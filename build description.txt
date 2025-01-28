@@ -1,0 +1,34 @@
+Lift:
+	-Two motors (Neos); Twist same directions
+	-Motors spin in the same direction, one way makes the lift go
+	up the other goes down.
+	-Positions:
+		-Low Coral
+		-High Coral
+		-Middle Coral
+		-Base Coral
+		-Rest position; Lift down
+		
+
+Intake:
+	-Kraken powers pivot to move the funnel.
+	Meets these positions:
+		-Intake;
+		-Hanging
+		-Ready to hang
+
+End effector:
+	-On the lift.
+	-Two motors (5-50s) spinning opposite of one another to intake
+	coral.
+	-Third motors (5-50) to descore coral. Simply spins.
+
+
+Climb:
+	-Two neos on gear ratio.
+	Positions:
+		-Clamp
+		-Open
+	-Motors move opposite of each other. One moves forward while
+	the other goes back to clamp.
+
