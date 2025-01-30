@@ -32,6 +32,8 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.intake.RampMechanism;
+
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -46,11 +48,12 @@ public class RobotContainer {
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
-  private final CommandXboxController operatorController = new CommandXboxController(1); //Controller for driver.
+  private final CommandXboxController operatorController =
+      new CommandXboxController(1); // Controller for driver.
 
-
-  //Subsystems
-  ClimbSubsystem climb = new ClimbSubsystem(); //Subsystem for climb.
+  // Subsystems
+  ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
+  RampMechanism ramp = new RampMechanism(); //System for ramp control.
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -143,12 +146,34 @@ public class RobotContainer {
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
+    // Controller inputs to control the grip motors on the hang system.
+    operatorController
+        .povDown()
+        .onTrue(
+            new InstantCommand(
+                () -> climb.runGripMotors())); // If down on the DPad is pressed, close the grip and
+    // hang on.
+    operatorController
+        .povUp()
+        .onTrue(
+            new InstantCommand(
+                () -> climb.openGripMotors())); // If up on the DPad is pressed, open the grip and
+    // release hang.
+    operatorController
+        .povLeft()
+        .onTrue(
+            new InstantCommand(
+                () -> climb.stopGripMotors())); // If the left on the DPad is pressed, stop the grip
+    // motors.
 
-    //Controller inputs to control the grip motors on the hang system.
-    operatorController.povDown().onTrue(new InstantCommand(() -> climb.runGripMotors())); //If down on the DPad is pressed, close the grip and hang on.
-    operatorController.povUp().onTrue(new InstantCommand(() -> climb.openGripMotors())); //If up on the DPad is pressed, open the grip and release hang.
-    operatorController.povLeft().onTrue(new InstantCommand(() -> climb.stopGripMotors())); //If the left on the DPad is pressed, stop the grip motors.
-    
+
+    // Ramp Mechanism Control; To hang position
+    operatorController.rightBumper().onTrue(new InstantCommand(() -> ramp.toHangPosition()));
+
+    // Ramp Mechanism Control; To intake position
+    operatorController.leftBumper().onTrue(new InstantCommand(() -> ramp.toIntakePosition()));
+
+
     // Reset gyro to 0° when B button is pressed
     controller
         .b()
