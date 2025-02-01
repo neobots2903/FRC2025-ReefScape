@@ -24,15 +24,21 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.drive.*;
-import frc.robot.subsystems.vision.*;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
+
+import frc.robot.subsystems.drive.*;
+import frc.robot.subsystems.vision.*;
+import frc.robot.subsystems.climb.*;
+import frc.robot.subsystems.intake.*;
+import frc.robot.subsystems.lift.*;
+
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -48,9 +54,14 @@ public class RobotContainer {
 
     // Controller
     private final CommandXboxController controller = new CommandXboxController(0);
+    private final CommandXboxController operatorController = new CommandXboxController(1);
 
     // Dashboard inputs
     private final LoggedDashboardChooser<Command> autoChooser;
+  // Subsystems
+  ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
+  RampMechanism ramp = new RampMechanism(); // System for ramp control.
+  Lift lift = new Lift(); //Subsystem for the lift control.
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
@@ -144,6 +155,48 @@ public class RobotContainer {
                 ? () -> drive.resetOdometry(driveSimulation.getSimulatedDriveTrainPose())
                 : () -> drive.resetOdometry(new Pose2d(drive.getPose().getTranslation(), new Rotation2d()));
         controller.start().onTrue(Commands.runOnce(resetOdometry).ignoringDisable(true));
+
+        //Check lift periodically.
+        lift.liftMain();
+
+        // Controller inputs to control the grip motors on the hang system.
+        operatorController
+            .povDown()
+            .onTrue(
+                new InstantCommand(
+                    () -> climb.runGripMotors())); // If down on the DPad is pressed, close the grip and
+        // hang on.
+        operatorController
+            .povUp()
+            .onTrue(
+                new InstantCommand(
+                    () -> climb.openGripMotors())); // If up on the DPad is pressed, open the grip and
+        // release hang.
+        operatorController
+            .povLeft()
+            .onTrue(
+                new InstantCommand(
+                    () -> climb.stopGripMotors())); // If the left on the DPad is pressed, stop the grip
+        // motors.
+
+        // Ramp Mechanism Control; To hang position
+        operatorController.rightBumper().onTrue(new InstantCommand(() -> ramp.toHangPosition()));
+
+        // Ramp Mechanism Control; To intake position
+        operatorController.leftBumper().onTrue(new InstantCommand(() -> ramp.toIntakePosition()));
+
+
+
+        // Reset gyro to 0° when B button is pressed
+        controller
+            .b()
+            .onTrue(
+                Commands.runOnce(
+                        () ->
+                            drive.resetOdometry(
+                                new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
+                        drive)
+                    .ignoringDisable(true));
     }
 
     /**
