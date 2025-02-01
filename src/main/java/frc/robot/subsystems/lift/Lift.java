@@ -36,8 +36,8 @@ public class Lift extends SubsystemBase {
     public Lift() {
         // Intialize motors
         m_liftMotorOne = new SparkMax(
-                ClimbConstants.leftGrip_motorPort, MotorType.kBrushless); // Motors intialized for the lift.
-        m_liftMotorTwo = new SparkMax(ClimbConstants.rightGrip_motorPort, MotorType.kBrushless);
+                20, MotorType.kBrushless); // Motors intialized for the lift.
+        m_liftMotorTwo = new SparkMax(21, MotorType.kBrushless);
 
         // Motor configs
         liftMotorOneConfig = new SparkMaxConfig(); // Configuartions for lift motors.
