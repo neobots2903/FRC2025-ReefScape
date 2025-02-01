@@ -33,6 +33,7 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.intake.RampMechanism;
+import frc.robot.subsystems.lift.Lift;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -53,7 +54,8 @@ public class RobotContainer {
 
   // Subsystems
   ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
-  RampMechanism ramp = new RampMechanism(); //System for ramp control.
+  RampMechanism ramp = new RampMechanism(); // System for ramp control.
+  Lift lift = new Lift(); //Subsystem for the lift control.
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -146,6 +148,12 @@ public class RobotContainer {
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
+
+    //Check lift periodically.
+    lift.liftMain();
+
+
+
     // Controller inputs to control the grip motors on the hang system.
     operatorController
         .povDown()
@@ -166,12 +174,12 @@ public class RobotContainer {
                 () -> climb.stopGripMotors())); // If the left on the DPad is pressed, stop the grip
     // motors.
 
-
     // Ramp Mechanism Control; To hang position
     operatorController.rightBumper().onTrue(new InstantCommand(() -> ramp.toHangPosition()));
 
     // Ramp Mechanism Control; To intake position
     operatorController.leftBumper().onTrue(new InstantCommand(() -> ramp.toIntakePosition()));
+
 
 
     // Reset gyro to 0° when B button is pressed

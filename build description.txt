@@ -10,7 +10,7 @@ Lift:
 		-Rest position; Lift down
 		
 
-Intake:
+/Intake:
 	-Kraken powers pivot to move the funnel.
 	Meets these positions:
 		-Intake;
@@ -24,7 +24,7 @@ End effector:
 	-Third motors (5-50) to descore coral. Simply spins.
 
 
-Climb:
+/Climb:
 	-Two neos on gear ratio.
 	Positions:
 		-Clamp

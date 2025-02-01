@@ -48,10 +48,9 @@ public final class Constants {
     public static final double kClimbPercentDisabled = 0.0;
   }
 
-
   public static final class RampMechanismConstants {
 
-    //TalonFX (Kraken) pivot motor
+    // TalonFX (Kraken) pivot motor
     public static final int rampMechanismPivot_motorPort = 13;
     public static final int rampMechanismPivot_stallAmperage = 50;
     public static final boolean rampMechanismPivot_EnableStatorCurrentLimit = true;
@@ -61,6 +60,8 @@ public final class Constants {
     public static final double rampMechanismPivot_kP1 = 0.0;
     public static final double rampMechanismPivot_kI1 = 0.0;
     public static final double rampMechanismPivot_kD1 = 0.0;
-    public static final double rampMechanismPivot_gearRatio = 12.0; //Gear ratio for the pivot motor for the ramp. For example, if this was was 8, gear ratio would be 1:8 (8 full motor rotations for 1 shaft rotation.)
+    public static final double rampMechanismPivot_gearRatio =
+        12.0; // Gear ratio for the pivot motor for the ramp. For example, if this was was 8, gear
+    // ratio would be 1:8 (8 full motor rotations for 1 shaft rotation.)
   }
 }
