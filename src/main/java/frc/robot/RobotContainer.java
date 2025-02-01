@@ -15,11 +15,11 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.vision.VisionConstants.*;
-import static frc.robot.subsystems.vision.VisionConstants.robotToCamera1;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -36,6 +36,7 @@ import frc.robot.subsystems.lift.*;
 import frc.robot.subsystems.vision.*;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralAlgaeStack;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -48,6 +49,10 @@ public class RobotContainer {
     // Subsystems
     private final Vision vision;
     private final Drive drive;
+    private Climb climb;
+    private Intake ramp;
+    private Lift lift;
+
     private SwerveDriveSimulation driveSimulation = null;
 
     // Controller
@@ -56,10 +61,6 @@ public class RobotContainer {
 
     // Dashboard inputs
     private final LoggedDashboardChooser<Command> autoChooser;
-    // Subsystems
-    Climb climb = new Climb(); // Subsystem for climb.
-    Intake ramp = new Intake(); // System for ramp control.
-    Lift lift = new Lift(); // Subsystem for the lift control.
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
@@ -77,12 +78,18 @@ public class RobotContainer {
                         drive,
                         new VisionIOLimelight(VisionConstants.camera0Name, drive::getRotation),
                         new VisionIOLimelight(VisionConstants.camera1Name, drive::getRotation));
+
+                climb = new Climb();
+                ramp = new Intake();
+                lift = new Lift();
                 break;
 
             case SIM:
                 // Sim robot, instantiate physics sim IO implementations
                 driveSimulation = new SwerveDriveSimulation(Drive.mapleSimConfig, new Pose2d(3, 3, new Rotation2d()));
                 SimulatedArena.getInstance().addDriveTrainSimulation(driveSimulation);
+                SimulatedArena.getInstance().addGamePiece(new ReefscapeCoralAlgaeStack(new Translation2d(2, 2)));
+
                 drive = new Drive(
                         new GyroIOSim(driveSimulation.getGyroSimulation()),
                         new ModuleIOSim(driveSimulation.getModules()[0]),
@@ -137,16 +144,52 @@ public class RobotContainer {
     private void configureButtonBindings() {
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(
-                drive, () -> -controller.getLeftY(), () -> -controller.getLeftX(), () -> -controller.getRightX()));
+                drive, () -> controller.getLeftY(), () -> controller.getLeftX(), () -> -controller.getRightX()));
 
-        // Lock to 0° when A button is held
+        // Snap to 0° when Up on the DPad is pressed
         controller
-                .a()
+                .povUp()
                 .whileTrue(DriveCommands.joystickDriveAtAngle(
-                        drive, () -> -controller.getLeftY(), () -> -controller.getLeftX(), () -> new Rotation2d()));
+                        drive, () -> controller.getLeftY(), () -> controller.getLeftX(), () -> new Rotation2d()));
+
+        // Snap to 90° when Right on the DPad is pressed (flipped)
+        controller
+                .povLeft()
+                .whileTrue(DriveCommands.joystickDriveAtAngle(
+                        drive,
+                        () -> controller.getLeftY(),
+                        () -> controller.getLeftX(),
+                        () -> Rotation2d.fromDegrees(90)));
+
+        // Snap to 180° when Down on the DPad is pressed
+        controller
+                .povDown()
+                .whileTrue(DriveCommands.joystickDriveAtAngle(
+                        drive,
+                        () -> controller.getLeftY(),
+                        () -> controller.getLeftX(),
+                        () -> Rotation2d.fromDegrees(180)));
+
+        // Snap to 270° when Left on the DPad is pressed (flipped)
+        controller
+                .povRight()
+                .whileTrue(DriveCommands.joystickDriveAtAngle(
+                        drive,
+                        () -> controller.getLeftY(),
+                        () -> controller.getLeftX(),
+                        () -> Rotation2d.fromDegrees(270)));
 
         // Switch to X pattern when X button is pressed
         controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+
+        // Reset gyro to 0° when B button is pressed
+        controller
+                .b()
+                .onTrue(Commands.runOnce(
+                                () -> drive.resetOdometry(
+                                        new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
+                                drive)
+                        .ignoringDisable(true));
 
         // Reset gyro / odometry
         final Runnable resetOdometry = Constants.currentMode == Constants.Mode.SIM
@@ -155,7 +198,7 @@ public class RobotContainer {
         controller.start().onTrue(Commands.runOnce(resetOdometry).ignoringDisable(true));
 
         // Check lift periodically.
-        lift.liftMain();
+        // lift.liftMain();
 
         // Controller inputs to control the grip motors on the hang system.
         operatorController
@@ -179,15 +222,6 @@ public class RobotContainer {
 
         // Ramp Mechanism Control; To intake position
         operatorController.leftBumper().onTrue(new InstantCommand(() -> ramp.toIntakePosition()));
-
-        // Reset gyro to 0° when B button is pressed
-        controller
-                .b()
-                .onTrue(Commands.runOnce(
-                                () -> drive.resetOdometry(
-                                        new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
-                                drive)
-                        .ignoringDisable(true));
     }
 
     /**

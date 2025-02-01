@@ -7,7 +7,6 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.ClimbConstants;
 
 public class Lift extends SubsystemBase {
 
@@ -35,8 +34,7 @@ public class Lift extends SubsystemBase {
     // Constructor to intialize motors and other electronics.
     public Lift() {
         // Intialize motors
-        m_liftMotorOne = new SparkMax(
-                20, MotorType.kBrushless); // Motors intialized for the lift.
+        m_liftMotorOne = new SparkMax(20, MotorType.kBrushless); // Motors intialized for the lift.
         m_liftMotorTwo = new SparkMax(21, MotorType.kBrushless);
 
         // Motor configs
