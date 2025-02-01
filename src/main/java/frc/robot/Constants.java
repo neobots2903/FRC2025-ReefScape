@@ -1,4 +1,4 @@
-// Copyright 2021-2025 FRC 6328
+// Copyright 2021-2024 FRC 6328
 // http://github.com/Mechanical-Advantage
 //
 // This program is free software; you can redistribute it and/or
@@ -32,35 +32,5 @@ public final class Constants {
 
         /** Replaying from a log file. */
         REPLAY
-    }
-
-    public static final class ClimbConstants {
-        public static final int leftGrip_motorPort = 11; // Neo + spark
-        public static final int rightGrip_motorPort = 12; // Neo + Spark
-        public static final int rotateIntakeFunnel_motorPort = 16; // Krakern
-        public static final double kGripMotorSpeeds = 0.1; // Speeds for the grip motors on the climb.
-        public static final double kGripMotorOpenSpeeds = -0.1; // Speeds for the grip motors to open.
-        public static final double kGripMotorStopped = 0.0; // Speed to stop the grip motors.
-
-        // current constants
-        public static final double kClimbPercentEnabled = 0.2;
-        public static final double kClimbPercentDisabled = 0.0;
-    }
-
-    public static final class RampMechanismConstants {
-
-        // TalonFX (Kraken) pivot motor
-        public static final int rampMechanismPivot_motorPort = 13;
-        public static final int rampMechanismPivot_stallAmperage = 50;
-        public static final boolean rampMechanismPivot_EnableStatorCurrentLimit = true;
-        public static final double rampMechanismPivot_kP = 0.0;
-        public static final double rampMechanismPivot_kI = 0.0;
-        public static final double rampMechanismPivot_kD = 0.0;
-        public static final double rampMechanismPivot_kP1 = 0.0;
-        public static final double rampMechanismPivot_kI1 = 0.0;
-        public static final double rampMechanismPivot_kD1 = 0.0;
-        public static final double rampMechanismPivot_gearRatio =
-                12.0; // Gear ratio for the pivot motor for the ramp. For example, if this was was 8, gear ratio would
-        // be 1:8 (8 full motor rotations for 1 shaft rotation.)
     }
 }
