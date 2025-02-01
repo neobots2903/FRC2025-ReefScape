@@ -32,14 +32,13 @@ import frc.robot.generated.TunerConstants;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.vision.*;
-import frc.robot.subsystems.climb.*;
 import frc.robot.subsystems.intake.*;
 import frc.robot.subsystems.lift.*;
-
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import frc.robot.subsystems.climb.*;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a "declarative" paradigm, very
@@ -58,10 +57,10 @@ public class RobotContainer {
 
     // Dashboard inputs
     private final LoggedDashboardChooser<Command> autoChooser;
-  // Subsystems
-  ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
-  RampMechanism ramp = new RampMechanism(); // System for ramp control.
-  Lift lift = new Lift(); //Subsystem for the lift control.
+    // Subsystems
+    Climb climb = new Climb(); // Subsystem for climb.
+    Intake ramp = new Intake(); // System for ramp control.
+    Lift lift = new Lift(); // Subsystem for the lift control.
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     public RobotContainer() {
@@ -156,27 +155,24 @@ public class RobotContainer {
                 : () -> drive.resetOdometry(new Pose2d(drive.getPose().getTranslation(), new Rotation2d()));
         controller.start().onTrue(Commands.runOnce(resetOdometry).ignoringDisable(true));
 
-        //Check lift periodically.
+        // Check lift periodically.
         lift.liftMain();
 
         // Controller inputs to control the grip motors on the hang system.
         operatorController
-            .povDown()
-            .onTrue(
-                new InstantCommand(
-                    () -> climb.runGripMotors())); // If down on the DPad is pressed, close the grip and
+                .povDown()
+                .onTrue(new InstantCommand(
+                        () -> climb.runGripMotors())); // If down on the DPad is pressed, close the grip and
         // hang on.
         operatorController
-            .povUp()
-            .onTrue(
-                new InstantCommand(
-                    () -> climb.openGripMotors())); // If up on the DPad is pressed, open the grip and
+                .povUp()
+                .onTrue(new InstantCommand(
+                        () -> climb.openGripMotors())); // If up on the DPad is pressed, open the grip and
         // release hang.
         operatorController
-            .povLeft()
-            .onTrue(
-                new InstantCommand(
-                    () -> climb.stopGripMotors())); // If the left on the DPad is pressed, stop the grip
+                .povLeft()
+                .onTrue(new InstantCommand(
+                        () -> climb.stopGripMotors())); // If the left on the DPad is pressed, stop the grip
         // motors.
 
         // Ramp Mechanism Control; To hang position
@@ -185,18 +181,14 @@ public class RobotContainer {
         // Ramp Mechanism Control; To intake position
         operatorController.leftBumper().onTrue(new InstantCommand(() -> ramp.toIntakePosition()));
 
-
-
         // Reset gyro to 0° when B button is pressed
         controller
-            .b()
-            .onTrue(
-                Commands.runOnce(
-                        () ->
-                            drive.resetOdometry(
-                                new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
-                        drive)
-                    .ignoringDisable(true));
+                .b()
+                .onTrue(Commands.runOnce(
+                                () -> drive.resetOdometry(
+                                        new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
+                                drive)
+                        .ignoringDisable(true));
     }
 
     /**
