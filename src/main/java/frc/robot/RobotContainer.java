@@ -55,7 +55,7 @@ public class RobotContainer {
   // Subsystems
   ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
   RampMechanism ramp = new RampMechanism(); // System for ramp control.
-  Lift lift = new Lift(); //Subsystem for the lift control.
+  Lift lift = new Lift(operatorController); //Subsystem for the lift control.
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -149,30 +149,12 @@ public class RobotContainer {
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
 
-    //Check lift periodically.
-    lift.liftMain();
+    //Lift control system.
+    lift.freeMovement();
+
+    
 
 
-
-    // Controller inputs to control the grip motors on the hang system.
-    operatorController
-        .povDown()
-        .onTrue(
-            new InstantCommand(
-                () -> climb.runGripMotors())); // If down on the DPad is pressed, close the grip and
-    // hang on.
-    operatorController
-        .povUp()
-        .onTrue(
-            new InstantCommand(
-                () -> climb.openGripMotors())); // If up on the DPad is pressed, open the grip and
-    // release hang.
-    operatorController
-        .povLeft()
-        .onTrue(
-            new InstantCommand(
-                () -> climb.stopGripMotors())); // If the left on the DPad is pressed, stop the grip
-    // motors.
 
     // Ramp Mechanism Control; To hang position
     operatorController.rightBumper().onTrue(new InstantCommand(() -> ramp.toHangPosition()));

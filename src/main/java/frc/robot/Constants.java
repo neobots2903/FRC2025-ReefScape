@@ -64,4 +64,14 @@ public final class Constants {
         12.0; // Gear ratio for the pivot motor for the ramp. For example, if this was was 8, gear
     // ratio would be 1:8 (8 full motor rotations for 1 shaft rotation.)
   }
+
+  public static final class LiftConstants {
+    public static final double maxLiftPosition = 20.0;
+    public static final double minLiftPosition = 0.0;
+    public static final double kP = 0.1;
+    public static final double kI = 0.1;
+    public static final double kD = 0.1;
+    public static final double kMinOutput = 0.1;
+    public static final double kMaxOutput = 0.5;
+  }
 }
