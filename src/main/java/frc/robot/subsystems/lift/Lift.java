@@ -95,30 +95,30 @@ public class Lift extends SubsystemBase {
 
 
     //Controls the free movement of the lift using the sticks; If and only if we are in the correct state "FREE_MOVEMENT".
-    public void freeMovement() {
+    public void freeMovement(double rightY) {
         //If the current state is free movement, allow the lift to freely move.
         if (states == liftStates.FREE_MOVEMENT) {
             
             //If the lift is not at max height, then enable upward movement and apply it here.
             if (m_liftMotorOne_Encoder.getPosition() < liftConstants.maxLiftPosition) {
                 //The lift is below maximum position. If the controller is trying to move the lift down, do so.
-                if (operatorController.getRightY() > 0.0) {
-                    m_liftMotorOne.set(operatorController.getRightY());
-                    m_liftMotorTwo.set(operatorController.getRightY());
+                if (rightY > 0.0) {
+                    m_liftMotorOne.set(rightY);
+                    m_liftMotorTwo.set(rightY);
                 }
             }
 
             //If the lift is not at its minimum position, then allow movement downward.
             if (m_liftMotorOne_Encoder.getPosition() > liftConstants.minLiftPosition) {
                 //The lift is above minimum position. If the controller is requesting the lift to move down, then do so.
-                if (operatorController.getRightY() < 0.0) {
-                    m_liftMotorOne.set(operatorController.getRightY());
-                    m_liftMotorTwo.set(operatorController.getRightY());
+                if (rightY < 0.0) {
+                    m_liftMotorOne.set(rightY);
+                    m_liftMotorTwo.set(rightY);
                 }
             }
             
             //If the joystick is at zero or very close to it (borderline stick drift) stop the lift from moving
-            if (operatorController.getRightY() < 0.05 && operatorController.getRightY() > -0.05) {
+            if (rightY < 0.05 && rightY > -0.05) {
                 m_liftMotorOne.set(0);
                 m_liftMotorTwo.set(0);
             }
@@ -139,7 +139,7 @@ public class Lift extends SubsystemBase {
         states = liftStates.HIGH_CORAL; //Current state is traveling to high coral.
 
         //Run the lift motors in a pid loop to high coral.
-        liftMotorOne_pidController.setReference(liftConstants.maxLiftPosition, ControlType.kPosition, 0);
-        liftMotorTwo_pidController.setReference(liftConstants.maxLiftPosition, ControlType.kPosition, 0);
+        //liftMotorOne_pidController.setReference(liftConstants.maxLiftPosition, ControlType.kPosition, 0);
+        //liftMotorTwo_pidController.setReference(liftConstants.maxLiftPosition, ControlType.kPosition, 0);
     }
 }

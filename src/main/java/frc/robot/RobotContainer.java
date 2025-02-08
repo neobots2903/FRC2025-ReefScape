@@ -32,6 +32,7 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.endEffector.EndEffector;
 import frc.robot.subsystems.intake.RampMechanism;
 import frc.robot.subsystems.lift.Lift;
 
@@ -56,6 +57,7 @@ public class RobotContainer {
   ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
   RampMechanism ramp = new RampMechanism(); // System for ramp control.
   Lift lift = new Lift(operatorController); //Subsystem for the lift control.
+  EndEffector endEffector = new EndEffector(); //Subsystem to control the end effector.
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -150,11 +152,16 @@ public class RobotContainer {
 
 
     //Lift control system.
-    lift.freeMovement();
+    lift.freeMovement(operatorController.getRightY());
 
-    
+    //Periodically check the end effector and run systems related to it each frame/application cycle.
+    endEffector.periodicMain();
 
+    //Outtake control for the end effector.
+    operatorController.a().onTrue(new InstantCommand(() -> endEffector.outtaking = true));
 
+    //Alge descorer control for the end effector
+    operatorController.b().onTrue(new InstantCommand(() -> endEffector.runAlgeDescorer = true));
 
     // Ramp Mechanism Control; To hang position
     operatorController.rightBumper().onTrue(new InstantCommand(() -> ramp.toHangPosition()));

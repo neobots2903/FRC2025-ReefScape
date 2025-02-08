@@ -74,4 +74,13 @@ public final class Constants {
     public static final double kMinOutput = 0.1;
     public static final double kMaxOutput = 0.5;
   }
+
+  public static final class EndEffectorConstants {
+    public static final int endEffectorMotorOne_Port = 15;
+    public static final int endEffectorMotorTwo_Port = 16;
+    public static final int intakeLimitSwitchPort = 0;
+    public static final int outtakeLimitSwitchPort = 1;
+    public static final double endEffectorSpeed = 0.2;
+    public static final int algeDescorerMotor_Port = 17;
+  }
 }
