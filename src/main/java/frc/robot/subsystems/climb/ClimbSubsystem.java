@@ -13,23 +13,9 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ClimbConstants;
 
-// TODO:
-/*
- * Need to find out motor controller type (Spark Max, Talon, Victor SP, Victor SPX).
- * Find out which encoders the build team will grace us with, if any...
- */
-
-// Hardware:
-/*
- * 2 CIM for climb.
- * 1 mini CIM for engage.
- */
-
-// NOTES:
-/*
- * Could also do position control, but I was thinking that Current would be easier to
- * work with and less likely to kill motors. Empirically find amps under normal climb, then
- * use as target current.
+/* NOTES */
+/* 
+ * - We may need to use current sensing to detect when the robot is on the hang, or maybe a current pid. We should see how this works though.
  */
 
 public class ClimbSubsystem extends SubsystemBase {

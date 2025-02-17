@@ -13,6 +13,17 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.ClimbConstants;
 import frc.robot.Constants.LiftConstants;
 
+/* NOTES */
+/*
+ * - The lift is using the new Thrify Nova controllers. You need to install ThriftyLib to use them.
+ * - We should look into the Nova's to see if they support Motion Profiling, because the lift is scary powerful.
+ * - None of the lift states are implemented yet?
+ * - The lift subsystem shouldn't take in the operator controller.
+ * - The subsystem is just for defining mechanism control. Such as setting power, handling pid calulations, etc. The actual usage,
+ *   such as when to move the lift, should be handled in a command in either the RobotContainer or in a command group.
+ * - LiftConstants is a static class, so you can access the constants without instantiating it (without using new to create an object).
+ */
+
 public class Lift extends SubsystemBase {
 
   // Pid loop parameters

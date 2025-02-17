@@ -32,6 +32,13 @@ import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
+/* NOTES */
+/*
+ * - I'd probably instantiate the subsystems inside of the RobotContainer constructor instead of
+ *   having them be fields. This way, you can use the RobotContainer to determine which
+ *   subsystems to instantiate based on the current mode. Right now, they would all move under "REAL".
+ */
+
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
  * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}

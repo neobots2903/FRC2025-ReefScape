@@ -10,6 +10,14 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.EndEffectorConstants;
 
+/* NOTES */
+/*
+ * - The end effector (wheel) motors are Brushed motors, so we'd need to pass in MotorType.kBrushed.
+ * - The alge descorer doesn't exist yet.
+ * - Need to figure out if the limit switches are normally open or normally closed. The logic might just be inverted.
+ * - If you want to use the periodic method, it needs to be named "periodic" and needs to use the @Override annotation.
+ */
+
 public class EndEffector extends SubsystemBase {
 
   // Motors

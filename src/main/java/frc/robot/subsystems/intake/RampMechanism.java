@@ -9,6 +9,14 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.RampMechanismConstants;
 
+/* NOTES */
+/*
+ * - When creating a TalonFX controller object, the canbus option will always be "rio" in our case.
+ * - This functionality is tightly coupled with the climb subsystem, so I'd recommend combining them together.
+ * - The naming is a bit confusing. This is in the intake folder, but the end-effector is the intake I think?
+ * - We should write a method that converts units (inches?) to rotations to more easily set the position.
+ */
+
 /*
  * Class to manage the Ramp Mechanism for the intake.
  */
