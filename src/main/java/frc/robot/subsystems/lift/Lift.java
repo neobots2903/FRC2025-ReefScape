@@ -1,158 +1,119 @@
 package frc.robot.subsystems.lift;
 
-import com.revrobotics.RelativeEncoder;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
-import com.revrobotics.spark.SparkClosedLoopController;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SparkMaxConfig;
+import com.thethriftybot.Conversion;
+import com.thethriftybot.Conversion.PositionUnit;
+import com.thethriftybot.ThriftyNova;
+import com.thethriftybot.ThriftyNova.CurrentType;
+import com.thethriftybot.ThriftyNova.EncoderType;
+import com.thethriftybot.ThriftyNova.PIDSlot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.Constants.ClimbConstants;
-import frc.robot.Constants.LiftConstants;
-
-/* NOTES */
-/*
- * - The lift is using the new Thrify Nova controllers. You need to install ThriftyLib to use them.
- * - We should look into the Nova's to see if they support Motion Profiling, because the lift is scary powerful.
- * - None of the lift states are implemented yet?
- * - The lift subsystem shouldn't take in the operator controller.
- * - The subsystem is just for defining mechanism control. Such as setting power, handling pid calulations, etc. The actual usage,
- *   such as when to move the lift, should be handled in a command in either the RobotContainer or in a command group.
- * - LiftConstants is a static class, so you can access the constants without instantiating it (without using new to create an object).
- */
 
 public class Lift extends SubsystemBase {
+    // Physical constants
+    private static final double INCHES_PER_RADIAN = 2.5;
+    private static final double POSITION_TOLERANCE = 0.25; // inches
+    
+    // Motor configuration constants
+    private static final double RAMP_UP_TIME = 0.25;
+    private static final double RAMP_DOWN_TIME = 0.05;
+    private static final double FORWARD_MAX_OUTPUT = 1.0;
+    private static final double REVERSE_MAX_OUTPUT = 0.25;
+    private static final double SOFT_LIMIT_MIN = 0;
+    private static final double SOFT_LIMIT_MAX = 7 * Math.PI;
+    private static final int CURRENT_LIMIT = 50;
+    
+    // PID constants
+    private static final double kP = 0.5;
+    private static final double kI = 0;
+    private static final double kD = 0;
+    private static final double kFF = 1.2;
 
-  // Pid loop parameters
-  SparkMaxConfig pidConfig = new SparkMaxConfig(); // Parameters to control the Neo motor pid loops.
+    public enum SetPoint {
+        BOTTOM(0),
+        LOW(18),
+        MID(32),
+        HIGH(42);
 
-  // Pid controllers
-  SparkClosedLoopController liftMotorOne_pidController; // Pid controllers for both spark max motor.
-  SparkClosedLoopController liftMotorTwo_pidController;
+        final double position;
 
-  // Motors
-  private SparkMax m_liftMotorOne; // Motors to accuate the lift.
-  private SparkMax m_liftMotorTwo;
-
-  // Encoders
-  private RelativeEncoder m_liftMotorOne_Encoder;
-
-  // Motor configs
-  private SparkMaxConfig liftMotorOneConfig; // Configs for the motors moving the lift.
-  private SparkMaxConfig liftMotorTwoConfig;
-
-  // Controllers
-  CommandXboxController operatorController; // Operator controller.
-
-  // Constants
-  LiftConstants liftConstants = new LiftConstants(); // Constants for lift
-
-  // //Lift states.
-  enum liftStates {
-    FREE_MOVEMENT, // Lift is at the level where coral can be intaked via end effector.
-    LOW_CORAL, // Lift is at the low coral level.
-    MEDIUM_CORAL, // Lift is at the medium coral level.
-    HIGH_CORAL, // Lift is at the high coral level.
-    BASE_CORAL, // Lift is at the base coral level.
-  }
-
-  // States
-  liftStates states = liftStates.FREE_MOVEMENT; // States for the lift.
-
-  // Constructor to intialize motors and other electronics.
-  public Lift(CommandXboxController operatorController) {
-    // Intialize motors
-    m_liftMotorOne =
-        new SparkMax(
-            ClimbConstants.leftGrip_motorPort,
-            MotorType.kBrushless); // Motors intialized for the lift.
-    m_liftMotorTwo = new SparkMax(ClimbConstants.rightGrip_motorPort, MotorType.kBrushless);
-
-    // Motor configs
-    liftMotorOneConfig = new SparkMaxConfig(); // Configuartions for lift motors.
-    liftMotorTwoConfig = new SparkMaxConfig();
-
-    // Apply configurations and parameters to motor configs
-    liftMotorOneConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake);
-    liftMotorTwoConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake);
-
-    // Set configs onto the motors.
-    m_liftMotorOne.configure(
-        liftMotorOneConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-    m_liftMotorTwo.configure(
-        liftMotorTwoConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-
-    // Setup pid controllers
-    liftMotorOne_pidController = m_liftMotorOne.getClosedLoopController();
-    liftMotorTwo_pidController = m_liftMotorTwo.getClosedLoopController();
-
-    // Encoder for the lifts movements
-    m_liftMotorOne_Encoder = m_liftMotorOne.getEncoder(); // Get the encoder for the 1st lift motor.
-    m_liftMotorOne_Encoder.setPosition(0); // Reset the encoder.
-
-    // Initalize the operator controller
-    this.operatorController = operatorController;
-
-    // Pid loop setup
-    pidConfig
-        .closedLoop
-        .p(liftConstants.kP)
-        .i(liftConstants.kI)
-        .d(liftConstants.kD)
-        .outputRange(liftConstants.kMinOutput, liftConstants.kMaxOutput);
-  }
-
-  // Controls the free movement of the lift using the sticks; If and only if we are in the correct
-  // state "FREE_MOVEMENT".
-  public void freeMovement(double rightY) {
-    // If the current state is free movement, allow the lift to freely move.
-    if (states == liftStates.FREE_MOVEMENT) {
-
-      // If the lift is not at max height, then enable upward movement and apply it here.
-      if (m_liftMotorOne_Encoder.getPosition() < liftConstants.maxLiftPosition) {
-        // The lift is below maximum position. If the controller is trying to move the lift down, do
-        // so.
-        if (rightY > 0.0) {
-          m_liftMotorOne.set(rightY);
-          m_liftMotorTwo.set(rightY);
+        SetPoint(double position) {
+            this.position = position;
         }
-      }
-
-      // If the lift is not at its minimum position, then allow movement downward.
-      if (m_liftMotorOne_Encoder.getPosition() > liftConstants.minLiftPosition) {
-        // The lift is above minimum position. If the controller is requesting the lift to move
-        // down, then do so.
-        if (rightY < 0.0) {
-          m_liftMotorOne.set(rightY);
-          m_liftMotorTwo.set(rightY);
-        }
-      }
-
-      // If the joystick is at zero or very close to it (borderline stick drift) stop the lift from
-      // moving
-      if (rightY < 0.05 && rightY > -0.05) {
-        m_liftMotorOne.set(0);
-        m_liftMotorTwo.set(0);
-      }
     }
-  }
 
-  // Gets the lift to a specific position based on the first argument.
-  // Positions: base coral (0), low coral (1), high coral (2), medium coral (3).
-  public void travelToPosition(int pos) {}
+    private final ThriftyNova m_leftMotor;
+    private final ThriftyNova m_rightMotor;
+    private final Conversion converter;
+    
+    private SetPoint currentSetPoint = SetPoint.BOTTOM;
+    private double currentPosition = 0;
 
-  // Runs the lift to high coral using encoders.
-  public void toHighCoral() {
+    // Singleton instance
+    private static volatile Lift instance;
 
-    states = liftStates.HIGH_CORAL; // Current state is traveling to high coral.
+    public static synchronized Lift getInstance() {
+        if (instance == null) {
+            instance = new Lift();
+        }
+        return instance;
+    }
 
-    // Run the lift motors in a pid loop to high coral.
-    // liftMotorOne_pidController.setReference(liftConstants.maxLiftPosition, ControlType.kPosition,
-    // 0);
-    // liftMotorTwo_pidController.setReference(liftConstants.maxLiftPosition, ControlType.kPosition,
-    // 0);
-  }
+    private Lift() {
+        converter = new Conversion(PositionUnit.RADIANS, EncoderType.INTERNAL);
+        
+        m_leftMotor = configureMotor(100, false);  // CAN ID 100, not inverted
+        m_rightMotor = configureMotor(101, true);  // CAN ID 101, inverted
+    }
+
+    private ThriftyNova configureMotor(int canId, boolean inverted) {
+        ThriftyNova motor = new ThriftyNova(canId);
+        
+        // Basic motor configuration
+        motor.setBrakeMode(true);
+        motor.setInverted(inverted);
+        motor.setRampUp(RAMP_UP_TIME);
+        motor.setRampDown(RAMP_DOWN_TIME);
+        motor.setMaxOutput(FORWARD_MAX_OUTPUT, REVERSE_MAX_OUTPUT);
+
+        // Safety limits
+        motor.setSoftLimits(SOFT_LIMIT_MIN, SOFT_LIMIT_MAX);
+        motor.enableSoftLimits(true);
+        motor.setMaxCurrent(CurrentType.SUPPLY, CURRENT_LIMIT);
+
+        // Encoder and PID configuration
+        motor.useEncoderType(EncoderType.INTERNAL);
+        motor.usePIDSlot(PIDSlot.SLOT0);
+
+        // PID configuration
+        motor.pid0.setP(kP);
+        motor.pid0.setI(kI);
+        motor.pid0.setD(kD);
+        motor.pid0.setFF(kFF);
+
+        motor.clearErrors();
+        return motor;
+    }
+
+    public void setPosition(SetPoint setPoint) {
+        this.currentSetPoint = setPoint;
+        double motorPosition = converter.toMotor(setPoint.position / INCHES_PER_RADIAN);
+        m_leftMotor.setPosition(motorPosition);
+        m_rightMotor.setPosition(motorPosition);
+    }
+
+    public boolean atSetpoint() {
+        return Math.abs(currentPosition - currentSetPoint.position) < POSITION_TOLERANCE;
+    }
+
+    @Override
+    public void periodic() {
+        currentPosition = converter.fromMotor(m_leftMotor.getPosition()) * INCHES_PER_RADIAN;
+        
+        // Dashboard telemetry
+        SmartDashboard.putNumber("Elevator/Position", currentPosition);
+        SmartDashboard.putNumber("Elevator/Current", m_leftMotor.getStatorCurrent());
+        SmartDashboard.putNumber("Elevator/Target", currentSetPoint.position);
+        SmartDashboard.putBoolean("Elevator/AtSetpoint", atSetpoint());
+    }
 }
