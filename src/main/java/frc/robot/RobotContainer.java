@@ -18,6 +18,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -26,18 +27,10 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.drive.GyroIO;
-import frc.robot.subsystems.drive.GyroIOPigeon2;
-import frc.robot.subsystems.drive.ModuleIO;
-import frc.robot.subsystems.drive.ModuleIOSim;
-import frc.robot.subsystems.drive.ModuleIOTalonFX;
-import frc.robot.subsystems.vision.Vision;
-import frc.robot.subsystems.vision.VisionIO;
-import frc.robot.subsystems.vision.VisionIOLimelight;
-import frc.robot.subsystems.vision.VisionIOPhotonVision;
-import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
+import frc.robot.subsystems.drive.*;
+import frc.robot.subsystems.vision.*;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.photonvision.PhotonUtils;
 
 import static frc.robot.subsystems.vision.VisionConstants.*; // Move these to actual constants file later.
 
@@ -172,44 +165,26 @@ public class RobotContainer {
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
     
-    // // Auto aim command example
+        // // Auto aim command example
     // @SuppressWarnings("resource")
     // PIDController aimController = new PIDController(0.2, 0.0, 0.0);
     // aimController.enableContinuousInput(-Math.PI, Math.PI);
     // controller
-    //     .button(1)
+    //     .y()
     //     .whileTrue(
-    //         Commands.startRun(
-    //             () -> {
-    //               aimController.reset();
-    //             },
-    //             () -> {
-    //               drive.run(0.0, aimController.calculate(vision.getTargetX(0).getRadians()));
-    //             },
-    //             drive));
-
-    /*
-    // Lift control system.
-    lift.freeMovement(operatorController.getRightY());
-
-    // Periodically check the end effector and run systems related to it each frame/application
-    // cycle.
-    endEffector.periodicMain();
-
-    // Outtake control for the end effector.
-    operatorController.a().onTrue(new InstantCommand(() -> endEffector.outtaking = true));
-
-    // Alge descorer control for the end effector
-    operatorController.b().onTrue(new InstantCommand(() -> endEffector.runAlgeDescorer()));
-    operatorController.b().onFalse(new InstantCommand(() -> endEffector.cutAlgeDescorer()));
-
-    // Ramp Mechanism Control; To hang position
-    operatorController.rightBumper().onTrue(new InstantCommand(() -> ramp.toHangPosition()));
-
-    // Ramp Mechanism Control; To intake position
-    operatorController.leftBumper().onTrue(new InstantCommand(() -> ramp.toIntakePosition()));
-
-    */
+    //         Commands.sequence(
+    //             Commands.runOnce(
+    //                 () -> {
+    //                   aimController.reset();
+    //                 }
+    //             ),
+    //             DriveCommands.joystickDrive(
+    //                 drive,
+    //                 () -> 0.0,
+    //                 () -> 0.0,
+    //                 () -> aimController.calculate(vision.getTargetX(0).getRadians()))
+    //         )
+    //     );
 
     // Reset gyro to 0° when B button is pressed
     controller

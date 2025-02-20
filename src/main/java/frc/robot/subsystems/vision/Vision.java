@@ -64,6 +64,24 @@ public class Vision extends SubsystemBase {
     return inputs[cameraIndex].latestTargetObservation.tx();
   }
 
+  /**
+   * Returns the distance to the best target, which can be used for simple servoing with vision.
+   * @param cameraIndex
+   * @return
+   */
+  // public double getTargetDistance(int cameraIndex) {
+  //   return inputs[cameraIndex].latestTargetObservation.
+  // }
+
+  /** 
+   * Returns the Y angle to the best target, which can be used for simple servoing with vision.
+   * 
+   * @param cameraIndex The index of the camera to use.
+   */
+  public Rotation2d getTargetY(int cameraIndex) {
+    return inputs[cameraIndex].latestTargetObservation.ty();
+  }
+
   @Override
   public void periodic() {
     for (int i = 0; i < io.length; i++) {
