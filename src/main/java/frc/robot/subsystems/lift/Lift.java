@@ -1,63 +1,119 @@
 package frc.robot.subsystems.lift;
 
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SparkMaxConfig;
+import com.thethriftybot.Conversion;
+import com.thethriftybot.Conversion.PositionUnit;
+import com.thethriftybot.ThriftyNova;
+import com.thethriftybot.ThriftyNova.CurrentType;
+import com.thethriftybot.ThriftyNova.EncoderType;
+import com.thethriftybot.ThriftyNova.PIDSlot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Lift extends SubsystemBase {
+  // Physical constants
+  private static final double INCHES_PER_RADIAN = 2.5;
+  private static final double POSITION_TOLERANCE = 0.25; // inches
 
-    // Motors
-    private SparkMax m_liftMotorOne; // Motors to accuate the lift.
-    private SparkMax m_liftMotorTwo;
+  // Motor configuration constants
+  private static final double RAMP_UP_TIME = 0.25;
+  private static final double RAMP_DOWN_TIME = 0.05;
+  private static final double FORWARD_MAX_OUTPUT = 1.0;
+  private static final double REVERSE_MAX_OUTPUT = 0.25;
+  private static final double SOFT_LIMIT_MIN = 0;
+  private static final double SOFT_LIMIT_MAX = 7 * Math.PI;
+  private static final int CURRENT_LIMIT = 50;
 
-    // Motor configs
-    private SparkMaxConfig liftMotorOneConfig; // Configs for the motors moving the lift.
-    private SparkMaxConfig liftMotorTwoConfig;
+  // PID constants
+  private static final double kP = 0.5;
+  private static final double kI = 0;
+  private static final double kD = 0;
+  private static final double kFF = 1.2;
 
-    // Lift states.
-    enum liftStates {
-        AT_INTAKE, // Lift is at the level where coral can be intaked via end effector.
-        GOING_UP, // Lift is going up by input.
-        GOING_DOWN, // Lift is going down by input
-        AT_DIFFERENT_POSITION, // The lift was stopped at a position other than a defined position.
-        LOW_CORAL, // Lift is at the low coral level.
-        MEDIUM_CORAL, // Lift is at the medium coral level.
-        HIGH_CORAL, // Lift is at the high coral level.
-        BASE_CORAL, // Lift is at the base coral level.
-        STOP_AT_DIFFERENT_POSITION // Get the lift ready to stop at a place not defined in the lift states.
+  public enum SetPoint {
+    BOTTOM(0),
+    LOW(18),
+    MID(32),
+    HIGH(42);
+
+    final double position;
+
+    SetPoint(double position) {
+      this.position = position;
     }
+  }
 
-    // Constructor to intialize motors and other electronics.
-    public Lift() {
-        // Intialize motors
-        m_liftMotorOne = new SparkMax(20, MotorType.kBrushless); // Motors intialized for the lift.
-        m_liftMotorTwo = new SparkMax(21, MotorType.kBrushless);
+  private final ThriftyNova m_leftMotor;
+  private final ThriftyNova m_rightMotor;
+  private final Conversion converter;
 
-        // Motor configs
-        liftMotorOneConfig = new SparkMaxConfig(); // Configuartions for lift motors.
-        liftMotorTwoConfig = new SparkMaxConfig();
+  private SetPoint currentSetPoint = SetPoint.BOTTOM;
+  private double currentPosition = 0;
 
-        // Apply configurations and parameters to motor configs
-        liftMotorOneConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake);
-        liftMotorTwoConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake);
+  // Singleton instance
+  private static volatile Lift instance;
 
-        // Set configs onto the motors.
-        m_liftMotorOne.configure(
-                liftMotorOneConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-        m_liftMotorTwo.configure(
-                liftMotorTwoConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+  public static synchronized Lift getInstance() {
+    if (instance == null) {
+      instance = new Lift();
     }
+    return instance;
+  }
 
-    // Runs each cycle of the program to periodically check on the lift anf run other tasks.
-    public void liftMain() {}
+  public Lift() {
+    converter = new Conversion(PositionUnit.RADIANS, EncoderType.INTERNAL);
 
-    // Controls the lift going up via user input.
-    public void lift_runUp() {}
+    m_leftMotor = configureMotor(100, false); // CAN ID 100, not inverted
+    m_rightMotor = configureMotor(101, true); // CAN ID 101, inverted
+  }
 
-    // Controls the lift going down via user input.
-    public void lift_runDown() {}
+  private ThriftyNova configureMotor(int canId, boolean inverted) {
+    ThriftyNova motor = new ThriftyNova(canId);
+
+    // Basic motor configuration
+    motor.setBrakeMode(true);
+    motor.setInverted(inverted);
+    motor.setRampUp(RAMP_UP_TIME);
+    motor.setRampDown(RAMP_DOWN_TIME);
+    motor.setMaxOutput(FORWARD_MAX_OUTPUT, REVERSE_MAX_OUTPUT);
+
+    // Safety limits
+    motor.setSoftLimits(SOFT_LIMIT_MIN, SOFT_LIMIT_MAX);
+    motor.enableSoftLimits(true);
+    motor.setMaxCurrent(CurrentType.SUPPLY, CURRENT_LIMIT);
+
+    // Encoder and PID configuration
+    motor.useEncoderType(EncoderType.INTERNAL);
+    motor.usePIDSlot(PIDSlot.SLOT0);
+
+    // PID configuration
+    motor.pid0.setP(kP);
+    motor.pid0.setI(kI);
+    motor.pid0.setD(kD);
+    motor.pid0.setFF(kFF);
+
+    motor.clearErrors();
+    return motor;
+  }
+
+  public void setPosition(SetPoint setPoint) {
+    this.currentSetPoint = setPoint;
+    double motorPosition = converter.toMotor(setPoint.position / INCHES_PER_RADIAN);
+    m_leftMotor.setPosition(motorPosition);
+    m_rightMotor.setPosition(motorPosition);
+  }
+
+  public boolean atSetpoint() {
+    return Math.abs(currentPosition - currentSetPoint.position) < POSITION_TOLERANCE;
+  }
+
+  @Override
+  public void periodic() {
+    currentPosition = converter.fromMotor(m_leftMotor.getPosition()) * INCHES_PER_RADIAN;
+
+    // Dashboard telemetry
+    SmartDashboard.putNumber("Elevator/Position", currentPosition);
+    SmartDashboard.putNumber("Elevator/Current", m_leftMotor.getStatorCurrent());
+    SmartDashboard.putNumber("Elevator/Target", currentSetPoint.position);
+    SmartDashboard.putBoolean("Elevator/AtSetpoint", atSetpoint());
+  }
 }

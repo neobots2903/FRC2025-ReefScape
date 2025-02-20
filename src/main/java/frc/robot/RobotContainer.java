@@ -17,6 +17,8 @@ import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -39,6 +41,16 @@ import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralAlgaeStack;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.photonvision.PhotonUtils;
+
+import static frc.robot.subsystems.vision.VisionConstants.*; // Move these to actual constants file later.
+
+/* NOTES */
+/*
+ * - I'd probably instantiate the subsystems inside of the RobotContainer constructor instead of
+ *   having them be fields. This way, you can use the RobotContainer to determine which
+ *   subsystems to instantiate based on the current mode. Right now, they would all move under "REAL".
+ */
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a "declarative" paradigm, very
@@ -76,9 +88,8 @@ public class RobotContainer {
                         (robotPose) -> {});
                 vision = new Vision(
                         drive,
-                        new VisionIOLimelight(VisionConstants.camera0Name, drive::getRotation),
-                        new VisionIOLimelight(VisionConstants.camera1Name, drive::getRotation));
-
+                        new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                        new VisionIOPhotonVision(camera1Name, robotToCamera1));
                 climb = new Climb();
                 ramp = new Intake();
                 lift = new Lift();
