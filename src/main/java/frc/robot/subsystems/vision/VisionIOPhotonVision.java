@@ -18,6 +18,8 @@ import static frc.robot.subsystems.vision.VisionConstants.*;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.util.Units;
+
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -54,9 +56,15 @@ public class VisionIOPhotonVision implements VisionIO {
         inputs.latestTargetObservation =
             new TargetObservation(
                 Rotation2d.fromDegrees(result.getBestTarget().getYaw()),
-                Rotation2d.fromDegrees(result.getBestTarget().getPitch()));
+                Rotation2d.fromDegrees(result.getBestTarget().getPitch()),
+                PhotonUtils.calculateDistanceToTargetMeters(
+                    Units.inchesToMeters(10.125), // Measured with a tape measure, or in CAD.
+                    Units.inchesToMeters(6.875), // From 2025 game manual
+                    Units.degreesToRadians(90), // Measured with a protractor, or in CAD.
+                    Units.degreesToRadians(result.getBestTarget().getPitch()))
+                );
       } else {
-        inputs.latestTargetObservation = new TargetObservation(new Rotation2d(), new Rotation2d());
+        inputs.latestTargetObservation = new TargetObservation(new Rotation2d(), new Rotation2d(), 0.0);
       }
 
       // Add pose observation

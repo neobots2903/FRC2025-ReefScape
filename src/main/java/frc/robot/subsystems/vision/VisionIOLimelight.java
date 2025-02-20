@@ -66,7 +66,7 @@ public class VisionIOLimelight implements VisionIO {
     // Update target observation
     inputs.latestTargetObservation =
         new TargetObservation(
-            Rotation2d.fromDegrees(txSubscriber.get()), Rotation2d.fromDegrees(tySubscriber.get()));
+            Rotation2d.fromDegrees(txSubscriber.get()), Rotation2d.fromDegrees(tySubscriber.get()), 0.0);
 
     // Update orientation for MegaTag 2
     orientationPublisher.accept(

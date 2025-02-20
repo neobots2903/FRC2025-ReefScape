@@ -164,27 +164,24 @@ public class RobotContainer {
 
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
-    
-        // // Auto aim command example
+
+    // // Auto aim command, left of the tag
     // @SuppressWarnings("resource")
     // PIDController aimController = new PIDController(0.2, 0.0, 0.0);
+    // PIDController driveController = new PIDController(0.2, 0.0, 0.0);
     // aimController.enableContinuousInput(-Math.PI, Math.PI);
-    // controller
-    //     .y()
-    //     .whileTrue(
-    //         Commands.sequence(
-    //             Commands.runOnce(
-    //                 () -> {
-    //                   aimController.reset();
-    //                 }
-    //             ),
-    //             DriveCommands.joystickDrive(
-    //                 drive,
-    //                 () -> 0.0,
-    //                 () -> 0.0,
-    //                 () -> aimController.calculate(vision.getTargetX(0).getRadians()))
-    //         )
-    //     );
+    // driveController.enableContinuousInput(-1.0, 1.0);
+    // controller.leftBumper().whileTrue(
+    //     DriveCommands.joystickDrive(
+    //         drive,
+    //         () -> -driveController.calculate(vision.getTargetRange(), 0.0), // Forwards/Backwards
+    //         () -> -controller.getLeftX(), // Left/Right
+    //         () -> aimController.calculate( // Rotation2d
+    //             vision.getPose(0).getRotation().getRadians(), 0.0)
+    //     )
+    // );
+    // Try using drive.getPose() for something. It has vision + drive odometry info.
+
 
     // Reset gyro to 0° when B button is pressed
     controller
