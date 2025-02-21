@@ -23,9 +23,11 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.DriveToPose;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.vision.*;
@@ -174,7 +176,14 @@ public class RobotContainer {
 
     controller
         .rightBumper()
-        .whileTrue(DriveCommands.alignToAprilTag(drive, vision.getClosestTagPose()));
+        .whileTrue(
+            new InstantCommand(() -> vision.toggleLock()) // Toggle lock momentarily
+                .andThen(
+                    new DriveToPose(
+                        drive,
+                        () -> vision.getClosestTagPose(),
+                        () -> drive.getPose()))) // Drive to pose while the bumper is held
+        .onFalse(new InstantCommand(() -> vision.toggleLock()));
 
     final Runnable resetOdometry =
         Constants.currentMode == Constants.Mode.SIM

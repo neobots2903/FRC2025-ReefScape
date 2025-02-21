@@ -38,6 +38,8 @@ public class Vision extends SubsystemBase {
   private final VisionIO[] io;
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
+  private static final List<Integer> ALLOWED_TAG_IDS =
+      Arrays.asList(6, 7, 8, 9, 10, 11, 17, 18, 19, 20, 21, 22); // List of allowed tag IDs
 
   public Vision(VisionConsumer consumer, VisionIO... io) {
     this.consumer = consumer;
@@ -86,14 +88,40 @@ public class Vision extends SubsystemBase {
     return inputs[cameraIndex].latestTargetObservation.ty();
   }
 
-  public Pose3d getClosestTagPose() {
-    return getClosestTagPose(inputs[0]);
+  public Pose2d getClosestTagPose() {
+    return inputs[0].closestTag.toPose2d();
+  }
+
+  public void toggleLock() {
+    inputs[0].isLocked = !inputs[0].isLocked;
   }
 
   private Pose3d getClosestTagPose(VisionIOInputs input) {
+    // Define the max allowed distance (5 feet)
+    double maxDistance = 5.0; // 5 feet
+
+    // Use the dynamically chosen allowed tag IDs based on the alliance
     return Arrays.stream(input.tagIds)
+        .filter(tagId -> ALLOWED_TAG_IDS.contains(tagId)) // Use the appropriate tag list
         .mapToObj(id -> aprilTagLayout.getTagPose(id).orElse(null)) // Get Pose3d for each tag
         .filter(tagPose -> tagPose != null)
+        .filter(
+            tagPose -> {
+              // Check if the tag is within the 5 feet distance from the robot's current position
+              double distance =
+                  tagPose
+                      .getTranslation()
+                      .getDistance(
+                          input.poseObservations.length > 0
+                              ? input
+                                  .poseObservations[0]
+                                  .pose()
+                                  .getTranslation() // Use the first observed pose
+                              : new Pose3d().getTranslation()); // Default if no observations exist
+
+              // Only consider tags within the max distance
+              return distance <= maxDistance;
+            })
         .min(
             Comparator.comparingDouble(
                 tagPose ->
@@ -107,7 +135,10 @@ public class Vision extends SubsystemBase {
                                     .getTranslation() // Use first observed pose
                                 : new Pose3d()
                                     .getTranslation()))) // Default if no observations exist
-        .orElse(new Pose3d()); // Return default Pose3d if no tags are found
+        .orElse(
+            input.closestTag != null
+                ? input.closestTag
+                : new Pose3d()); // Return last valid tag pose or default Pose3d
   }
 
   @Override
@@ -129,7 +160,9 @@ public class Vision extends SubsystemBase {
       disconnectedAlerts[cameraIndex].set(!inputs[cameraIndex].connected);
 
       // Find closest tag based on current robot observations
-      inputs[0].closestTag = getClosestTagPose(inputs[0]);
+      if (!inputs[0].isLocked) {
+        inputs[0].closestTag = getClosestTagPose(inputs[0]);
+      }
 
       // Initialize logging values
       List<Pose3d> tagPoses = new LinkedList<>();

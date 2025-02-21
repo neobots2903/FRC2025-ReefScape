@@ -13,6 +13,10 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
@@ -21,6 +25,11 @@ import edu.wpi.first.wpilibj.RobotBase;
  * (log replay from a file).
  */
 public final class Constants {
+  public static final Translation2d zeroTranslation2d = new Translation2d();
+  public static final Rotation2d zeroRotation2d = new Rotation2d();
+  public static final Pose2d zeroPose2d = new Pose2d();
+  public static final Pose3d zeroPose3d = new Pose3d();
+
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
 

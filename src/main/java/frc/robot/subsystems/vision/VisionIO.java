@@ -25,6 +25,7 @@ public interface VisionIO {
         new TargetObservation(new Rotation2d(), new Rotation2d(), 0.0);
     public PoseObservation[] poseObservations = new PoseObservation[0];
     public Pose3d closestTag = new Pose3d();
+    public boolean isLocked = false;
     public int[] tagIds = new int[0];
   }
 

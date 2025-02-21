@@ -17,7 +17,6 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -189,63 +188,6 @@ public class DriveCommands {
             drive)
         // Reset PID controller when command starts
         .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
-  }
-
-  /** Field relative drive command that aligns to an April Tag using PhotonVision data. */
-  public static Command alignToAprilTag(Drive drive, Pose3d targetPose) {
-    // Create PID controllers
-    ProfiledPIDController xController =
-        new ProfiledPIDController(
-            LINEAR_KP,
-            0.0,
-            0.0,
-            new TrapezoidProfile.Constraints(LINEAR_MAX_VELOCITY, LINEAR_MAX_ACCELERATION));
-    ProfiledPIDController yController =
-        new ProfiledPIDController(
-            0.1,
-            0.0,
-            0.0,
-            new TrapezoidProfile.Constraints(LINEAR_MAX_VELOCITY, LINEAR_MAX_ACCELERATION));
-    ProfiledPIDController thetaController =
-        new ProfiledPIDController(
-            0.5,
-            0.0,
-            0.0,
-            new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
-
-    thetaController.enableContinuousInput(-Math.PI, Math.PI);
-
-    return Commands.sequence(
-        // Reset controllers on start
-        Commands.runOnce(
-            () -> {
-              var robotPose = drive.getPose();
-              xController.reset(robotPose.getX());
-              yController.reset(robotPose.getY());
-              thetaController.reset(robotPose.getRotation().getRadians());
-            }),
-
-        // Main alignment command
-        Commands.run(
-            () -> {
-              // Calculate velocities using PID controllers
-              double xVelocity = xController.calculate(drive.getPose().getX(), targetPose.getX());
-              double yVelocity =
-                  yController.calculate(drive.getPose().getY(), targetPose.getY()); // NOT WORKING
-              double omega =
-                  thetaController.calculate(
-                      drive.getRotation().getRadians(),
-                      targetPose.getRotation().toRotation2d().getRadians()); // ALSO NOT WORKING
-
-              // Create and send chassis speeds command
-              ChassisSpeeds speeds =
-                  new ChassisSpeeds(
-                      -xVelocity * drive.getMaxLinearSpeedMetersPerSec(),
-                      -yVelocity * drive.getMaxLinearSpeedMetersPerSec(),
-                      omega * drive.getMaxAngularSpeedRadPerSec());
-              drive.runVelocity(speeds);
-            },
-            drive));
   }
 
   /**
