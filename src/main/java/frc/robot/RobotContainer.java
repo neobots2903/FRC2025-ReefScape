@@ -174,6 +174,7 @@ public class RobotContainer {
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
+    // Auto aligh to right of tag
     controller
         .rightBumper()
         .whileTrue(
@@ -182,7 +183,21 @@ public class RobotContainer {
                     new DriveToPose(
                         drive,
                         () -> vision.getClosestTagPose(),
-                        () -> drive.getPose()))) // Drive to pose while the bumper is held
+                        () -> drive.getPose(),
+                        Constants.reefTagOffsetRight))) // Drive to pose while the bumper is held
+        .onFalse(new InstantCommand(() -> vision.toggleLock()));
+
+    // Auto aligh to right of tag
+    controller
+        .leftBumper()
+        .whileTrue(
+            new InstantCommand(() -> vision.toggleLock()) // Toggle lock momentarily
+                .andThen(
+                    new DriveToPose(
+                        drive,
+                        () -> vision.getClosestTagPose(),
+                        () -> drive.getPose(),
+                        Constants.reefTagOffsetLeft))) // Drive to pose while the bumper is held
         .onFalse(new InstantCommand(() -> vision.toggleLock()));
 
     final Runnable resetOdometry =

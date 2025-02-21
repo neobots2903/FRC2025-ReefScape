@@ -21,22 +21,25 @@ public class DriveToPose extends Command {
   private final Supplier<Pose2d> currentRobotPose;
   private final ProfiledPIDController driveController;
   private final ProfiledPIDController thetaController;
+  private final Pose2d offset;
 
   private Translation2d lastSetpointTranslation;
 
   private static final double MIN_RADIUS = 0.2; // 20 cm stop threshold
   private static final double MAX_RADIUS = 0.4; // 0.4 meter full speed threshold
 
-  public DriveToPose(Drive drive, Supplier<Pose2d> targetPose, Supplier<Pose2d> currentRobotPose) {
+  public DriveToPose(
+      Drive drive, Supplier<Pose2d> targetPose, Supplier<Pose2d> currentRobotPose, Pose2d offset) {
     this.drive = drive;
     this.poseSupplier = targetPose;
     this.currentRobotPose = currentRobotPose;
+    this.offset = offset;
     addRequirements(drive);
 
     driveController =
         new ProfiledPIDController(1, 0.0, 0.0, new TrapezoidProfile.Constraints(2.0, 3.0));
     thetaController =
-        new ProfiledPIDController(0.1, 0.0, 0.0, new TrapezoidProfile.Constraints(4.0, 6.0));
+        new ProfiledPIDController(0.01, 0.0, 0.0, new TrapezoidProfile.Constraints(4.0, 6.0));
 
     thetaController.enableContinuousInput(-Math.PI, Math.PI);
   }
@@ -53,7 +56,7 @@ public class DriveToPose extends Command {
   @Override
   public void execute() {
     var currentPose = currentRobotPose.get();
-    var targetPose = poseSupplier.get();
+    var targetPose = poseSupplier.get().minus(offset);
     double currentDistance = currentPose.getTranslation().getDistance(targetPose.getTranslation());
     double ffScaler =
         MathUtil.clamp((currentDistance - MIN_RADIUS) / (MAX_RADIUS - MIN_RADIUS), 0.0, 1.0);
@@ -91,7 +94,7 @@ public class DriveToPose extends Command {
 
     ChassisSpeeds speeds =
         new ChassisSpeeds(
-            -driveVelocity.getX(), -driveVelocity.getY(), -(thetaVelocity / 2)); // Theta is bad...
+            -driveVelocity.getX(), -driveVelocity.getY(), -thetaVelocity); // Theta is bad...
     boolean isFlipped =
         DriverStation.getAlliance().isPresent()
             && DriverStation.getAlliance().get() == Alliance.Red;

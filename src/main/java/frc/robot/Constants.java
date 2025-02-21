@@ -30,6 +30,13 @@ public final class Constants {
   public static final Pose2d zeroPose2d = new Pose2d();
   public static final Pose3d zeroPose3d = new Pose3d();
 
+  // OFFSETS ARE 0.2 Y
+  public static final Pose2d reefTagOffsetLeft = // Robot +0.2 away X
+      new Pose2d(new Translation2d(0.0, -0.225), Rotation2d.fromDegrees(0.0));
+
+  public static final Pose2d reefTagOffsetRight = // robot -0.2 away X
+      new Pose2d(new Translation2d(0.0, 0.225), Rotation2d.fromDegrees(0.0));
+
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
 
