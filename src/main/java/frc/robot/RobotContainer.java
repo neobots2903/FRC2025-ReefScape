@@ -17,8 +17,6 @@ import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
-
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -26,7 +24,6 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
@@ -41,9 +38,6 @@ import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralAlgaeStack;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
-import org.photonvision.PhotonUtils;
-
-import static frc.robot.subsystems.vision.VisionConstants.*; // Move these to actual constants file later.
 
 /* NOTES */
 /*
@@ -68,7 +62,7 @@ public class RobotContainer {
     private SwerveDriveSimulation driveSimulation = null;
 
     // Controller
-    private final CommandXboxController controller = new CommandXboxController(0);
+    private final CommandXboxController driverController = new CommandXboxController(0);
     private final CommandXboxController operatorController = new CommandXboxController(1);
 
     // Dashboard inputs
@@ -86,13 +80,10 @@ public class RobotContainer {
                         new ModuleIOTalonFX(TunerConstants.BackLeft),
                         new ModuleIOTalonFX(TunerConstants.BackRight),
                         (robotPose) -> {});
-                vision = new Vision(
-                        drive,
-                        new VisionIOPhotonVision(camera0Name, robotToCamera0),
-                        new VisionIOPhotonVision(camera1Name, robotToCamera1));
-                climb = new Climb();
-                ramp = new Intake();
-                lift = new Lift();
+                vision = new Vision(drive, new VisionIOPhotonVision(camera0Name, robotToCamera0));
+                // climb = new Climb();
+                // ramp = new Intake();
+                // lift = new Lift();
                 break;
 
             case SIM:
@@ -112,9 +103,7 @@ public class RobotContainer {
                 vision = new Vision(
                         drive,
                         new VisionIOPhotonVisionSim(
-                                camera0Name, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose),
-                        new VisionIOPhotonVisionSim(
-                                camera1Name, robotToCamera1, driveSimulation::getSimulatedDriveTrainPose));
+                                camera0Name, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose));
                 break;
 
             default:
@@ -155,46 +144,52 @@ public class RobotContainer {
     private void configureButtonBindings() {
         // Default command, normal field-relative drive
         drive.setDefaultCommand(DriveCommands.joystickDrive(
-                drive, () -> controller.getLeftY(), () -> controller.getLeftX(), () -> -controller.getRightX()));
+                drive,
+                () -> driverController.getLeftY(),
+                () -> driverController.getLeftX(),
+                () -> -driverController.getRightX()));
 
         // Snap to 0° when Up on the DPad is pressed
-        controller
+        driverController
                 .povUp()
                 .whileTrue(DriveCommands.joystickDriveAtAngle(
-                        drive, () -> controller.getLeftY(), () -> controller.getLeftX(), () -> new Rotation2d()));
+                        drive,
+                        () -> driverController.getLeftY(),
+                        () -> driverController.getLeftX(),
+                        () -> new Rotation2d()));
 
         // Snap to 90° when Right on the DPad is pressed (flipped)
-        controller
+        driverController
                 .povLeft()
                 .whileTrue(DriveCommands.joystickDriveAtAngle(
                         drive,
-                        () -> controller.getLeftY(),
-                        () -> controller.getLeftX(),
+                        () -> driverController.getLeftY(),
+                        () -> driverController.getLeftX(),
                         () -> Rotation2d.fromDegrees(90)));
 
         // Snap to 180° when Down on the DPad is pressed
-        controller
+        driverController
                 .povDown()
                 .whileTrue(DriveCommands.joystickDriveAtAngle(
                         drive,
-                        () -> controller.getLeftY(),
-                        () -> controller.getLeftX(),
+                        () -> driverController.getLeftY(),
+                        () -> driverController.getLeftX(),
                         () -> Rotation2d.fromDegrees(180)));
 
         // Snap to 270° when Left on the DPad is pressed (flipped)
-        controller
+        driverController
                 .povRight()
                 .whileTrue(DriveCommands.joystickDriveAtAngle(
                         drive,
-                        () -> controller.getLeftY(),
-                        () -> controller.getLeftX(),
+                        () -> driverController.getLeftY(),
+                        () -> driverController.getLeftX(),
                         () -> Rotation2d.fromDegrees(270)));
 
         // Switch to X pattern when X button is pressed
-        controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+        driverController.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
         // Reset gyro to 0° when B button is pressed
-        controller
+        driverController
                 .b()
                 .onTrue(Commands.runOnce(
                                 () -> drive.resetOdometry(
@@ -206,33 +201,7 @@ public class RobotContainer {
         final Runnable resetOdometry = Constants.currentMode == Constants.Mode.SIM
                 ? () -> drive.resetOdometry(driveSimulation.getSimulatedDriveTrainPose())
                 : () -> drive.resetOdometry(new Pose2d(drive.getPose().getTranslation(), new Rotation2d()));
-        controller.start().onTrue(Commands.runOnce(resetOdometry).ignoringDisable(true));
-
-        // Check lift periodically.
-        // lift.liftMain();
-
-        // Controller inputs to control the grip motors on the hang system.
-        operatorController
-                .povDown()
-                .onTrue(new InstantCommand(
-                        () -> climb.runGripMotors())); // If down on the DPad is pressed, close the grip and
-        // hang on.
-        operatorController
-                .povUp()
-                .onTrue(new InstantCommand(
-                        () -> climb.openGripMotors())); // If up on the DPad is pressed, open the grip and
-        // release hang.
-        operatorController
-                .povLeft()
-                .onTrue(new InstantCommand(
-                        () -> climb.stopGripMotors())); // If the left on the DPad is pressed, stop the grip
-        // motors.
-
-        // Ramp Mechanism Control; To hang position
-        operatorController.rightBumper().onTrue(new InstantCommand(() -> ramp.toHangPosition()));
-
-        // Ramp Mechanism Control; To intake position
-        operatorController.leftBumper().onTrue(new InstantCommand(() -> ramp.toIntakePosition()));
+        driverController.start().onTrue(Commands.runOnce(resetOdometry).ignoringDisable(true));
     }
 
     /**
