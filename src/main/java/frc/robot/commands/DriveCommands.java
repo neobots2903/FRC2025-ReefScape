@@ -198,14 +198,22 @@ public class DriveCommands {
         new ProfiledPIDController(
             LINEAR_KP,
             0.0,
-            LINEAR_KD,
+            0.0,
             new TrapezoidProfile.Constraints(LINEAR_MAX_VELOCITY, LINEAR_MAX_ACCELERATION));
     ProfiledPIDController yController =
         new ProfiledPIDController(
             LINEAR_KP,
             0.0,
-            LINEAR_KD,
+            0.0,
             new TrapezoidProfile.Constraints(LINEAR_MAX_VELOCITY, LINEAR_MAX_ACCELERATION));
+    ProfiledPIDController thetaController =
+        new ProfiledPIDController(
+            ANGLE_KP,
+            0.0,
+            0.0,
+            new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
+
+    thetaController.enableContinuousInput(-Math.PI, Math.PI);
 
     return Commands.sequence(
         // Reset controllers on start
@@ -214,6 +222,7 @@ public class DriveCommands {
               var robotPose = drive.getPose();
               xController.reset(robotPose.getX());
               yController.reset(robotPose.getY());
+              thetaController.reset(robotPose.getRotation().getRadians());
             }),
 
         // Main alignment command
@@ -222,10 +231,27 @@ public class DriveCommands {
               // Calculate velocities using PID controllers
               double xVelocity = xController.calculate(drive.getPose().getX(), targetPose.getX());
               double yVelocity = yController.calculate(drive.getPose().getY(), targetPose.getY());
+              double omega =
+                  thetaController.calculate(
+                      drive.getRotation().getRadians(),
+                      targetPose.getRotation().toRotation2d().getRadians());
 
               // Create and send chassis speeds command
-              ChassisSpeeds speeds = new ChassisSpeeds(xVelocity, yVelocity, 0);
+              ChassisSpeeds speeds =
+                  new ChassisSpeeds(
+                      -xVelocity * drive.getMaxLinearSpeedMetersPerSec(),
+                      -yVelocity * drive.getMaxLinearSpeedMetersPerSec(),
+                      omega * drive.getMaxAngularSpeedRadPerSec());
               drive.runVelocity(speeds);
+              // boolean isFlipped =
+              //     DriverStation.getAlliance().isPresent()
+              //         && DriverStation.getAlliance().get() == Alliance.Red;
+              // drive.runVelocity(
+              //     ChassisSpeeds.fromFieldRelativeSpeeds(
+              //         speeds,
+              //         isFlipped
+              //             ? drive.getRotation().plus(new Rotation2d(Math.PI))
+              //             : drive.getRotation()));
             },
             drive));
   }
