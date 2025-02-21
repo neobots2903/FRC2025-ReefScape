@@ -59,7 +59,7 @@ public class VisionIOPhotonVision implements VisionIO {
                 PhotonUtils.calculateDistanceToTargetMeters(
                     Units.inchesToMeters(10.125), // Measured with a tape measure, or in CAD.
                     Units.inchesToMeters(6.875), // From 2025 game manual
-                    Units.degreesToRadians(90), // Measured with a protractor, or in CAD.
+                    Units.degreesToRadians(0), // Measured with a protractor, or in CAD.
                     Units.degreesToRadians(result.getBestTarget().getPitch())));
       } else {
         inputs.latestTargetObservation =

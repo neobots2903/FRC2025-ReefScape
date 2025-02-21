@@ -26,6 +26,9 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.vision.VisionIO.PoseObservationType;
+import frc.robot.subsystems.vision.VisionIO.VisionIOInputs;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import org.littletonrobotics.junction.Logger;
@@ -60,7 +63,7 @@ public class Vision extends SubsystemBase {
    *
    * @param cameraIndex The index of the camera to use.
    */
-  public Rotation2d getTargetYaw(int cameraIndex) {
+  public Rotation2d getTargetX(int cameraIndex) {
     return inputs[cameraIndex].latestTargetObservation.tx();
   }
 
@@ -79,8 +82,32 @@ public class Vision extends SubsystemBase {
    *
    * @param cameraIndex The index of the camera to use.
    */
-  public Rotation2d getTargetPitch(int cameraIndex) {
+  public Rotation2d getTargetY(int cameraIndex) {
     return inputs[cameraIndex].latestTargetObservation.ty();
+  }
+
+  public Pose3d getClosestTagPose() {
+    return getClosestTagPose(inputs[0]);
+  }
+
+  private Pose3d getClosestTagPose(VisionIOInputs input) {
+    return Arrays.stream(input.tagIds)
+        .mapToObj(id -> aprilTagLayout.getTagPose(id).orElse(null)) // Get Pose3d for each tag
+        .filter(tagPose -> tagPose != null)
+        .min(
+            Comparator.comparingDouble(
+                tagPose ->
+                    tagPose
+                        .getTranslation()
+                        .getDistance(
+                            input.poseObservations.length > 0
+                                ? input
+                                    .poseObservations[0]
+                                    .pose()
+                                    .getTranslation() // Use first observed pose
+                                : new Pose3d()
+                                    .getTranslation()))) // Default if no observations exist
+        .orElse(new Pose3d()); // Return default Pose3d if no tags are found
   }
 
   @Override
@@ -100,6 +127,9 @@ public class Vision extends SubsystemBase {
     for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
       // Update disconnected alert
       disconnectedAlerts[cameraIndex].set(!inputs[cameraIndex].connected);
+
+      // Find closest tag based on current robot observations
+      inputs[0].closestTag = getClosestTagPose(inputs[0]);
 
       // Initialize logging values
       List<Pose3d> tagPoses = new LinkedList<>();

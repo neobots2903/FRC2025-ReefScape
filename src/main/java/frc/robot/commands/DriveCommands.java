@@ -17,6 +17,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -46,6 +47,12 @@ public class DriveCommands {
   private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
+
+  // April Tag alignment constants
+  private static final double LINEAR_KP = 3.0;
+  private static final double LINEAR_KD = 0.0;
+  private static final double LINEAR_MAX_VELOCITY = 2.0; // meters/sec
+  private static final double LINEAR_MAX_ACCELERATION = 3.0; // meters/sec^2
 
   private DriveCommands() {}
 
@@ -102,15 +109,7 @@ public class DriveCommands {
         drive);
   }
 
-  /**
-   * Robot relative drive command using joystick for linear control and angular control.
-   *
-   * @param drive
-   * @param xSupplier
-   * @param ySupplier
-   * @param omegaSupplier
-   * @return
-   */
+  /** Robot relative drive command using joystick for linear control and angular control. */
   public static Command joystickDriveRobotRelative(
       Drive drive,
       DoubleSupplier xSupplier,
@@ -188,9 +187,47 @@ public class DriveCommands {
                           : drive.getRotation()));
             },
             drive)
-
         // Reset PID controller when command starts
         .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
+  }
+
+  /** Field relative drive command that aligns to an April Tag using PhotonVision data. */
+  public static Command alignToAprilTag(Drive drive, Pose3d targetPose) {
+    // Create PID controllers
+    ProfiledPIDController xController =
+        new ProfiledPIDController(
+            LINEAR_KP,
+            0.0,
+            LINEAR_KD,
+            new TrapezoidProfile.Constraints(LINEAR_MAX_VELOCITY, LINEAR_MAX_ACCELERATION));
+    ProfiledPIDController yController =
+        new ProfiledPIDController(
+            LINEAR_KP,
+            0.0,
+            LINEAR_KD,
+            new TrapezoidProfile.Constraints(LINEAR_MAX_VELOCITY, LINEAR_MAX_ACCELERATION));
+
+    return Commands.sequence(
+        // Reset controllers on start
+        Commands.runOnce(
+            () -> {
+              var robotPose = drive.getPose();
+              xController.reset(robotPose.getX());
+              yController.reset(robotPose.getY());
+            }),
+
+        // Main alignment command
+        Commands.run(
+            () -> {
+              // Calculate velocities using PID controllers
+              double xVelocity = xController.calculate(drive.getPose().getX(), targetPose.getX());
+              double yVelocity = yController.calculate(drive.getPose().getY(), targetPose.getY());
+
+              // Create and send chassis speeds command
+              ChassisSpeeds speeds = new ChassisSpeeds(xVelocity, yVelocity, 0);
+              drive.runVelocity(speeds);
+            },
+            drive));
   }
 
   /**

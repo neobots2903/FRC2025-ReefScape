@@ -24,6 +24,7 @@ public interface VisionIO {
     public TargetObservation latestTargetObservation =
         new TargetObservation(new Rotation2d(), new Rotation2d(), 0.0);
     public PoseObservation[] poseObservations = new PoseObservation[0];
+    public Pose3d closestTag = new Pose3d();
     public int[] tagIds = new int[0];
   }
 

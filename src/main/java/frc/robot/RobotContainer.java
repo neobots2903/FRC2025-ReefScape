@@ -159,8 +159,8 @@ public class RobotContainer {
             () -> controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    // Switch to robot-relative drive when a is held
-    controller // CHANGE THIS BUTTON!!!
+    // Switch to robot-relative drive when a is held (for vision)
+    controller // Assign to paddle probably?
         .a()
         .whileTrue(
             DriveCommands.joystickDriveRobotRelative(
@@ -172,22 +172,9 @@ public class RobotContainer {
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
-    // // Auto aim command, left of the tag
-    // @SuppressWarnings("resource")
-    // PIDController aimController = new PIDController(0.2, 0.0, 0.0);
-    // PIDController driveController = new PIDController(0.2, 0.0, 0.0);
-    // aimController.enableContinuousInput(-Math.PI, Math.PI);
-    // driveController.enableContinuousInput(-1.0, 1.0);
-    // controller.leftBumper().whileTrue(
-    //     DriveCommands.joystickDrive(
-    //         drive,
-    //         () -> -driveController.calculate(vision.getTargetRange(), 0.0), // Forwards/Backwards
-    //         () -> -controller.getLeftX(), // Left/Right
-    //         () -> aimController.calculate( // Rotation2d
-    //             vision.getPose(0).getRotation().getRadians(), 0.0)
-    //     )
-    // );
-    // Try using drive.getPose() for something. It has vision + drive odometry info.
+    controller
+        .rightBumper()
+        .whileTrue(DriveCommands.alignToAprilTag(drive, vision.getClosestTagPose()));
 
     final Runnable resetOdometry =
         Constants.currentMode == Constants.Mode.SIM
