@@ -77,7 +77,7 @@ public class Lift extends SubsystemBase {
     motor.setMaxCurrent(CurrentType.SUPPLY, 50);
     motor.useEncoderType(EncoderType.INTERNAL);
     motor.usePIDSlot(PIDSlot.SLOT0);
-    motor.pid0.setP(0.5);
+    motor.pid0.setP(0.1);
     motor.pid0.setI(0);
     motor.pid0.setD(0);
     motor.pid0.setFF(1.2);
