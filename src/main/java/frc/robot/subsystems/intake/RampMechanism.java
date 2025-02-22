@@ -63,7 +63,7 @@ public class RampMechanism extends SubsystemBase {
   }
 
 
-  
+
 
   // Sets up motor configurations for all motors.
   void initMotorConfigurations() {
@@ -71,7 +71,7 @@ public class RampMechanism extends SubsystemBase {
 
     //Init motors for pivot
     m_pivotMotorOne = new SparkMax(ClimbConstants.pivotMotorOne_motorPort, MotorType.kBrushless);
-    m_pivotMotorTwo = new SparkMax(ClimbConstants.pivotMotorOne_motorPort, MotorType.kBrushless);
+    m_pivotMotorTwo = new SparkMax(ClimbConstants.pivotMotorTwo_motorPort, MotorType.kBrushless);
   
     //Init configs for pivot motors
     pivotMotorOneConfig = new SparkMaxConfig();
