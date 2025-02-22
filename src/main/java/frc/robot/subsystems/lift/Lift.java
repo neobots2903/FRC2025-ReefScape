@@ -20,31 +20,8 @@ import frc.robot.Constants.LiftConstants;
 
 public class Lift extends SubsystemBase {
 
-  // Pid loop parameters
-  SparkMaxConfig pidConfig = new SparkMaxConfig(); // Parameters to control the Neo motor pid loops.
-
-  // Pid controllers
-  SparkClosedLoopController liftMotorOne_pidController; // Pid controllers for both spark max motor.
-  SparkClosedLoopController liftMotorTwo_pidController;
-
-  // Motors
-  // private SparkMax m_liftMotorOne; // Motors to accuate the lift.
-  // private SparkMax m_liftMotorTwo;
   private ThriftyNova liftMotorOne; // Motors to accuate the lift.
   private ThriftyNova liftMotorTwo;
-
-  // Encoders
-  // private RelativeEncoder m_liftMotorOne_Encoder;
-
-  // Motor configs
-  // private SparkMaxConfig liftMotorOneConfig; // Configs for the motors moving the lift.
-  // private SparkMaxConfig liftMotorTwoConfig;
-
-  // Controllers
-  CommandXboxController operatorController; // Operator controller.
-
-  // Constants
-  LiftConstants liftConstants = new LiftConstants(); // Constants for lift
 
   // //Lift states.
   enum liftStates {
@@ -59,23 +36,12 @@ public class Lift extends SubsystemBase {
   liftStates states = liftStates.FREE_MOVEMENT; // States for the lift.
 
   // Constructor to intialize motors and other electronics.
-  public Lift(CommandXboxController operatorController) {
+  public Lift() {
 
     // Motors
     liftMotorOne = new ThriftyNova(LiftConstants.liftMotorOneCanID); // Linear lift motors.
     liftMotorTwo = new ThriftyNova(LiftConstants.liftMotorTwoCanID);
 
-    // Initalize the operator controller
-    this.operatorController = operatorController;
-
-    /*
-    // Pid loop setup
-    pidConfig
-        .closedLoop
-        .p(liftConstants.kP)
-        .i(liftConstants.kI)
-        .d(liftConstants.kD)
-        .outputRange(liftConstants.kMinOutput, liftConstants.kMaxOutput);*/
   }
 
   // Controls the free movement of the lift using the sticks; If and only if we are in the correct
