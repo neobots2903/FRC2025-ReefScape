@@ -45,9 +45,9 @@ public class EndEffector extends SubsystemBase {
 
     // Intialize motors
     m_endEffectorOne =
-        new SparkMax(EndEffectorConstants.endEffectorMotorOne_Port, MotorType.kBrushless);
+        new SparkMax(EndEffectorConstants.endEffectorMotorOne_Port, MotorType.kBrushed);
     m_endEffectorTwo =
-        new SparkMax(EndEffectorConstants.endEffectorMotorTwo_Port, MotorType.kBrushless);
+        new SparkMax(EndEffectorConstants.endEffectorMotorTwo_Port, MotorType.kBrushed);
     m_algeDescorer =
         new SparkMax(EndEffectorConstants.algeDescorerMotor_Port, MotorType.kBrushless);
 
