@@ -31,9 +31,10 @@ public class Lift extends SubsystemBase {
 
   public enum SetPoint {
     BOTTOM(0),
-    LOW(18),
-    MID(32),
-    HIGH(42);
+    L1(18),
+    L2(32),
+    L3(42),
+    L4(56);
 
     final double position;
 

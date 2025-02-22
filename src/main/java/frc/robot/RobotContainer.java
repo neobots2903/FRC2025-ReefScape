@@ -33,6 +33,7 @@ import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriveToPose;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.*;
+import frc.robot.subsystems.lift.Lift;
 import frc.robot.subsystems.vision.*;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -59,9 +60,10 @@ public class RobotContainer {
   private final Drive drive;
   private SwerveDriveSimulation driveSimulation = null;
   private final Vision vision;
+  private Lift lift;
 
   // Controller
-  private final CommandXboxController controller = new CommandXboxController(0);
+  private final CommandXboxController driverController = new CommandXboxController(0);
   private final CommandXboxController operatorController =
       new CommandXboxController(1); // Controller for driver.
 
@@ -90,6 +92,7 @@ public class RobotContainer {
         vision =
             new Vision(
                 drive::addVisionMeasurement, new VisionIOPhotonVision(camera0Name, robotToCamera0));
+        lift = Lift.getInstance();
         break;
 
       case SIM:
@@ -160,27 +163,27 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> controller.getLeftY(),
-            () -> controller.getLeftX(),
-            () -> -controller.getRightX()));
+            () -> driverController.getLeftY(),
+            () -> driverController.getLeftX(),
+            () -> -driverController.getRightX()));
 
     // Switch to robot-relative drive when a is held (for vision)
-    controller // Assign to paddle probably?
+    driverController // Assign to paddle probably?
         .a()
         .whileTrue(
             DriveCommands.joystickDriveRobotRelative(
                 drive,
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
-                () -> -controller.getRightX()));
+                () -> -driverController.getLeftY(),
+                () -> -driverController.getLeftX(),
+                () -> -driverController.getRightX()));
 
     // Switch to X pattern when X button is pressed
-    controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+    driverController.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
     double distanceOffset = Units.inchesToMeters(9);
 
     // Auto align to right of tag
-    controller
+    driverController
         .rightBumper()
         .whileTrue(
             new SequentialCommandGroup(
@@ -193,7 +196,7 @@ public class RobotContainer {
         .onFalse(new InstantCommand(() -> vision.toggleLock()));
 
     // Auto align to left of tag
-    controller
+    driverController
         .leftBumper()
         .whileTrue(
             new SequentialCommandGroup(
@@ -211,7 +214,10 @@ public class RobotContainer {
             ? () -> drive.setPose(driveSimulation.getSimulatedDriveTrainPose())
             : () -> drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d()));
 
-    controller.b().onTrue(Commands.runOnce(resetOdometry).ignoringDisable(true));
+    driverController.b().onTrue(Commands.runOnce(resetOdometry).ignoringDisable(true));
+
+    operatorController.povUp().onTrue(Commands.runOnce(() -> lift.setPosition(Lift.SetPoint.L1)));
+    operatorController.povDown().onTrue(Commands.runOnce(() -> lift.setPosition(Lift.SetPoint.BOTTOM)));
   }
 
   public Pose2d calculateOffsetFromCenter(
