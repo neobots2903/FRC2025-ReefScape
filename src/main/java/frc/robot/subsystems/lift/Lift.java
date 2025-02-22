@@ -1,5 +1,7 @@
 package frc.robot.subsystems.lift;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.thethriftybot.Conversion;
 import com.thethriftybot.Conversion.PositionUnit;
 import com.thethriftybot.ThriftyNova;
@@ -112,9 +114,9 @@ public class Lift extends SubsystemBase {
     currentPosition = converter.fromMotor(m_leftMotor.getPosition()) * INCHES_PER_RADIAN;
 
     // Dashboard telemetry
-    SmartDashboard.putNumber("Elevator/Position", currentPosition);
-    SmartDashboard.putNumber("Elevator/Current", m_leftMotor.getStatorCurrent());
-    SmartDashboard.putNumber("Elevator/Target", currentSetPoint.position);
-    SmartDashboard.putBoolean("Elevator/AtSetpoint", atSetpoint());
+    Logger.recordOutput("Elevator/Position", currentPosition);
+    Logger.recordOutput("Elevator/Current", m_leftMotor.getStatorCurrent());
+    Logger.recordOutput("Elevator/Target", currentSetPoint.position);
+    Logger.recordOutput("Elevator/AtSetpoint", atSetpoint());
   }
 }
