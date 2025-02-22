@@ -155,10 +155,6 @@ public class RobotContainer {
     // Lift control system.
     lift.freeMovement(operatorController.getRightY());
 
-    // Periodically check the end effector and run systems related to it each frame/application
-    // cycle.
-    endEffector.periodicMain();
-
     // Outtake control for the end effector.
     operatorController.a().onTrue(new InstantCommand(() -> endEffector.outtaking = true));
 

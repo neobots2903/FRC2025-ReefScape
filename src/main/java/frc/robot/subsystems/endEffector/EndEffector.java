@@ -83,7 +83,8 @@ public class EndEffector extends SubsystemBase {
 
   // Runs frame/cycle of the application;
   // Used to check limit switchs and run other systems in the background for the End Effector.
-  public void periodicMain() {
+  @Override
+  public void periodic() {
 
     // Monitor and control the intake/outtake system.
     if (outtaking == false) {
