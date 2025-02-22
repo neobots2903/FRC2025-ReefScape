@@ -36,9 +36,11 @@ public final class Constants {
   }
 
   public static final class ClimbConstants {
-    public static final int leftGrip_motorPort = 11; // Neo + spark
-    public static final int rightGrip_motorPort = 12; // Neo + Spark
-    public static final int rotateIntakeFunnel_motorPort = 16; // Krakern
+    public static final int leftGrip_motorPort = 27; // Neo + spark
+    public static final int rightGrip_motorPort = 28; // Neo + Spark
+    //REMOVED public static final int rotateIntakeFunnel_motorPort = 29; // Krakern
+    public static final int pivotMotorOne_motorPort = 29;
+    public static final int pivotMotorTwo_motorPort = 30;
     public static final double kGripMotorSpeeds = 0.1; // Speeds for the grip motors on the climb.
     public static final double kGripMotorOpenSpeeds = -0.1; // Speeds for the grip motors to open.
     public static final double kGripMotorStopped = 0.0; // Speed to stop the grip motors.
