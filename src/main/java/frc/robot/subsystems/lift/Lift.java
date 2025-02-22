@@ -2,7 +2,13 @@ package frc.robot.subsystems.lift;
 
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import com.thethriftybot.Conversion;
 import com.thethriftybot.ThriftyNova;
+import com.thethriftybot.Conversion.PositionUnit;
+import com.thethriftybot.ThriftyNova.CurrentType;
+import com.thethriftybot.ThriftyNova.EncoderType;
+import com.thethriftybot.ThriftyNova.PIDSlot;
+
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.LiftConstants;
@@ -20,8 +26,20 @@ import frc.robot.Constants.LiftConstants;
 
 public class Lift extends SubsystemBase {
 
+  // How many inches the elavator tranvels
+  // per radian that the motor turns
+  public static double inchesPerRad = 2.5; 
+  // where theta is rotation in radians and x is travel in inches:
+  // - theta(x) = x / inchesPerRad
+  // - x(theta) = theta * inchesPerRad
+
+  //Motors
   private ThriftyNova liftMotorOne; // Motors to accuate the lift.
   private ThriftyNova liftMotorTwo;
+
+  //Converter for ThriftyNova motors
+  private Conversion converter;
+
 
   // //Lift states.
   enum liftStates {
@@ -38,11 +56,35 @@ public class Lift extends SubsystemBase {
   // Constructor to intialize motors and other electronics.
   public Lift() {
 
+    converter = new Conversion(PositionUnit.RADIANS, EncoderType.INTERNAL);
+
     // Motors
-    liftMotorOne = new ThriftyNova(LiftConstants.liftMotorOneCanID); // Linear lift motors.
-    liftMotorTwo = new ThriftyNova(LiftConstants.liftMotorTwoCanID);
+    liftMotorOne = configMotor(LiftConstants.liftMotorOneCanID, false); //Linear lift motors.
+    liftMotorTwo = configMotor(LiftConstants.liftMotorTwoCanID, true);
 
   }
+
+  private ThriftyNova configMotor(int canId, boolean inverted) {
+    ThriftyNova motor = new ThriftyNova(canId);
+
+    motor.setBrakeMode(true);
+    motor.setInverted(inverted);
+    motor.setRampUp(0.25);
+    motor.setRampDown(0.05);
+    motor.setMaxOutput(1, 0.25);
+    motor.setSoftLimits(0, 7 * Math.PI);
+    motor.enableSoftLimits(true);
+    motor.setMaxCurrent(CurrentType.SUPPLY, 50);
+    motor.useEncoderType(EncoderType.INTERNAL);
+    motor.usePIDSlot(PIDSlot.SLOT0);
+    motor.pid0.setP(0.5);
+    motor.pid0.setI(0);
+    motor.pid0.setD(0);
+    motor.pid0.setFF(1.2);
+
+    return motor;
+  }
+
 
   // Controls the free movement of the lift using the sticks; If and only if we are in the correct
   // state "FREE_MOVEMENT".
@@ -79,19 +121,12 @@ public class Lift extends SubsystemBase {
     }
   }
 
-  // Gets the lift to a specific position based on the first argument.
-  // Positions: base coral (0), low coral (1), high coral (2), medium coral (3).
-  public void travelToPosition(int pos) {}
 
-  // Runs the lift to high coral using encoders.
-  public void toHighCoral() {
-
-    states = liftStates.HIGH_CORAL; // Current state is traveling to high coral.
-
-    // Run the lift motors in a pid loop to high coral.
-    // liftMotorOne_pidController.setReference(liftConstants.maxLiftPosition, ControlType.kPosition,
-    // 0);
-    // liftMotorTwo_pidController.setReference(liftConstants.maxLiftPosition, ControlType.kPosition,
-    // 0);
+  //Run the lift to height.
+  public void runLiftToPos(int pos) {
+    double motorPosition = converter.toMotor(pos / inchesPerRad);
+    liftMotorOne.setPosition(pos);
+    liftMotorTwo.setPosition(pos);
   }
+
 }

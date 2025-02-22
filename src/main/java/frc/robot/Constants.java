@@ -77,6 +77,14 @@ public final class Constants {
     public static final double kMaxOutput = 0.5;
     public static final int liftMotorOneCanID = 20;
     public static final int liftMotorTwoCanID = 21;
+
+
+    //Lift Heights
+    public static final int L_ONE = 12;
+    public static final int L_TWO = 24;
+    public static final int L_Three = 30;
+    public static final int L_FOUR = 32;
+    public static final int BOTTOM = 0;
   }
 
   public static final class EndEffectorConstants {
