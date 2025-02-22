@@ -56,7 +56,7 @@ public class Lift extends SubsystemBase {
         // so.
         if (rightY > 0.0) {
           liftMotorOne.setPercent(rightY);
-          liftMotorTwo.setPercent(rightY);
+          liftMotorTwo.setPercent(-rightY);
         }
       }
 
@@ -66,7 +66,7 @@ public class Lift extends SubsystemBase {
         // down, then do so.
         if (rightY < 0.0) {
           liftMotorOne.setPercent(rightY);
-          liftMotorTwo.setPercent(rightY);
+          liftMotorTwo.setPercent(-rightY);
         }
       }
 

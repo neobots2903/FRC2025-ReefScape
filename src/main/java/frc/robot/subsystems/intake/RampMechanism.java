@@ -7,11 +7,16 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.ClosedLoopSlot;
+import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ClimbConstants;
@@ -40,6 +45,13 @@ public class RampMechanism extends SubsystemBase {
   private SparkMaxConfig pivotMotorOneConfig;
   private SparkMaxConfig pivotMotorTwoConfig;
 
+  //Pid loop controllers
+  private SparkClosedLoopController pivotMotorOnePidController;
+  private SparkClosedLoopController pivotMotorTwoPidController;
+
+  //Encoders
+  private RelativeEncoder pivotMotorOneEncoder;
+  private RelativeEncoder pivotMotorTwoEncoder;
 
   // Constructor, init hardware and other software components here;
   // Run setups if needed.
@@ -50,18 +62,12 @@ public class RampMechanism extends SubsystemBase {
     initMotorConfigurations();
   }
 
-  // Runs the Ramp to position for a hang.
-  public void toHangPosition() {
-    
-  }
 
-  // Runs the Ramp to a position to intake.
-  public void toIntakePosition() {
-    
-  }
+  
 
   // Sets up motor configurations for all motors.
   void initMotorConfigurations() {
+
 
     //Init motors for pivot
     m_pivotMotorOne = new SparkMax(ClimbConstants.pivotMotorOne_motorPort, MotorType.kBrushless);
@@ -71,10 +77,45 @@ public class RampMechanism extends SubsystemBase {
     pivotMotorOneConfig = new SparkMaxConfig();
     pivotMotorTwoConfig = new SparkMaxConfig();
     pivotMotorOneConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake);
-    pivotMotorTwoConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake);
+    pivotMotorTwoConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake); 
+
+    //Set converstion factor for position conversion because of gear ratio.
+    pivotMotorOneConfig.encoder.positionConversionFactor(3.6);
+    pivotMotorTwoConfig.encoder.positionConversionFactor(3.6);
   
-    //Add configs to pivot motors
-    m_pivotMotorOne.configure(pivotMotorOneConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-    m_pivotMotorTwo.configure(pivotMotorTwoConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    
+    //Setup encoders
+    pivotMotorOneEncoder = m_pivotMotorOne.getEncoder();
+    pivotMotorTwoEncoder = m_pivotMotorTwo.getEncoder();
+
+    //Get pid loop controllers from both motors.
+    pivotMotorOnePidController = m_pivotMotorOne.getClosedLoopController();
+    pivotMotorTwoPidController = m_pivotMotorTwo.getClosedLoopController();
+
+    //Setup closed loop pid controllers.
+    pivotMotorOneConfig.closedLoop
+    .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+    .p(0.1)
+    .i(0)
+    .d(0)
+    .outputRange(-1, 1);
+
+    pivotMotorTwoConfig.closedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+    .p(0.1)
+    .i(0)
+    .d(0)
+    .outputRange(-1, 1);
+
+     //Add configs to pivot motors
+     m_pivotMotorOne.configure(pivotMotorOneConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+     m_pivotMotorTwo.configure(pivotMotorTwoConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+   
   }
+
+  //Rotates the ramp to a specific position in degrees.
+  //Starting position when intializing the robot is 0 degrees.
+  void rotateRamp(double degrees) {
+    pivotMotorOnePidController.setReference(degrees, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+    pivotMotorTwoPidController.setReference(-degrees, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+  } 
 }
