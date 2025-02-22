@@ -73,6 +73,8 @@ public final class Constants {
     public static final double kD = 0.1;
     public static final double kMinOutput = 0.1;
     public static final double kMaxOutput = 0.5;
+    public static final int liftMotorOneCanID = 4;
+    public static final int liftMotorTwoCanID = 5;
   }
 
   public static final class EndEffectorConstants {

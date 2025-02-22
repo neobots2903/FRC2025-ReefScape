@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ClimbConstants;
 
 /* NOTES */
-/* 
+/*
  * - We may need to use current sensing to detect when the robot is on the hang, or maybe a current pid. We should see how this works though.
  */
 
