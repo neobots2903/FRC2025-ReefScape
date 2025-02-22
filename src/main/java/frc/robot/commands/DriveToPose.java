@@ -21,19 +21,15 @@ public class DriveToPose extends Command {
   private final Supplier<Pose2d> currentRobotPose;
   private final ProfiledPIDController driveController;
   private final ProfiledPIDController thetaController;
-  private final Pose2d offset;
-
   private Translation2d lastSetpointTranslation;
 
   private static final double MIN_RADIUS = 0.2; // 20 cm stop threshold
   private static final double MAX_RADIUS = 0.4; // 0.4 meter full speed threshold
 
-  public DriveToPose(
-      Drive drive, Supplier<Pose2d> targetPose, Supplier<Pose2d> currentRobotPose, Pose2d offset) {
+  public DriveToPose(Drive drive, Supplier<Pose2d> targetPose, Supplier<Pose2d> currentRobotPose) {
     this.drive = drive;
     this.poseSupplier = targetPose;
     this.currentRobotPose = currentRobotPose;
-    this.offset = offset;
     addRequirements(drive);
 
     driveController =
@@ -56,7 +52,7 @@ public class DriveToPose extends Command {
   @Override
   public void execute() {
     var currentPose = currentRobotPose.get();
-    var targetPose = poseSupplier.get().minus(offset);
+    var targetPose = poseSupplier.get();
     double currentDistance = currentPose.getTranslation().getDistance(targetPose.getTranslation());
     double ffScaler =
         MathUtil.clamp((currentDistance - MIN_RADIUS) / (MAX_RADIUS - MIN_RADIUS), 0.0, 1.0);

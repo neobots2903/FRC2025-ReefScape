@@ -19,11 +19,14 @@ import static frc.robot.subsystems.vision.VisionConstants.*; // Move these to ac
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
@@ -174,30 +177,33 @@ public class RobotContainer {
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
-    // Auto aligh to right of tag
+    double distanceOffset = Units.inchesToMeters(9);
+
+    // Auto align to right of tag
     controller
         .rightBumper()
         .whileTrue(
-            new InstantCommand(() -> vision.toggleLock()) // Toggle lock momentarily
-                .andThen(
-                    new DriveToPose(
-                        drive,
-                        () -> vision.getClosestTagPose(),
-                        () -> drive.getPose(),
-                        Constants.reefTagOffsetRight))) // Drive to pose while the bumper is held
+            new SequentialCommandGroup(
+                new InstantCommand(() -> vision.toggleLock()),
+                new DriveToPose(
+                    drive,
+                    () ->
+                        calculateOffsetFromCenter(vision.getClosestTagPose(), distanceOffset, true),
+                    () -> drive.getPose())))
         .onFalse(new InstantCommand(() -> vision.toggleLock()));
 
-    // Auto aligh to right of tag
+    // Auto align to left of tag
     controller
         .leftBumper()
         .whileTrue(
-            new InstantCommand(() -> vision.toggleLock()) // Toggle lock momentarily
-                .andThen(
-                    new DriveToPose(
-                        drive,
-                        () -> vision.getClosestTagPose(),
-                        () -> drive.getPose(),
-                        Constants.reefTagOffsetLeft))) // Drive to pose while the bumper is held
+            new SequentialCommandGroup(
+                new InstantCommand(() -> vision.toggleLock()),
+                new DriveToPose(
+                    drive,
+                    () ->
+                        calculateOffsetFromCenter(
+                            vision.getClosestTagPose(), distanceOffset, false),
+                    () -> drive.getPose())))
         .onFalse(new InstantCommand(() -> vision.toggleLock()));
 
     final Runnable resetOdometry =
@@ -206,6 +212,42 @@ public class RobotContainer {
             : () -> drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d()));
 
     controller.b().onTrue(Commands.runOnce(resetOdometry).ignoringDisable(true));
+  }
+
+  public Pose2d calculateOffsetFromCenter(
+      Pose2d tagPose, double distanceFromCenter, boolean moveRight) {
+    // Convert tag heading to radians
+    double tagRadians = tagPose.getRotation().getRadians();
+
+    // Define the offset angle (Right = -90 degrees, Left = +90 degrees)
+    double offsetAngle = moveRight ? Math.PI / 2 : -Math.PI / 2;
+
+    // Calculate the offset relative to the tag's orientation
+    double xOffset =
+        distanceFromCenter
+            * (Math.cos(tagRadians) * Math.cos(offsetAngle)
+                - Math.sin(tagRadians) * Math.sin(offsetAngle));
+    double yOffset =
+        distanceFromCenter
+            * (Math.sin(tagRadians) * Math.cos(offsetAngle)
+                + Math.cos(tagRadians) * Math.sin(offsetAngle));
+
+    // Compute the final target pose in field coordinates
+    double finalX = tagPose.getX() + xOffset;
+    double finalY = tagPose.getY() + yOffset;
+
+    // Ensure the robot faces the tag (by rotating 180 degrees from the tag's heading)
+    Pose2d finalPose =
+        new Pose2d(
+            new Translation2d(finalX, finalY),
+            new Rotation2d(Math.toRadians(tagPose.getRotation().getDegrees() + 180)));
+
+    Logger.recordOutput("AutoAlign/TagPose", tagPose);
+    Logger.recordOutput("AutoAlign/Offset", new Pose2d(xOffset, yOffset, new Rotation2d()));
+    Logger.recordOutput("AutoAlign/FinalOffset", finalPose);
+
+    // Return the final target pose
+    return finalPose;
   }
 
   /**
