@@ -37,9 +37,9 @@ public class DriveToPose extends Command {
     addRequirements(drive);
 
     driveController =
-        new ProfiledPIDController(1, 0.0, 0.0, new TrapezoidProfile.Constraints(2.0, 3.0));
+        new ProfiledPIDController(1.25, 0.0, 0.0, new TrapezoidProfile.Constraints(2.0, 3.0));
     thetaController =
-        new ProfiledPIDController(0.01, 0.0, 0.0, new TrapezoidProfile.Constraints(4.0, 6.0));
+        new ProfiledPIDController(1, 0.0, 0.0, new TrapezoidProfile.Constraints(4.0, 6.0));
 
     thetaController.enableContinuousInput(-Math.PI, Math.PI);
   }
@@ -93,8 +93,7 @@ public class DriveToPose extends Command {
         < thetaController.getPositionTolerance()) thetaVelocity = 0.0;
 
     ChassisSpeeds speeds =
-        new ChassisSpeeds(
-            -driveVelocity.getX(), -driveVelocity.getY(), -thetaVelocity); // Theta is bad...
+        new ChassisSpeeds(-driveVelocity.getX(), -driveVelocity.getY(), thetaVelocity);
     boolean isFlipped =
         DriverStation.getAlliance().isPresent()
             && DriverStation.getAlliance().get() == Alliance.Red;

@@ -89,7 +89,9 @@ public class Vision extends SubsystemBase {
   }
 
   public Pose2d getClosestTagPose() {
-    return inputs[0].closestTag.toPose2d();
+    var tag = inputs[0].closestTag.toPose2d();
+    // Flip the rotation to match the robot's coordinate system. Ex: if the tag is 180rad, the robot
+    return new Pose2d(tag.getTranslation(), tag.getRotation().minus(Rotation2d.fromDegrees(180)));
   }
 
   public void toggleLock() {
