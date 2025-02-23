@@ -52,9 +52,11 @@ public final class Constants {
   }
 
   public static final class ClimbConstants {
-    public static final int leftGrip_motorPort = 11; // Neo + spark
-    public static final int rightGrip_motorPort = 12; // Neo + Spark
-    public static final int rotateIntakeFunnel_motorPort = 16; // Krakern
+    public static final int leftGrip_motorPort = 27; // Neo + spark
+    public static final int rightGrip_motorPort = 28; // Neo + Spark
+    // REMOVED public static final int rotateIntakeFunnel_motorPort = 29; // Krakern
+    public static final int pivotMotorOne_motorPort = 29;
+    public static final int pivotMotorTwo_motorPort = 30;
     public static final double kGripMotorSpeeds = 0.1; // Speeds for the grip motors on the climb.
     public static final double kGripMotorOpenSpeeds = -0.1; // Speeds for the grip motors to open.
     public static final double kGripMotorStopped = 0.0; // Speed to stop the grip motors.
@@ -67,7 +69,7 @@ public final class Constants {
   public static final class RampMechanismConstants {
 
     // TalonFX (Kraken) pivot motor
-    public static final int rampMechanismPivot_motorPort = 13;
+    public static final int rampMechanismPivot_motorPort = 25;
     public static final int rampMechanismPivot_stallAmperage = 50;
     public static final boolean rampMechanismPivot_EnableStatorCurrentLimit = true;
     public static final double rampMechanismPivot_kP = 0.0;
@@ -89,14 +91,23 @@ public final class Constants {
     public static final double kD = 0.1;
     public static final double kMinOutput = 0.1;
     public static final double kMaxOutput = 0.5;
+    public static final int liftMotorOneCanID = 20;
+    public static final int liftMotorTwoCanID = 21;
+
+    // Lift Heights
+    public static final int L_ONE = 12;
+    public static final int L_TWO = 24;
+    public static final int L_Three = 30;
+    public static final int L_FOUR = 32;
+    public static final int BOTTOM = 0;
   }
 
   public static final class EndEffectorConstants {
-    public static final int endEffectorMotorOne_Port = 15;
-    public static final int endEffectorMotorTwo_Port = 16;
+    public static final int endEffectorMotorOne_Port = 22;
+    public static final int endEffectorMotorTwo_Port = 23;
     public static final int intakeLimitSwitchPort = 0;
     public static final int outtakeLimitSwitchPort = 1;
     public static final double endEffectorSpeed = 0.2;
-    public static final int algeDescorerMotor_Port = 17;
+    public static final int algeDescorerMotor_Port = 24;
   }
 }

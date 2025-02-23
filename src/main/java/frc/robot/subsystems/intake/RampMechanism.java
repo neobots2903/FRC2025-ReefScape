@@ -2,12 +2,19 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.*;
 
-import com.ctre.phoenix6.StatusCode;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.PositionVoltage;
-import com.ctre.phoenix6.hardware.TalonFX;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.ClosedLoopSlot;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.RampMechanismConstants;
+import frc.robot.Constants.ClimbConstants;
 
 /* NOTES */
 /*
@@ -22,90 +29,84 @@ import frc.robot.Constants.RampMechanismConstants;
  */
 public class RampMechanism extends SubsystemBase {
 
-  private final PositionVoltage m_positionVoltage =
-      new PositionVoltage(0)
-          .withSlot(0); // No idea for what this does, used to go to a position with the encoder?
-
   // Motors
-  private TalonFX m_RampMechanism_PivotMotor; // Pivot motor for the Ramp Mechanism.
+  // Motors for pivot
+  private SparkMax m_pivotMotorOne;
+  private SparkMax m_pivotMotorTwo;
 
   // Configurations
-  private TalonFXConfiguration rampMechanismPivotMotorConfig; // Configuration for the pivot motor.
-  // CurrentLimitsConfigs rampMechanismPivotMotor_LimitConfiguration; //Limits configuration for the
-  // kraken motor.
+  private SparkMaxConfig pivotMotorOneConfig;
+  private SparkMaxConfig pivotMotorTwoConfig;
+
+  // Pid loop controllers
+  private SparkClosedLoopController pivotMotorOnePidController;
+  private SparkClosedLoopController pivotMotorTwoPidController;
+
+  // Encoders
+  private RelativeEncoder pivotMotorOneEncoder;
+  private RelativeEncoder pivotMotorTwoEncoder;
 
   // Constructor, init hardware and other software components here;
   // Run setups if needed.
   public RampMechanism() {
-    // Intialize motor objects
-    m_RampMechanism_PivotMotor =
-        new TalonFX(
-            RampMechanismConstants.rampMechanismPivot_motorPort,
-            "krakenX60"); // Intializing motor for the Ramp Mechanism pivot.
 
     // Setup motor configurations and variables (init motors)
     initMotorConfigurations();
   }
 
-  // Runs the Ramp to position for a hang.
-  public void toHangPosition() {
-    m_RampMechanism_PivotMotor.setControl(
-        m_positionVoltage.withPosition(.25 * RampMechanismConstants.rampMechanismPivot_gearRatio));
-  }
-
-  // Runs the Ramp to a position to intake.
-  public void toIntakePosition() {
-    m_RampMechanism_PivotMotor.setControl(
-        m_positionVoltage.withPosition(0 * RampMechanismConstants.rampMechanismPivot_gearRatio));
-  }
-
   // Sets up motor configurations for all motors.
   void initMotorConfigurations() {
 
-    /*
-     *Setup configuration for the RampMechanism pivot motor.
-     */
-    rampMechanismPivotMotorConfig = new TalonFXConfiguration();
+    // Init motors for pivot
+    m_pivotMotorOne = new SparkMax(ClimbConstants.pivotMotorOne_motorPort, MotorType.kBrushless);
+    m_pivotMotorTwo = new SparkMax(ClimbConstants.pivotMotorTwo_motorPort, MotorType.kBrushless);
 
-    rampMechanismPivotMotorConfig.Slot0.kP =
-        RampMechanismConstants
-            .rampMechanismPivot_kP; // An error of 1 rotation results in 2.4 V output
-    rampMechanismPivotMotorConfig.Slot0.kI =
-        RampMechanismConstants.rampMechanismPivot_kI; // No output for integrated error
-    rampMechanismPivotMotorConfig.Slot0.kD =
-        RampMechanismConstants.rampMechanismPivot_kD; // A velocity of 1 rps results in 0.1 V output
-    // Peak output of 8 V
-    rampMechanismPivotMotorConfig
-        .Voltage
-        .withPeakForwardVoltage(Volts.of(8))
-        .withPeakReverseVoltage(Volts.of(-8));
+    // Init configs for pivot motors
+    pivotMotorOneConfig = new SparkMaxConfig();
+    pivotMotorTwoConfig = new SparkMaxConfig();
+    pivotMotorOneConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake);
+    pivotMotorTwoConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake);
 
-    rampMechanismPivotMotorConfig.Slot1.kP =
-        RampMechanismConstants
-            .rampMechanismPivot_kP1; // An error of 1 rotation results in 60 A output
-    rampMechanismPivotMotorConfig.Slot1.kI =
-        RampMechanismConstants.rampMechanismPivot_kI1; // No output for integrated error
-    rampMechanismPivotMotorConfig.Slot1.kD =
-        RampMechanismConstants.rampMechanismPivot_kD1; // A velocity of 1 rps results in 6 A output
-    // Peak output of 120 A
-    rampMechanismPivotMotorConfig
-        .TorqueCurrent
-        .withPeakForwardTorqueCurrent(
-            Amps.of(RampMechanismConstants.rampMechanismPivot_stallAmperage))
-        .withPeakReverseTorqueCurrent(
-            Amps.of(-RampMechanismConstants.rampMechanismPivot_stallAmperage));
+    // Set converstion factor for position conversion because of gear ratio.
+    pivotMotorOneConfig.encoder.positionConversionFactor(3.6);
+    pivotMotorTwoConfig.encoder.positionConversionFactor(3.6);
 
-    /* Retry config apply up to 5 times, report if failure */
-    StatusCode status = StatusCode.StatusCodeNotInitialized;
-    for (int i = 0; i < 5; ++i) {
-      status = m_RampMechanism_PivotMotor.getConfigurator().apply(rampMechanismPivotMotorConfig);
-      if (status.isOK()) break;
-    }
-    if (!status.isOK()) {
-      System.out.println("Could not apply configs, error code: " + status.toString());
-    }
+    // Setup encoders
+    pivotMotorOneEncoder = m_pivotMotorOne.getEncoder();
+    pivotMotorTwoEncoder = m_pivotMotorTwo.getEncoder();
 
-    /* Make sure we start at 0 */
-    m_RampMechanism_PivotMotor.setPosition(0);
+    // Get pid loop controllers from both motors.
+    pivotMotorOnePidController = m_pivotMotorOne.getClosedLoopController();
+    pivotMotorTwoPidController = m_pivotMotorTwo.getClosedLoopController();
+
+    // Setup closed loop pid controllers.
+    pivotMotorOneConfig
+        .closedLoop
+        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+        .p(0.1)
+        .i(0)
+        .d(0)
+        .outputRange(-1, 1);
+
+    pivotMotorTwoConfig
+        .closedLoop
+        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+        .p(0.1)
+        .i(0)
+        .d(0)
+        .outputRange(-1, 1);
+
+    // Add configs to pivot motors
+    m_pivotMotorOne.configure(
+        pivotMotorOneConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    m_pivotMotorTwo.configure(
+        pivotMotorTwoConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+  }
+
+  // Rotates the ramp to a specific position in degrees.
+  // Starting position when intializing the robot is 0 degrees.
+  void rotateRamp(double degrees) {
+    pivotMotorOnePidController.setReference(degrees, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+    pivotMotorTwoPidController.setReference(-degrees, ControlType.kPosition, ClosedLoopSlot.kSlot0);
   }
 }
