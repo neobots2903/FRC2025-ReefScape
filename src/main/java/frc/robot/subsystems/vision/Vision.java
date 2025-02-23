@@ -38,8 +38,10 @@ public class Vision extends SubsystemBase {
   private final VisionIO[] io;
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
-  private static final List<Integer> ALLOWED_TAG_IDS =
+  private static final List<Integer> REEF_TAGS =
       Arrays.asList(6, 7, 8, 9, 10, 11, 17, 18, 19, 20, 21, 22); // List of allowed tag IDs
+  private static final List<Integer> CORAL_STATION_TAGS =
+      Arrays.asList(1, 2, 12, 13); // List of allowed tag IDs
 
   public Vision(VisionConsumer consumer, VisionIO... io) {
     this.consumer = consumer;
@@ -88,18 +90,16 @@ public class Vision extends SubsystemBase {
     return inputs[cameraIndex].latestTargetObservation.ty();
   }
 
-  public Pose2d getClosestTagPose() {
-    return inputs[0].closestTag.toPose2d();
+  public Pose2d getClosestTagPose(int cameraIndex) {
+    return inputs[cameraIndex].closestTag.toPose2d();
   }
 
-  public void toggleLock() {
-    inputs[0].isLocked = !inputs[0].isLocked;
+  public void toggleLock(int cameraIndex) {
+    inputs[cameraIndex].isLocked = !inputs[cameraIndex].isLocked;
   }
 
-  private Pose3d getClosestTagPose(VisionIOInputs input) {
-    // Define the max allowed distance (5 feet)
-    double maxDistance = 5.0; // 5 feet
-
+  private Pose3d getClosestTagPose(
+      VisionIOInputs input, List<Integer> ALLOWED_TAG_IDS, double maxDistance) {
     // Use the dynamically chosen allowed tag IDs based on the alliance
     return Arrays.stream(input.tagIds)
         .filter(tagId -> ALLOWED_TAG_IDS.contains(tagId)) // Use the appropriate tag list
@@ -160,8 +160,13 @@ public class Vision extends SubsystemBase {
       disconnectedAlerts[cameraIndex].set(!inputs[cameraIndex].connected);
 
       // Find closest tag based on current robot observations
-      if (!inputs[0].isLocked) {
-        inputs[0].closestTag = getClosestTagPose(inputs[0]);
+      if (!inputs[cameraIndex].isLocked) {
+        if (cameraIndex == 0) {
+          inputs[cameraIndex].closestTag = getClosestTagPose(inputs[cameraIndex], REEF_TAGS, 5.0);
+        } else if (cameraIndex == 1) {
+          inputs[cameraIndex].closestTag =
+              getClosestTagPose(inputs[cameraIndex], CORAL_STATION_TAGS, 10);
+        }
       }
 
       // Initialize logging values
@@ -229,6 +234,8 @@ public class Vision extends SubsystemBase {
       }
 
       // Log camera datadata
+      Logger.recordOutput("Vision/robotToCamera0", robotToCamera0);
+      Logger.recordOutput("Vision/robotToCamera1", robotToCamera1);
       Logger.recordOutput(
           "Vision/Camera" + Integer.toString(cameraIndex) + "/TagPoses",
           tagPoses.toArray(new Pose3d[tagPoses.size()]));

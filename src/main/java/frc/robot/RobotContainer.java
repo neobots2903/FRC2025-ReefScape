@@ -91,7 +91,9 @@ public class RobotContainer {
                 (robotPose) -> {});
         vision =
             new Vision(
-                drive::addVisionMeasurement, new VisionIOPhotonVision(camera0Name, robotToCamera0));
+                drive::addVisionMeasurement,
+                new VisionIOPhotonVision(camera0Name, robotToCamera0),
+                new VisionIOPhotonVision(camera1Name, robotToCamera1));
         lift = Lift.getInstance();
         break;
 
@@ -112,7 +114,9 @@ public class RobotContainer {
             new Vision(
                 drive::addVisionMeasurement,
                 new VisionIOPhotonVisionSim(
-                    camera0Name, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose));
+                    camera0Name, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose),
+                new VisionIOPhotonVisionSim(
+                    camera1Name, robotToCamera1, driveSimulation::getSimulatedDriveTrainPose));
         break;
 
       default:
@@ -182,32 +186,42 @@ public class RobotContainer {
 
     double distanceOffset = Units.inchesToMeters(9);
 
-    // Auto align to right of tag
+    // Auto align to right of reef tag
     driverController
         .rightBumper()
         .whileTrue(
             new SequentialCommandGroup(
-                new InstantCommand(() -> vision.toggleLock()),
-                new DriveToPose(
-                    drive,
-                    () ->
-                        calculateOffsetFromCenter(vision.getClosestTagPose(), distanceOffset, true),
-                    () -> drive.getPose())))
-        .onFalse(new InstantCommand(() -> vision.toggleLock()));
-
-    // Auto align to left of tag
-    driverController
-        .leftBumper()
-        .whileTrue(
-            new SequentialCommandGroup(
-                new InstantCommand(() -> vision.toggleLock()),
+                new InstantCommand(() -> vision.toggleLock(0)),
                 new DriveToPose(
                     drive,
                     () ->
                         calculateOffsetFromCenter(
-                            vision.getClosestTagPose(), distanceOffset, false),
+                            vision.getClosestTagPose(0), distanceOffset, true),
                     () -> drive.getPose())))
-        .onFalse(new InstantCommand(() -> vision.toggleLock()));
+        .onFalse(new InstantCommand(() -> vision.toggleLock(0)));
+
+    // Auto align to left of reef tag
+    driverController
+        .leftBumper()
+        .whileTrue(
+            new SequentialCommandGroup(
+                new InstantCommand(() -> vision.toggleLock(0)),
+                new DriveToPose(
+                    drive,
+                    () ->
+                        calculateOffsetFromCenter(
+                            vision.getClosestTagPose(0), distanceOffset, false),
+                    () -> drive.getPose())))
+        .onFalse(new InstantCommand(() -> vision.toggleLock(0)));
+
+    // Auto align to coral station tag
+    driverController
+        .y()
+        .whileTrue(
+            new SequentialCommandGroup(
+                new InstantCommand(() -> vision.toggleLock(1)),
+                new DriveToPose(drive, () -> vision.getClosestTagPose(1), () -> drive.getPose())))
+        .onFalse(new InstantCommand(() -> vision.toggleLock(1)));
 
     final Runnable resetOdometry =
         Constants.currentMode == Constants.Mode.SIM
@@ -217,7 +231,9 @@ public class RobotContainer {
     driverController.b().onTrue(Commands.runOnce(resetOdometry).ignoringDisable(true));
 
     operatorController.povUp().onTrue(Commands.runOnce(() -> lift.setPosition(Lift.SetPoint.L1)));
-    operatorController.povDown().onTrue(Commands.runOnce(() -> lift.setPosition(Lift.SetPoint.BOTTOM)));
+    operatorController
+        .povDown()
+        .onTrue(Commands.runOnce(() -> lift.setPosition(Lift.SetPoint.BOTTOM)));
   }
 
   public Pose2d calculateOffsetFromCenter(

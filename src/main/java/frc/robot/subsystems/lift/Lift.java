@@ -1,15 +1,13 @@
 package frc.robot.subsystems.lift;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.thethriftybot.Conversion;
 import com.thethriftybot.Conversion.PositionUnit;
 import com.thethriftybot.ThriftyNova;
 import com.thethriftybot.ThriftyNova.CurrentType;
 import com.thethriftybot.ThriftyNova.EncoderType;
 import com.thethriftybot.ThriftyNova.PIDSlot;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.Logger;
 
 public class Lift extends SubsystemBase {
   // Physical constants

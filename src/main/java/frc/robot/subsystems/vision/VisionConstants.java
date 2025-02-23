@@ -25,7 +25,8 @@ public class VisionConstants {
       AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
 
   // Camera names, must match names configured on coprocessor
-  public static String camera0Name = "camera_0";
+  public static String camera0Name = "frontCamera";
+  public static String camera1Name = "backCamera";
 
   // Robot to camera transforms
   // (Not used by Limelight, configure in web UI instead)
@@ -34,10 +35,17 @@ public class VisionConstants {
   // +X is forward, +Y is left, +Z is up
   public static Transform3d robotToCamera0 =
       new Transform3d(
-          Units.inchesToMeters(10),
+          Units.inchesToMeters(14),
           Units.inchesToMeters(-3),
           Units.inchesToMeters(6.125),
           new Rotation3d(0.0, 0.0, 0.0));
+
+  public static Transform3d robotToCamera1 =
+      new Transform3d(
+          Units.inchesToMeters(-14),
+          Units.inchesToMeters(3),
+          Units.inchesToMeters(6.125),
+          new Rotation3d(0.0, Units.degreesToRadians(-45), Units.degreesToRadians(180)));
 
   // Basic filtering thresholds
   public static double maxAmbiguity = 0.3;
@@ -53,6 +61,7 @@ public class VisionConstants {
   public static double[] cameraStdDevFactors =
       new double[] {
         1.0, // Camera 0
+        1.0 // Camera 1
       };
 
   // Multipliers to apply for MegaTag 2 observations
