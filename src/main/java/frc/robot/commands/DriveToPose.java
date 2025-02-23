@@ -33,7 +33,7 @@ public class DriveToPose extends Command {
     addRequirements(drive);
 
     driveController =
-        new ProfiledPIDController(3, 0.0, 0.0, new TrapezoidProfile.Constraints(2.0, 3.0));
+        new ProfiledPIDController(3, 0.0, 0.0, new TrapezoidProfile.Constraints(4.0, 6.0));
     thetaController =
         new ProfiledPIDController(5, 0.0, 0.0, new TrapezoidProfile.Constraints(4.0, 6.0));
 
