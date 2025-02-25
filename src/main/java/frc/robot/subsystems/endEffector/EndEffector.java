@@ -21,8 +21,8 @@ import frc.robot.Constants.EndEffectorConstants;
 public class EndEffector extends SubsystemBase {
 
   // Motors
-  private SparkMax m_endEffectorOne; // Motors for the end effector.
-  private SparkMax m_endEffectorTwo;
+  private SparkMax m_endEffectorOne; // Motors for the end effector. //left motor
+  private SparkMax m_endEffectorTwo; //right motor
   private SparkMax m_algeDescorer; // Motor for the algeDescorer
 
   // Motor configs
@@ -54,8 +54,8 @@ public class EndEffector extends SubsystemBase {
     // Intialize configs for the end effector motors
     m_endEffectorOne_config = new SparkMaxConfig();
     m_endEffectorTwo_config = new SparkMaxConfig();
-    m_endEffectorOne_config.smartCurrentLimit(30).idleMode(IdleMode.kBrake);
-    m_endEffectorTwo_config.smartCurrentLimit(30).idleMode(IdleMode.kBrake);
+    m_endEffectorOne_config.smartCurrentLimit(30).idleMode(IdleMode.kBrake).inverted(false);
+    m_endEffectorTwo_config.smartCurrentLimit(30).idleMode(IdleMode.kBrake).inverted(true);
 
     // Intialize config for the Alge Descorer motors
     m_algeDescorer_config = new SparkMaxConfig();

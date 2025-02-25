@@ -53,6 +53,9 @@ public class RampMechanism extends SubsystemBase {
   private RelativeEncoder pivotMotorOneEncoder;
   private RelativeEncoder pivotMotorTwoEncoder;
 
+  //Ramp info
+  public boolean rampRotatedForIntake = false;
+
   // Constructor, init hardware and other software components here;
   // Run setups if needed.
   public RampMechanism() {
@@ -76,8 +79,8 @@ public class RampMechanism extends SubsystemBase {
     //Init configs for pivot motors
     pivotMotorOneConfig = new SparkMaxConfig();
     pivotMotorTwoConfig = new SparkMaxConfig();
-    pivotMotorOneConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake);
-    pivotMotorTwoConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake); 
+    pivotMotorOneConfig.smartCurrentLimit(40).idleMode(IdleMode.kBrake);
+    pivotMotorTwoConfig.smartCurrentLimit(40).idleMode(IdleMode.kBrake); 
 
     //Set converstion factor for position conversion because of gear ratio.
     pivotMotorOneConfig.encoder.positionConversionFactor(3.6);
@@ -114,7 +117,7 @@ public class RampMechanism extends SubsystemBase {
 
   //Rotates the ramp to a specific position in degrees.
   //Starting position when intializing the robot is 0 degrees.
-  void rotateRamp(double degrees) {
+  public void rotateRamp(double degrees) {
     pivotMotorOnePidController.setReference(degrees, ControlType.kPosition, ClosedLoopSlot.kSlot0);
     pivotMotorTwoPidController.setReference(-degrees, ControlType.kPosition, ClosedLoopSlot.kSlot0);
   } 

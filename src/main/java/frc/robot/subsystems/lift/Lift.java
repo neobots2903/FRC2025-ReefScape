@@ -28,7 +28,7 @@ public class Lift extends SubsystemBase {
 
   // How many inches the elavator tranvels
   // per radian that the motor turns
-  public static double inchesPerRad = 2.5; 
+  public static double inchesPerRad = 0.25; 
   // where theta is rotation in radians and x is travel in inches:
   // - theta(x) = x / inchesPerRad
   // - x(theta) = theta * inchesPerRad

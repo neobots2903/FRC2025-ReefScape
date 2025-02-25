@@ -39,8 +39,8 @@ public class ClimbSubsystem extends SubsystemBase {
     rightGripConfig = new SparkMaxConfig();
 
     // Configure motors for grip hanging.
-    leftGripConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake);
-    rightGripConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake);
+    leftGripConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake).inverted(false);
+    rightGripConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake).inverted(true);
 
     // Set configurations onto hang grip motors.
     m_leftGrip.configure(

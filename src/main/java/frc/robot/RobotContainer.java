@@ -20,16 +20,24 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.LiftConstants;
+import frc.robot.Constants.RampMechanismConstants;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.climb.ClimbSubsystem;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.endEffector.EndEffector;
+import frc.robot.subsystems.intake.RampMechanism;
+import frc.robot.subsystems.lift.Lift;
+
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /* NOTES */
@@ -55,10 +63,11 @@ public class RobotContainer {
       new CommandXboxController(1); // Controller for driver.
 
   // Subsystems
-  // ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
-  // RampMechanism ramp = new RampMechanism(); // System for ramp control.
-  // Lift lift = new Lift(operatorController); // Subsystem for the lift control.
-  // EndEffector endEffector = new EndEffector(); // Subsystem to control the end effector.
+  ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
+  RampMechanism ramp = new RampMechanism(); // System for ramp control.
+  Lift lift = new Lift(); // Subsystem for the lift control.
+  EndEffector endEffector = new EndEffector(); // Subsystem to control the end effector.
+
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -151,10 +160,11 @@ public class RobotContainer {
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
-    /*
+
     // Lift control system.
     lift.freeMovement(operatorController.getRightY());
 
+    
     // Outtake control for the end effector.
     operatorController.a().onTrue(new InstantCommand(() -> endEffector.outtaking = true));
 
@@ -162,13 +172,17 @@ public class RobotContainer {
     operatorController.b().onTrue(new InstantCommand(() -> endEffector.runAlgeDescorer()));
     operatorController.b().onFalse(new InstantCommand(() -> endEffector.cutAlgeDescorer()));
 
-    // Ramp Mechanism Control; To hang position
-    operatorController.rightBumper().onTrue(new InstantCommand(() -> ramp.toHangPosition()));
+    //ramp.rotateRamp(degree);
+    //Rotate ramp system
+    operatorController.x().onTrue(new InstantCommand(() -> rampController()));
 
-    // Ramp Mechanism Control; To intake position
-    operatorController.leftBumper().onTrue(new InstantCommand(() -> ramp.toIntakePosition()));
+    //Run lift to position
+    operatorController.povDown().onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.BOTTOM)));
+    operatorController.povUp().onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.L_FOUR)));
+    operatorController.povLeft().onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.L_Three)));
+    operatorController.povRight().onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.L_TWO)));
 
-    */
+
 
     // Reset gyro to 0° when B button is pressed
     controller
@@ -180,6 +194,17 @@ public class RobotContainer {
                             new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
                     drive)
                 .ignoringDisable(true));
+  }
+
+
+  private void rampController() {
+    if (ramp.rampRotatedForIntake == false) {
+        ramp.rotateRamp(RampMechanismConstants.ROTATION_INTAKE);
+        ramp.rampRotatedForIntake = true;
+    } else {
+        ramp.rotateRamp(RampMechanismConstants.ROTATION_HANG);
+        ramp.rampRotatedForIntake = false;
+    }
   }
 
   /**

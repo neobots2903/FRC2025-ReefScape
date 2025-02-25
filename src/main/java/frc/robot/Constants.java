@@ -65,6 +65,11 @@ public final class Constants {
     public static final double rampMechanismPivot_gearRatio =
         12.0; // Gear ratio for the pivot motor for the ramp. For example, if this was was 8, gear
     // ratio would be 1:8 (8 full motor rotations for 1 shaft rotation.)
+
+    //ROTATIONS
+    public static final double ROTATION_START = 0.0;
+    public static final double ROTATION_INTAKE = 15.0;
+    public static final double ROTATION_HANG = 125.0;
   }
 
   public static final class LiftConstants {
