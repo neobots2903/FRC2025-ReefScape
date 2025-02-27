@@ -27,6 +27,7 @@ import frc.robot.Constants.LiftConstants;
 import frc.robot.Constants.RampMechanismConstants;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.IntakeCommands;
+import frc.robot.commands.SimpleAuto;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.climb.ClimbSubsystem;
 import frc.robot.subsystems.drive.Drive;
@@ -120,22 +121,26 @@ public class RobotContainer {
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
+    
+    // Add our simple autonomous routines
+    autoChooser.addOption(
+        "Simple Coral Auto", SimpleAuto.simpleCoral(drive, lift, endEffector));
 
-    // Set up SysId routines
-    autoChooser.addOption(
-        "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
-    autoChooser.addOption(
-        "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Forward)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Reverse)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    // // Set up SysId routines
+    // autoChooser.addOption(
+    //     "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
+    // autoChooser.addOption(
+    //     "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+    // autoChooser.addOption(
+    //     "Drive SysId (Quasistatic Forward)",
+    //     drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    // autoChooser.addOption(
+    //     "Drive SysId (Quasistatic Reverse)",
+    //     drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+    // autoChooser.addOption(
+    //     "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+    // autoChooser.addOption(
+    //     "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
     // Configure the button bindings
     configureButtonBindings();
@@ -225,6 +230,28 @@ public class RobotContainer {
             lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
         })
         .withName("Lift Position Up One"));
+
+    // === RAMP MECHANISM CONTROLS (BUMPERS) ===
+    // Left Bumper: Move ramp to intake position
+    operatorController.leftBumper()
+        .onTrue(Commands.runOnce(() -> ramp.moveToIntakePosition())
+        .withName("Ramp to Intake Position"));
+    
+    // Right Bumper: Move ramp to hang position
+    operatorController.rightBumper()
+        .onTrue(Commands.runOnce(() -> ramp.moveToHangPosition())
+        .withName("Ramp to Hang Position"));
+
+    // === CLIMB CONTROLS (TRIGGERS) ===
+    // Left Trigger: Move claws to open position
+    operatorController.leftTrigger(0.25) // 0.25 threshold for activation
+        .onTrue(Commands.runOnce(() -> climb.moveToOpenPosition())
+        .withName("Claws Open"));
+    
+    // Right Trigger: Move claws to grip position
+    operatorController.rightTrigger(0.25) // 0.25 threshold for activation
+        .onTrue(Commands.runOnce(() -> climb.moveToGripPosition())
+        .withName("Claws Grip"));
 
     // === GAME PIECE CONTROLS (FACE BUTTONS) ===
     // A button: Intake game piece (pulls piece in until properly positioned)

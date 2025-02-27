@@ -47,6 +47,11 @@ public class DriveCommands {
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
 
+  // Constants for autonomous driving
+  private static final double AUTO_DRIVE_KP = 3.0; // Proportional constant for distance control
+  private static final double AUTO_DRIVE_MAX_SPEED = 2.0; // Maximum speed in meters per second
+  private static final double AUTO_DRIVE_TOLERANCE = 0.05; // Distance tolerance in meters
+
   private DriveCommands() {}
 
   private static Translation2d getLinearVelocityFromJoysticks(double x, double y) {
@@ -288,9 +293,72 @@ public class DriveCommands {
                     })));
   }
 
+  /**
+   * Creates a command that drives the robot forward a specified distance.
+   * 
+   * @param drive The drive subsystem
+   * @param distanceInches The distance to drive in inches (positive = forward)
+   * @return A command that will drive forward the specified distance
+   */
+  public static Command driveDistance(Drive drive, double distanceInches) {
+    // Convert inches to meters for internal calculations
+    double distanceMeters = Units.inchesToMeters(distanceInches);
+    
+    return Commands.sequence(
+        // First, store the starting pose
+        Commands.runOnce(() -> {
+          // Store starting position to measure distance from
+          initialPose = drive.getPose();
+          System.out.println("Starting autonomous drive for " + distanceInches + " inches (" + 
+                             distanceMeters + " meters)");
+        }),
+        
+        // Then drive until we reach the target distance
+        Commands.run(() -> {
+          // Calculate how far we've gone so far
+          double distanceTraveledMeters = drive.getPose().getTranslation().getDistance(initialPose.getTranslation());
+          double distanceRemainingMeters = distanceMeters - distanceTraveledMeters;
+          
+          // Use proportional control to slow down as we approach target
+          double speed = Math.min(AUTO_DRIVE_MAX_SPEED, AUTO_DRIVE_KP * distanceRemainingMeters);
+          
+          // Maintain minimum speed to overcome friction
+          if (speed < 0.4 && distanceRemainingMeters > 0) {
+            speed = 0.4;
+          }
+
+          // Ensure we don't go backwards once we've reached the target
+          if (distanceRemainingMeters <= 0) {
+            speed = 0;
+          }
+
+          // Apply the calculated speed in the forward direction
+          drive.runVelocity(new ChassisSpeeds(speed, 0, 0));
+          
+          // Log in inches for clarity
+          double distanceRemainingInches = Units.metersToInches(distanceRemainingMeters);
+          System.out.println("Distance remaining: " + distanceRemainingInches + " inches, Speed: " + speed + "m/s");
+        }, drive)
+        .until(() -> {
+          // End the command when we're close enough to the target distance
+          double distanceTraveledMeters = drive.getPose().getTranslation().getDistance(initialPose.getTranslation());
+          return Math.abs(distanceMeters - distanceTraveledMeters) < AUTO_DRIVE_TOLERANCE;
+        }),
+        
+        // Finally, stop the robot
+        Commands.runOnce(() -> {
+          drive.runVelocity(new ChassisSpeeds(0, 0, 0));
+          System.out.println("Autonomous drive complete");
+        }, drive)
+    );
+  }
+
   private static class WheelRadiusCharacterizationState {
     double[] positions = new double[4];
     Rotation2d lastAngle = new Rotation2d();
     double gyroDelta = 0.0;
   }
+
+  // Add a field to store initial pose for distance driving
+  private static Pose2d initialPose = new Pose2d();
 }

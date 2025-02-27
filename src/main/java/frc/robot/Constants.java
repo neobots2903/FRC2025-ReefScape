@@ -35,39 +35,20 @@ public final class Constants {
     REPLAY
   }
 
-  public static final class ClimbConstants {
-    public static final int leftGrip_motorPort = 27; // Neo + spark
-    public static final int rightGrip_motorPort = 28; // Neo + Spark
-    // REMOVED public static final int rotateIntakeFunnel_motorPort = 29; // Krakern
+  public static final class RampMechanismConstants {
+    // Neo 1.1 with Spark Max
     public static final int pivotMotorOne_motorPort = 29;
     public static final int pivotMotorTwo_motorPort = 30;
-    public static final double kGripMotorSpeeds = 0.1; // Speeds for the grip motors on the climb.
-    public static final double kGripMotorOpenSpeeds = -0.1; // Speeds for the grip motors to open.
-    public static final double kGripMotorStopped = 0.0; // Speed to stop the grip motors.
-
-    // current constants
-    public static final double kClimbPercentEnabled = 0.2;
-    public static final double kClimbPercentDisabled = 0.0;
-  }
-
-  public static final class RampMechanismConstants {
-
-    // TalonFX (Kraken) pivot motor
-    public static final int rampMechanismPivot_motorPort = 25;
     public static final int rampMechanismPivot_stallAmperage = 50;
     public static final boolean rampMechanismPivot_EnableStatorCurrentLimit = true;
-    public static final double rampMechanismPivot_kP = 0.0;
+    public static final double rampMechanismPivot_kP = 0.1;
     public static final double rampMechanismPivot_kI = 0.0;
     public static final double rampMechanismPivot_kD = 0.0;
-    public static final double rampMechanismPivot_kP1 = 0.0;
-    public static final double rampMechanismPivot_kI1 = 0.0;
-    public static final double rampMechanismPivot_kD1 = 0.0;
-    public static final double rampMechanismPivot_gearRatio =
-        12.0; // Gear ratio for the pivot motor for the ramp. For example, if this was was 8, gear
-    // ratio would be 1:8 (8 full motor rotations for 1 shaft rotation.)
+    public static final double rampMechanismPivot_gearRatio = 100.0;
+    public static final double OUTPUT_MIN = -1.0;
+    public static final double OUTPUT_MAX = 1.0;
 
     // ROTATIONS
-    public static final double ROTATION_START = 0.0;
     public static final double ROTATION_INTAKE = 15.0;
     public static final double ROTATION_HANG = 125.0;
   }
@@ -102,5 +83,30 @@ public final class Constants {
     public static final int outtakeLimitSwitchPort = 1;
     public static final double endEffectorSpeed = 0.2;
     public static final int algeDescorerMotor_Port = 24;
+  }
+
+  public static final class ClimbConstants {
+    // Motor ports
+    public static final int leftGrip_motorPort = 27; // Neo + spark
+    public static final int rightGrip_motorPort = 28; // Neo + Spark
+    
+    // PID and motor configuration
+    public static final double CLAW_GEAR_RATIO = 49.0;  // 49:1 gear ratio
+    public static final double CLAW_PID_P = 0.1;
+    public static final double CLAW_PID_I = 0.0;
+    public static final double CLAW_PID_D = 0.0;
+    public static final double CLAW_OUTPUT_MIN = -0.3;
+    public static final double CLAW_OUTPUT_MAX = 1.0;
+    
+    // Claw position setpoints (degrees)
+    public static final double CLAW_OPEN_POSITION = 0.0;
+    public static final double CLAW_GRIP_POSITION = 90.0;
+
+    // Legacy constants (can be removed later)
+    public static final double kGripMotorSpeeds = 0.1;
+    public static final double kGripMotorOpenSpeeds = -0.1;
+    public static final double kGripMotorStopped = 0.0;
+    public static final double kClimbPercentEnabled = 0.2;
+    public static final double kClimbPercentDisabled = 0.0;
   }
 }
