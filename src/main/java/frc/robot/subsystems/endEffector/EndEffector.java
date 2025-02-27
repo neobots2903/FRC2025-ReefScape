@@ -12,98 +12,94 @@ import frc.robot.Constants.EndEffectorConstants;
 import org.littletonrobotics.junction.Logger;
 
 /**
- * Subsystem for the end effector with intake wheels and limit switches.
- * This subsystem provides direct control of the motors and access to sensor states.
+ * Subsystem for the end effector with intake wheels and limit switches. This subsystem provides
+ * direct control of the motors and access to sensor states.
  */
 public class EndEffector extends SubsystemBase {
   // Motors
   private final SparkMax leftIntakeMotor;
   private final SparkMax rightIntakeMotor;
-  
+
   // Limit switches
   private final DigitalInput intakeLimitSwitch;
   private final DigitalInput outtakeLimitSwitch;
-  
+
   // Current state tracking
   private IntakeState currentState = IntakeState.STOPPED;
-  
-  /**
-   * Possible states of the intake motors
-   */
+
+  /** Possible states of the intake motors */
   public enum IntakeState {
-    INTAKE, OUTTAKE, STOPPED
+    INTAKE,
+    OUTTAKE,
+    STOPPED
   }
 
-  /**
-   * Constructs the EndEffector subsystem and initializes hardware
-   */
+  /** Constructs the EndEffector subsystem and initializes hardware */
   public EndEffector() {
     // Initialize motors
-    leftIntakeMotor = new SparkMax(EndEffectorConstants.endEffectorMotorOne_Port, MotorType.kBrushed);
-    rightIntakeMotor = new SparkMax(EndEffectorConstants.endEffectorMotorTwo_Port, MotorType.kBrushed);
-    
+    leftIntakeMotor =
+        new SparkMax(EndEffectorConstants.endEffectorMotorOne_Port, MotorType.kBrushed);
+    rightIntakeMotor =
+        new SparkMax(EndEffectorConstants.endEffectorMotorTwo_Port, MotorType.kBrushed);
+
     // Configure motors
     SparkMaxConfig leftConfig = new SparkMaxConfig();
     leftConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake).inverted(false);
-    leftIntakeMotor.configure(leftConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-    
+    leftIntakeMotor.configure(
+        leftConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+
     SparkMaxConfig rightConfig = new SparkMaxConfig();
     rightConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake).inverted(true);
-    rightIntakeMotor.configure(rightConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-    
+    rightIntakeMotor.configure(
+        rightConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+
     // Initialize limit switches
     intakeLimitSwitch = new DigitalInput(EndEffectorConstants.intakeLimitSwitchPort);
     outtakeLimitSwitch = new DigitalInput(EndEffectorConstants.outtakeLimitSwitchPort);
   }
-  
-  /**
-   * Runs intake wheels inward to collect game pieces
-   */
+
+  /** Runs intake wheels inward to collect game pieces */
   public void intake() {
     leftIntakeMotor.set(EndEffectorConstants.endEffectorSpeed);
     rightIntakeMotor.set(-EndEffectorConstants.endEffectorSpeed);
     currentState = IntakeState.INTAKE;
   }
-  
-  /**
-   * Runs intake wheels outward to eject game pieces
-   */
+
+  /** Runs intake wheels outward to eject game pieces */
   public void outtake() {
     leftIntakeMotor.set(-EndEffectorConstants.endEffectorSpeed);
     rightIntakeMotor.set(EndEffectorConstants.endEffectorSpeed);
     currentState = IntakeState.OUTTAKE;
   }
-  
-  /**
-   * Stops the intake wheels
-   */
+
+  /** Stops the intake wheels */
   public void stop() {
     leftIntakeMotor.set(0);
     rightIntakeMotor.set(0);
     currentState = IntakeState.STOPPED;
   }
-  
+
   /**
    * @return true if the intake limit switch is triggered (game piece detected at intake position)
    */
   public boolean isIntakeLimitSwitchTriggered() {
     return intakeLimitSwitch.get();
   }
-  
+
   /**
    * @return true if the outtake limit switch is triggered (game piece detected at outtake position)
    */
   public boolean isOuttakeLimitSwitchTriggered() {
     return outtakeLimitSwitch.get();
   }
-  
+
   /**
    * @return the current state of the intake motors
    */
   public IntakeState getCurrentState() {
     return currentState;
   }
-  
+
   @Override
   public void periodic() {
     // Log sensor values and state

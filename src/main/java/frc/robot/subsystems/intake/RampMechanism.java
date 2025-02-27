@@ -16,78 +16,79 @@ import frc.robot.Constants.RampMechanismConstants;
 import org.littletonrobotics.junction.Logger;
 
 /**
- * Subsystem that controls the ramp/arm mechanism
- * This allows the robot to position the ramp at various angles for 
- * intake, outtake, or hang operations.
+ * Subsystem that controls the ramp/arm mechanism This allows the robot to position the ramp at
+ * various angles for intake, outtake, or hang operations.
  */
 public class RampMechanism extends SubsystemBase {
   // Motors
   private final SparkMax leftPivotMotor;
   private final SparkMax rightPivotMotor;
-  
+
   // Controllers and encoders
   private SparkClosedLoopController leftPidController;
   private SparkClosedLoopController rightPidController;
   private RelativeEncoder leftEncoder;
   private RelativeEncoder rightEncoder;
-  
+
   // Current state tracking
   private double currentSetpoint = 0.0;
 
-  /**
-   * Constructs the RampMechanism subsystem and initializes hardware
-   */
+  /** Constructs the RampMechanism subsystem and initializes hardware */
   public RampMechanism() {
     // Initialize motors
-    leftPivotMotor = new SparkMax(RampMechanismConstants.pivotMotorOne_motorPort, MotorType.kBrushless);
-    rightPivotMotor = new SparkMax(RampMechanismConstants.pivotMotorTwo_motorPort, MotorType.kBrushless);
-    
+    leftPivotMotor =
+        new SparkMax(RampMechanismConstants.pivotMotorOne_motorPort, MotorType.kBrushless);
+    rightPivotMotor =
+        new SparkMax(RampMechanismConstants.pivotMotorTwo_motorPort, MotorType.kBrushless);
+
     // Configure motors - right motor needs to be inverted to work in opposition
     configureMotor(leftPivotMotor, false);
     configureMotor(rightPivotMotor, true);
-    
+
     // Get controllers and encoders after configuration
     leftPidController = leftPivotMotor.getClosedLoopController();
     leftEncoder = leftPivotMotor.getEncoder();
     rightPidController = rightPivotMotor.getClosedLoopController();
     rightEncoder = rightPivotMotor.getEncoder();
   }
-  
+
   /**
    * Configures a SparkMax motor with standardized settings
+   *
    * @param motor The SparkMax motor to configure
    * @param inverted Whether the motor direction should be inverted
    */
   private void configureMotor(SparkMax motor, boolean inverted) {
     SparkMaxConfig motorConfig = new SparkMaxConfig();
-    
+
     // Configure motor
-    motorConfig.smartCurrentLimit(40)
-               .idleMode(IdleMode.kBrake);
-    
+    motorConfig.smartCurrentLimit(40).idleMode(IdleMode.kBrake);
+
     // Configure encoder
-    motorConfig.encoder.positionConversionFactor(360.0 / RampMechanismConstants.rampMechanismPivot_gearRatio);
-    
+    motorConfig.encoder.positionConversionFactor(
+        360.0 / RampMechanismConstants.rampMechanismPivot_gearRatio);
+
     // Configure closed loop controller
-    motorConfig.closedLoop
+    motorConfig
+        .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         .p(RampMechanismConstants.rampMechanismPivot_kP)
         .i(RampMechanismConstants.rampMechanismPivot_kI)
         .d(RampMechanismConstants.rampMechanismPivot_kD)
         .outputRange(RampMechanismConstants.OUTPUT_MIN, RampMechanismConstants.OUTPUT_MAX);
-    
+
     // Configure MAXMotion parameters (updated API)
-    motorConfig.closedLoop.maxMotion
+    motorConfig
+        .closedLoop
+        .maxMotion
         .maxVelocity(RampMechanismConstants.MAX_VELOCITY)
         .maxAcceleration(RampMechanismConstants.MAX_ACCELERATION)
         .allowedClosedLoopError(RampMechanismConstants.ALLOWED_ERROR);
-        
+
     // Apply configuration
     motor.configure(
-        motorConfig, 
-        ResetMode.kNoResetSafeParameters, 
-        PersistMode.kNoPersistParameters);
-    
+        motorConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+
     // Set motor inversion if needed
     if (inverted) {
       motorConfig.inverted(inverted);
@@ -96,39 +97,36 @@ public class RampMechanism extends SubsystemBase {
 
   /**
    * Rotates the ramp mechanism to a specific position in degrees
+   *
    * @param degrees The target position in degrees
    */
   public void setPosition(double degrees) {
     this.currentSetpoint = degrees;
-    
+
     // Use MAXMotionPositionControl (updated API)
     leftPidController.setReference(
         this.currentSetpoint, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0);
     rightPidController.setReference(
         this.currentSetpoint, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0);
   }
-  
-  /**
-   * Move the ramp to intake position
-   */
+
+  /** Move the ramp to intake position */
   public void moveToIntakePosition() {
     setPosition(RampMechanismConstants.ROTATION_INTAKE);
   }
-  
-  /**
-   * Move the ramp to hang position
-   */
+
+  /** Move the ramp to hang position */
   public void moveToHangPosition() {
     setPosition(RampMechanismConstants.ROTATION_HANG);
   }
-  
+
   /**
    * @return The current position of the ramp in degrees (average of both encoders)
    */
   public double getCurrentPosition() {
     return (leftEncoder.getPosition() - rightEncoder.getPosition()) / 2.0;
   }
-  
+
   /**
    * @return The current target position of the ramp in degrees
    */
@@ -141,31 +139,34 @@ public class RampMechanism extends SubsystemBase {
     // Log motor currents
     Logger.recordOutput("RampMechanism/LeftMotor/Current", leftPivotMotor.getOutputCurrent());
     Logger.recordOutput("RampMechanism/RightMotor/Current", rightPivotMotor.getOutputCurrent());
-    
+
     // Log motor positions
     Logger.recordOutput("RampMechanism/LeftMotor/Position", leftEncoder.getPosition());
     Logger.recordOutput("RampMechanism/RightMotor/Position", rightEncoder.getPosition());
     Logger.recordOutput("RampMechanism/AveragePosition", getCurrentPosition());
-    
+
     // Log motor velocities
     Logger.recordOutput("RampMechanism/LeftMotor/Velocity", leftEncoder.getVelocity());
     Logger.recordOutput("RampMechanism/RightMotor/Velocity", rightEncoder.getVelocity());
-    
+
     // Log applied output
     Logger.recordOutput("RampMechanism/LeftMotor/AppliedOutput", leftPivotMotor.getAppliedOutput());
-    Logger.recordOutput("RampMechanism/RightMotor/AppliedOutput", rightPivotMotor.getAppliedOutput());
-    
+    Logger.recordOutput(
+        "RampMechanism/RightMotor/AppliedOutput", rightPivotMotor.getAppliedOutput());
+
     // Log temperatures
-    Logger.recordOutput("RampMechanism/LeftMotor/Temperature", leftPivotMotor.getMotorTemperature());
-    Logger.recordOutput("RampMechanism/RightMotor/Temperature", rightPivotMotor.getMotorTemperature());
-    
+    Logger.recordOutput(
+        "RampMechanism/LeftMotor/Temperature", leftPivotMotor.getMotorTemperature());
+    Logger.recordOutput(
+        "RampMechanism/RightMotor/Temperature", rightPivotMotor.getMotorTemperature());
+
     // Log control metrics
     Logger.recordOutput("RampMechanism/Setpoint", currentSetpoint);
     Logger.recordOutput("RampMechanism/LeftError", currentSetpoint - leftEncoder.getPosition());
     Logger.recordOutput("RampMechanism/RightError", currentSetpoint - rightEncoder.getPosition());
-    
+
     // Log motor synchronization (difference between motors)
-    Logger.recordOutput("RampMechanism/PositionDifference", 
-                        leftEncoder.getPosition() - rightEncoder.getPosition());
+    Logger.recordOutput(
+        "RampMechanism/PositionDifference", leftEncoder.getPosition() - rightEncoder.getPosition());
   }
 }

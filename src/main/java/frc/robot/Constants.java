@@ -65,8 +65,12 @@ public final class Constants {
 
     // PID and motor configuration constants
     // Come back to tuning PID once other mechanisms are working. Good enough for now.
-    public static final double INCHES_PER_RADIAN = ((1/7) * (1.751 / 2.0)) * 2; // 7:1 gear ratio, 1.751" pitch(?) diameter, times 2 for second stage of lift
-    public static final double POSITION_CONVERSION_FACTOR = INCHES_PER_RADIAN * (2 * Math.PI); // Convert from inches per radian to inches per revolution
+    public static final double INCHES_PER_RADIAN =
+        ((1.0 / 7.0) * (1.751 / 2.0))
+            * 2; // 7:1 gear ratio, 1.751" pitch(?) diameter, times 2 for second stage of lift
+    public static final double POSITION_CONVERSION_FACTOR =
+        INCHES_PER_RADIAN
+            * (2 * Math.PI); // Convert from inches per radian to inches per revolution
     public static final double PID_P = 0.1;
     public static final double PID_I = 0.0;
     public static final double PID_D = 0.0;
@@ -82,7 +86,7 @@ public final class Constants {
     public static final double BOTTOM = 0;
 
     // Smart Motion Parameters
-    public static final double MAX_VELOCITY = 3500; // RPM 
+    public static final double MAX_VELOCITY = 3500; // RPM
     public static final double MAX_ACCELERATION = 2500; // RPM per second
     public static final double ALLOWED_ERROR = 0.25; // Inches
     public static final double MIN_OUTPUT_VELOCITY = 0; // RPM
@@ -101,15 +105,15 @@ public final class Constants {
     // Motor ports
     public static final int leftGrip_motorPort = 27; // Neo + spark
     public static final int rightGrip_motorPort = 28; // Neo + Spark
-    
+
     // PID and motor configuration
-    public static final double CLAW_GEAR_RATIO = 49.0;  // 49:1 gear ratio
+    public static final double CLAW_GEAR_RATIO = 49.0; // 49:1 gear ratio
     public static final double CLAW_PID_P = 0.1;
     public static final double CLAW_PID_I = 0.0;
     public static final double CLAW_PID_D = 0.0;
     public static final double CLAW_OUTPUT_MIN = -0.3;
     public static final double CLAW_OUTPUT_MAX = 1.0;
-    
+
     // Claw position setpoints (degrees)
     public static final double CLAW_OPEN_POSITION = 0.0;
     public static final double CLAW_GRIP_POSITION = 90.0;
