@@ -78,7 +78,8 @@ public final class Constants {
 
     // PID and motor configuration constants
     // Come back to tuning PID once other mechanisms are working. Good enough for now.
-    public static final double POSITION_CONVERSION_FACTOR = 0.25 * (2 * Math.PI);
+    public static final double INCHES_PER_RADIAN = ((1/7) * (1.751 / 2.0)) * 2; // 7:1 gear ratio, 1.751" pitch(?) diameter, times 2 for second stage of lift
+    public static final double POSITION_CONVERSION_FACTOR = INCHES_PER_RADIAN * (2 * Math.PI); // Convert from inches per radian to inches per revolution
     public static final double PID_P = 0.1;
     public static final double PID_I = 0.0;
     public static final double PID_D = 0.0;
