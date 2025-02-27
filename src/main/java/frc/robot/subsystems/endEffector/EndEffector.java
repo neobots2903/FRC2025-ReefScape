@@ -59,16 +59,16 @@ public class EndEffector extends SubsystemBase {
   }
 
   /** Runs intake wheels inward to collect game pieces */
-  public void intake() {
+  public void outtake() {
     leftIntakeMotor.set(EndEffectorConstants.endEffectorSpeed);
-    rightIntakeMotor.set(-EndEffectorConstants.endEffectorSpeed);
+    rightIntakeMotor.set(EndEffectorConstants.endEffectorSpeed);
     currentState = IntakeState.INTAKE;
   }
 
   /** Runs intake wheels outward to eject game pieces */
-  public void outtake() {
+  public void intake() {
     leftIntakeMotor.set(-EndEffectorConstants.endEffectorSpeed);
-    rightIntakeMotor.set(EndEffectorConstants.endEffectorSpeed);
+    rightIntakeMotor.set(-EndEffectorConstants.endEffectorSpeed);
     currentState = IntakeState.OUTTAKE;
   }
 

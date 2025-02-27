@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.LiftConstants;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.IntakeCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -30,6 +31,7 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.endEffector.EndEffector;
 import frc.robot.subsystems.lift.Lift;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -59,7 +61,7 @@ public class RobotContainer {
   // ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
   // RampMechanism ramp = new RampMechanism(); // System for ramp control.
   Lift lift = new Lift(); // Subsystem for the lift control.
-  // EndEffector endEffector = new EndEffector(); // Subsystem to control the end effector.
+  EndEffector endEffector = new EndEffector(); // Subsystem to control the end effector.
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -264,15 +266,15 @@ public class RobotContainer {
     //     .onTrue(Commands.runOnce(() -> climb.moveToGripPosition()).withName("Claws Grip"));
 
     // === GAME PIECE CONTROLS (FACE BUTTONS) ===
-    // // A button: Intake game piece (pulls piece in until properly positioned)
-    // operatorController
-    //     .a()
-    //     .onTrue(IntakeCommands.intakeGamePiece(endEffector).withName("Intake Game Piece"));
+    // A button: Intake game piece (pulls piece in until properly positioned)
+    operatorController
+        .a()
+        .onTrue(IntakeCommands.intakeGamePiece(endEffector).withName("Intake Game Piece"));
 
-    // // B button: Outtake game piece (pushes piece out completely)
-    // operatorController
-    //     .b()
-    //     .onTrue(IntakeCommands.outtakeGamePiece(endEffector).withName("Outtake Game Piece"));
+    // B button: Outtake game piece (pushes piece out completely)
+    operatorController
+        .b()
+        .onTrue(IntakeCommands.outtakeGamePiece(endEffector).withName("Outtake Game Piece"));
   }
 
   /**
