@@ -60,6 +60,12 @@ public class Lift extends SubsystemBase {
         .d(LiftConstants.PID_D)
         .outputRange(LiftConstants.OUTPUT_MIN, LiftConstants.OUTPUT_MAX);
 
+    motorConfig.smartCurrentLimit(40);
+
+    if (motor.getDeviceId() == 20) {
+      motorConfig.follow(21, inverted);
+    }
+
     // Set motor inversion if needed
     if (inverted) {
       motorConfig.inverted(inverted);
@@ -71,8 +77,8 @@ public class Lift extends SubsystemBase {
 
   public void runLiftToPos(double pos) {
     this.currentSetpoint = pos;
-    leftClosedLoopController.setReference(
-        this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+    // leftClosedLoopController.setReference(
+    //     this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
     rightClosedLoopController.setReference(
         this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
   }
