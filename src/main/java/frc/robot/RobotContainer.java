@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.LiftConstants;
 import frc.robot.Constants.RampMechanismConstants;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.IntakeCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.climb.ClimbSubsystem;
 import frc.robot.subsystems.drive.Drive;
@@ -36,6 +37,7 @@ import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.intake.RampMechanism;
 import frc.robot.subsystems.lift.Lift;
+import frc.robot.subsystems.endEffector.EndEffector;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /* NOTES */
@@ -56,7 +58,7 @@ public class RobotContainer {
   private final Drive drive;
 
   // Controller
-  private final CommandXboxController controller = new CommandXboxController(0);
+  private final CommandXboxController driverController = new CommandXboxController(0);
   private final CommandXboxController operatorController =
       new CommandXboxController(1); // Controller for driver.
 
@@ -64,10 +66,20 @@ public class RobotContainer {
   ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
   RampMechanism ramp = new RampMechanism(); // System for ramp control.
   Lift lift = new Lift(); // Subsystem for the lift control.
-  // EndEffector endEffector = new EndEffector(); // Subsystem to control the end effector.
+  EndEffector endEffector = new EndEffector(); // Subsystem to control the end effector.
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
+
+  // Lift positions array should be double, not int
+  private final double[] liftPositions = new double[]{
+      LiftConstants.BOTTOM, 
+      LiftConstants.L_ONE, 
+      LiftConstants.L_TWO, 
+      LiftConstants.L_THREE, 
+      LiftConstants.L_FOUR
+  };
+  private int currentLiftPositionIndex = 0;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -136,75 +148,94 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-    // Default command, normal field-relative drive
+    configureDriverControls();
+    configureOperatorControls();
+  }
+
+  /**
+   * Configure controls for the main driver
+   * Driver responsibilities:
+   * - Robot movement and orientation
+   * - Emergency functions
+   */
+  private void configureDriverControls() {
+    // Left stick: Translation control (forward/backward with Y-axis, left/right with X-axis)
+    // Right stick: Rotation control (X-axis controls turning)
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> controller.getLeftY(),
-            () -> controller.getLeftX(),
-            () -> -controller.getRightX()));
+            () -> driverController.getLeftY(),   // Forward/backward
+            () -> driverController.getLeftX(),   // Left/right
+            () -> -driverController.getRightX()) // Rotation
+        .withName("Default Drive Command"));
 
-    // Lock to 0° when A button is held
-    controller
-        .a()
-        .whileTrue(
-            DriveCommands.joystickDriveAtAngle(
-                drive,
-                () -> controller.getLeftY(),
-                () -> controller.getLeftX(),
-                () -> new Rotation2d()));
+    // X button: Lock wheels in X pattern to prevent movement
+    driverController.x()
+        .onTrue(Commands.runOnce(drive::stopWithX, drive)
+        .withName("Lock Wheels X-Pattern"));
 
-    // Switch to X pattern when X button is pressed
-    controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
-
-    // Lift control system.
-    // lift.freeMovement(operatorController.getRightY());
-
-    // Outtake control for the end effector.
-    // operatorController.a().onTrue(new InstantCommand(() -> endEffector.outtaking = true));
-
-    // Alge descorer control for the end effector
-    // operatorController.b().onTrue(new InstantCommand(() -> endEffector.runAlgeDescorer()));
-    // operatorController.b().onFalse(new InstantCommand(() -> endEffector.cutAlgeDescorer()));
-
-    // ramp.rotateRamp(degree);
-    // Rotate ramp system
-    operatorController.x().onTrue(new InstantCommand(() -> rampController()));
-
-    // Run lift to position
-    operatorController
-        .povDown()
-        .onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.BOTTOM)));
-    operatorController
-        .povUp()
-        .onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.L_FOUR)));
-    operatorController
-        .povLeft()
-        .onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.L_THREE)));
-    operatorController
-        .povRight()
-        .onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.L_TWO)));
-
-    // Reset gyro to 0° when B button is pressed
-    controller
-        .b()
+    // B button: Reset gyro to 0 degrees (forward direction)
+    driverController.b()
         .onTrue(
             Commands.runOnce(
-                    () ->
-                        drive.setPose(
-                            new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
-                    drive)
-                .ignoringDisable(true));
+                () -> drive.setPose(
+                    new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
+                drive)
+            .ignoringDisable(true)
+            .withName("Reset Gyro"));
   }
 
-  private void rampController() {
-    if (ramp.rampRotatedForIntake == false) {
-      ramp.rotateRamp(RampMechanismConstants.ROTATION_INTAKE);
-      ramp.rampRotatedForIntake = true;
-    } else {
-      ramp.rotateRamp(RampMechanismConstants.ROTATION_HANG);
-      ramp.rampRotatedForIntake = false;
-    }
+  /**
+   * Configure controls for the operator
+   * Operator responsibilities:
+   * - Lift control
+   * - Game piece manipulation
+   * - Mechanism control
+   */
+  private void configureOperatorControls() {
+    // === LIFT CONTROLS (D-PAD) ===
+    // D-Pad Up: Move lift directly to highest position (L4)
+    operatorController.povUp()
+        .onTrue(Commands.runOnce(() -> {
+            currentLiftPositionIndex = liftPositions.length - 1;
+            lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
+        })
+        .withName("Lift to Top Position (L4)"));
+    
+    // D-Pad Down: Move lift directly to bottom position
+    operatorController.povDown()
+        .onTrue(Commands.runOnce(() -> {
+            currentLiftPositionIndex = 0;
+            lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
+        })
+        .withName("Lift to Bottom Position"));
+    
+    // D-Pad Left: Move lift down one position
+    operatorController.povLeft()
+        .onTrue(Commands.runOnce(() -> {
+            currentLiftPositionIndex = Math.max(currentLiftPositionIndex - 1, 0);
+            lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
+        })
+        .withName("Lift Position Down One"));
+    
+    // D-Pad Right: Move lift up one position
+    operatorController.povRight()
+        .onTrue(Commands.runOnce(() -> {
+            currentLiftPositionIndex = Math.min(currentLiftPositionIndex + 1, liftPositions.length - 1);
+            lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
+        })
+        .withName("Lift Position Up One"));
+
+    // === GAME PIECE CONTROLS (FACE BUTTONS) ===
+    // A button: Intake game piece (pulls piece in until properly positioned)
+    operatorController.a()
+        .onTrue(IntakeCommands.intakeGamePiece(endEffector)
+        .withName("Intake Game Piece"));
+    
+    // B button: Outtake game piece (pushes piece out completely)
+    operatorController.b()
+        .onTrue(IntakeCommands.outtakeGamePiece(endEffector)
+        .withName("Outtake Game Piece"));
   }
 
   /**
