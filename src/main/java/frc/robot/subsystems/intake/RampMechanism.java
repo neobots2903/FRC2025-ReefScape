@@ -77,22 +77,14 @@ public class RampMechanism extends SubsystemBase {
         .d(RampMechanismConstants.rampMechanismPivot_kD)
         .outputRange(RampMechanismConstants.OUTPUT_MIN, RampMechanismConstants.OUTPUT_MAX);
 
-    // Configure MAXMotion parameters (updated API)
-    motorConfig
-        .closedLoop
-        .maxMotion
-        .maxVelocity(RampMechanismConstants.MAX_VELOCITY)
-        .maxAcceleration(RampMechanismConstants.MAX_ACCELERATION)
-        .allowedClosedLoopError(RampMechanismConstants.ALLOWED_ERROR);
-
-    // Apply configuration
-    motor.configure(
-        motorConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-
     // Set motor inversion if needed
     if (inverted) {
       motorConfig.inverted(inverted);
     }
+
+    // Apply configuration
+    motor.configure(
+        motorConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
   /**
@@ -105,9 +97,9 @@ public class RampMechanism extends SubsystemBase {
 
     // Use MAXMotionPositionControl (updated API)
     leftPidController.setReference(
-        this.currentSetpoint, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0);
+        this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
     rightPidController.setReference(
-        this.currentSetpoint, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0);
+        this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
   }
 
   /** Move the ramp to intake position */

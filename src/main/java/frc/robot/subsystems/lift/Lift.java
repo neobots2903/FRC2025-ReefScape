@@ -21,7 +21,7 @@ public class Lift extends SubsystemBase {
   private SparkClosedLoopController rightClosedLoopController;
   private RelativeEncoder leftEncoder;
   private RelativeEncoder rightEncoder;
-  private double currentSetpoint;
+  private double currentSetpoint = 0.0;
 
   public Lift() {
     // Initialize motors
