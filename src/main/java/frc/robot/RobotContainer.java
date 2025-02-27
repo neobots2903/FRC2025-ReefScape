@@ -123,7 +123,7 @@ public class RobotContainer {
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
     
     // Add our simple autonomous routines
-    autoChooser.addOption( // Drive forward, raise lift, outtake
+    autoChooser.addOption( // Drive forward, raise lift, outtake (BACK BUMPER ON START LINE)
         "Simple Coral Auto", SimpleAuto.simpleCoral(drive, lift, endEffector));
     autoChooser.addOption( // Drive forward 5 feet
     "Drive Forward 5 feet", DriveCommands.driveDistance(drive, 60.0));
