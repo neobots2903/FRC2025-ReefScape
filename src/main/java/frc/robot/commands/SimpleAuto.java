@@ -23,6 +23,8 @@ public class SimpleAuto {
    * 2. Raises the lift to L1 position
    * 3. Outtakes the game piece
    * 
+   * Reef is 7'4" from the start line. Robot is 30" long. (58" total)
+   * 
    * @param drive The drive subsystem
    * @param lift The lift subsystem
    * @param endEffector The end effector subsystem
@@ -30,9 +32,9 @@ public class SimpleAuto {
    */
   public static Command simpleCoral(Drive drive, Lift lift, EndEffector endEffector) {
     return Commands.sequence(
-        // Step 1: Drive forward 5 feet (60 inches)
+        // Step 1: Drive forward.
         Commands.runOnce(() -> Logger.recordOutput("Auto", "Starting drive forward")),
-        DriveCommands.driveDistance(drive, 60.0),
+        DriveCommands.driveDistance(drive, 58.0),
         Commands.runOnce(() -> Logger.recordOutput("Auto", "Completed drive forward")),
         
         // Step 2: Raise lift to L1 position

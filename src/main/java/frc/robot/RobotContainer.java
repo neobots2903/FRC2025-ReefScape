@@ -123,8 +123,12 @@ public class RobotContainer {
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
     
     // Add our simple autonomous routines
-    autoChooser.addOption(
+    autoChooser.addOption( // Drive forward, raise lift, outtake
         "Simple Coral Auto", SimpleAuto.simpleCoral(drive, lift, endEffector));
+    autoChooser.addOption( // Drive forward 5 feet
+    "Drive Forward 5 feet", DriveCommands.driveDistance(drive, 60.0));
+    autoChooser.addOption( // Drive forward 1 foot
+        "Drive Forward 1 foot", DriveCommands.driveDistance(drive, 12.0));
 
     // // Set up SysId routines
     // autoChooser.addOption(
