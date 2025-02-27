@@ -51,6 +51,12 @@ public final class Constants {
     // ROTATIONS
     public static final double ROTATION_INTAKE = 15.0;
     public static final double ROTATION_HANG = 125.0;
+
+    // Updated Smart Motion Parameters for 100:1 gear ratio
+    public static final double MAX_VELOCITY = 3700; // RPM (65% of NEO free speed)
+    public static final double MAX_ACCELERATION = 1850; // RPM per second
+    public static final double ALLOWED_ERROR = 1.0; // Degrees
+    public static final double MIN_OUTPUT_VELOCITY = 0; // RPM
   }
 
   public static final class LiftConstants {
@@ -74,6 +80,12 @@ public final class Constants {
     public static final double L_THREE = 41 - BASE_LIFT;
     public static final double L_FOUR = 68 - BASE_LIFT;
     public static final double BOTTOM = 0;
+
+    // Smart Motion Parameters
+    public static final double MAX_VELOCITY = 3500; // RPM 
+    public static final double MAX_ACCELERATION = 2500; // RPM per second
+    public static final double ALLOWED_ERROR = 0.25; // Inches
+    public static final double MIN_OUTPUT_VELOCITY = 0; // RPM
   }
 
   public static final class EndEffectorConstants {

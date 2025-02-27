@@ -51,13 +51,19 @@ public class Lift extends SubsystemBase {
     // Configure encoder
     motorConfig.encoder.positionConversionFactor(LiftConstants.POSITION_CONVERSION_FACTOR);
     
-    // Configure closed loop controller
+    // Configure closed loop controller with PID values
     motorConfig.closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         .p(LiftConstants.PID_P)
         .i(LiftConstants.PID_I)
         .d(LiftConstants.PID_D)
         .outputRange(LiftConstants.OUTPUT_MIN, LiftConstants.OUTPUT_MAX);
+    
+    // Configure MAXMotion parameters (updated API)
+    motorConfig.closedLoop.maxMotion
+        .maxVelocity(LiftConstants.MAX_VELOCITY)
+        .maxAcceleration(LiftConstants.MAX_ACCELERATION)
+        .allowedClosedLoopError(LiftConstants.ALLOWED_ERROR);
     
     // Apply configuration
     motor.configure(
@@ -73,11 +79,11 @@ public class Lift extends SubsystemBase {
 
   public void runLiftToPos(double pos) {
     this.currentSetpoint = pos;
-    // Now we can give both motors the same setpoint
+    // Use MAXMotionPositionControl (updated API) 
     leftClosedLoopController.setReference(
-        this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+        this.currentSetpoint, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0);
     rightClosedLoopController.setReference(
-        this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+        this.currentSetpoint, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0);
   }
 
   @Override

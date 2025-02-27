@@ -66,8 +66,6 @@ public class RampMechanism extends SubsystemBase {
                .idleMode(IdleMode.kBrake);
     
     // Configure encoder
-    // Position conversion factor converts from motor rotations to arm degrees
-    // Assuming 12:1 gear ratio, 360 degrees in a full rotation
     motorConfig.encoder.positionConversionFactor(360.0 / RampMechanismConstants.rampMechanismPivot_gearRatio);
     
     // Configure closed loop controller
@@ -78,6 +76,12 @@ public class RampMechanism extends SubsystemBase {
         .d(RampMechanismConstants.rampMechanismPivot_kD)
         .outputRange(RampMechanismConstants.OUTPUT_MIN, RampMechanismConstants.OUTPUT_MAX);
     
+    // Configure MAXMotion parameters (updated API)
+    motorConfig.closedLoop.maxMotion
+        .maxVelocity(RampMechanismConstants.MAX_VELOCITY)
+        .maxAcceleration(RampMechanismConstants.MAX_ACCELERATION)
+        .allowedClosedLoopError(RampMechanismConstants.ALLOWED_ERROR);
+        
     // Apply configuration
     motor.configure(
         motorConfig, 
@@ -97,11 +101,11 @@ public class RampMechanism extends SubsystemBase {
   public void setPosition(double degrees) {
     this.currentSetpoint = degrees;
     
-    // Set both motors to the same target position (right motor is inverted in config)
+    // Use MAXMotionPositionControl (updated API)
     leftPidController.setReference(
-        this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+        this.currentSetpoint, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0);
     rightPidController.setReference(
-        this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+        this.currentSetpoint, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0);
   }
   
   /**
