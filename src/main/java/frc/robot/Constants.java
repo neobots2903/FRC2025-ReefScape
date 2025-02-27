@@ -96,15 +96,18 @@ public final class Constants {
 
     // PID and motor configuration
     public static final double CLAW_GEAR_RATIO = 49.0; // 49:1 gear ratio
-    public static final double CLAW_PID_P = 0.1;
+    public static final double CLAW_PID_P = 0.05;
     public static final double CLAW_PID_I = 0.0;
     public static final double CLAW_PID_D = 0.0;
-    public static final double CLAW_OUTPUT_MIN = -0.3;
-    public static final double CLAW_OUTPUT_MAX = 1.0;
+    public static final double CLAW_OUTPUT_MIN = -0.75;
+    public static final double CLAW_OUTPUT_MAX = 0.75;
 
     // Claw position setpoints (degrees)
     public static final double CLAW_OPEN_POSITION = 0.0;
-    public static final double CLAW_GRIP_POSITION = 90.0;
+    public static final double LEFT_CLAW_GRIP_POSITION = 30.0;
+    public static final double RIGHT_CLAW_GRIP_POSITION = 85.0;
+
+    // Left 30, Right 85...
 
     // Legacy constants (can be removed later)
     public static final double kGripMotorSpeeds = 0.1;

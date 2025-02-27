@@ -34,9 +34,6 @@ public class ClimbSubsystem extends SubsystemBase {
   private RelativeEncoder leftEncoder;
   private RelativeEncoder rightEncoder;
 
-  // Current state tracking
-  private double currentSetpoint = 0.0;
-
   /** Constructs the ClimbSubsystem and initializes hardware */
   public ClimbSubsystem() {
     // Initialize motors
@@ -64,7 +61,7 @@ public class ClimbSubsystem extends SubsystemBase {
     SparkMaxConfig motorConfig = new SparkMaxConfig();
 
     // Configure motor
-    motorConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake);
+    motorConfig.smartCurrentLimit(30).idleMode(IdleMode.kCoast);
 
     // Configure encoder
     // Position conversion factor converts from motor rotations to arm degrees
@@ -80,14 +77,14 @@ public class ClimbSubsystem extends SubsystemBase {
         .d(ClimbConstants.CLAW_PID_D)
         .outputRange(ClimbConstants.CLAW_OUTPUT_MIN, ClimbConstants.CLAW_OUTPUT_MAX);
 
-    // Apply configuration
-    motor.configure(
-        motorConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
-
     // Set motor inversion if needed
     if (inverted) {
       motorConfig.inverted(inverted);
     }
+
+    // Apply configuration
+    motor.configure(
+        motorConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
   /**
@@ -95,24 +92,22 @@ public class ClimbSubsystem extends SubsystemBase {
    *
    * @param degrees The target position in degrees
    */
-  public void setPosition(double degrees) {
-    this.currentSetpoint = degrees;
+  public void setPosition(double leftPos, double rightPos) {
+    // this.currentSetpoint = degrees;
 
     // Set both motors to the same target position (right motor is inverted in config)
-    leftPidController.setReference(
-        this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
-    rightPidController.setReference(
-        this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+    leftPidController.setReference(leftPos, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+    rightPidController.setReference(rightPos, ControlType.kPosition, ClosedLoopSlot.kSlot0);
   }
 
   /** Move the claws to grip/closed position */
   public void moveToGripPosition() {
-    setPosition(ClimbConstants.CLAW_GRIP_POSITION);
+    setPosition(ClimbConstants.LEFT_CLAW_GRIP_POSITION, ClimbConstants.RIGHT_CLAW_GRIP_POSITION);
   }
 
   /** Move the claws to open position */
   public void moveToOpenPosition() {
-    setPosition(ClimbConstants.CLAW_OPEN_POSITION);
+    setPosition(ClimbConstants.CLAW_OPEN_POSITION, ClimbConstants.CLAW_OPEN_POSITION);
   }
 
   /**
@@ -120,13 +115,6 @@ public class ClimbSubsystem extends SubsystemBase {
    */
   public double getCurrentPosition() {
     return (leftEncoder.getPosition() + rightEncoder.getPosition()) / 2.0;
-  }
-
-  /**
-   * @return The current target position of the claws in degrees
-   */
-  public double getTargetPosition() {
-    return currentSetpoint;
   }
 
   @Override
@@ -151,11 +139,6 @@ public class ClimbSubsystem extends SubsystemBase {
     // Log temperatures
     Logger.recordOutput("Climb/LeftMotor/Temperature", leftClawMotor.getMotorTemperature());
     Logger.recordOutput("Climb/RightMotor/Temperature", rightClawMotor.getMotorTemperature());
-
-    // Log control metrics
-    Logger.recordOutput("Climb/Setpoint", currentSetpoint);
-    Logger.recordOutput("Climb/LeftError", currentSetpoint - leftEncoder.getPosition());
-    Logger.recordOutput("Climb/RightError", currentSetpoint - rightEncoder.getPosition());
 
     // Log motor synchronization (difference between motors)
     Logger.recordOutput(

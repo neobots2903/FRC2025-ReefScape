@@ -25,6 +25,7 @@ import frc.robot.Constants.LiftConstants;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.IntakeCommands;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.climb.ClimbSubsystem;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -58,7 +59,7 @@ public class RobotContainer {
       new CommandXboxController(1); // Controller for driver.
 
   // Subsystems
-  // ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
+  ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
   // RampMechanism ramp = new RampMechanism(); // System for ramp control.
   Lift lift = new Lift(); // Subsystem for the lift control.
   EndEffector endEffector = new EndEffector(); // Subsystem to control the end effector.
@@ -255,15 +256,15 @@ public class RobotContainer {
     //         Commands.runOnce(() -> ramp.moveToHangPosition()).withName("Ramp to Hang Position"));
 
     // // === CLIMB CONTROLS (TRIGGERS) ===
-    // // Left Trigger: Move claws to open position
-    // operatorController
-    //     .leftTrigger(0.25) // 0.25 threshold for activation
-    //     .onTrue(Commands.runOnce(() -> climb.moveToOpenPosition()).withName("Claws Open"));
+    // Left Trigger: Move claws to open position
+    operatorController
+        .leftTrigger(0.25) // 0.25 threshold for activation
+        .onTrue(Commands.runOnce(() -> climb.moveToOpenPosition()).withName("Claws Open"));
 
-    // // Right Trigger: Move claws to grip position
-    // operatorController
-    //     .rightTrigger(0.25) // 0.25 threshold for activation
-    //     .onTrue(Commands.runOnce(() -> climb.moveToGripPosition()).withName("Claws Grip"));
+    // Right Trigger: Move claws to grip position
+    operatorController
+        .rightTrigger(0.25) // 0.25 threshold for activation
+        .onTrue(Commands.runOnce(() -> climb.moveToGripPosition()).withName("Claws Grip"));
 
     // === GAME PIECE CONTROLS (FACE BUTTONS) ===
     // A button: Intake game piece (pulls piece in until properly positioned)
