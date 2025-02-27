@@ -38,7 +38,7 @@ public final class Constants {
   public static final class ClimbConstants {
     public static final int leftGrip_motorPort = 27; // Neo + spark
     public static final int rightGrip_motorPort = 28; // Neo + Spark
-    //REMOVED public static final int rotateIntakeFunnel_motorPort = 29; // Krakern
+    // REMOVED public static final int rotateIntakeFunnel_motorPort = 29; // Krakern
     public static final int pivotMotorOne_motorPort = 29;
     public static final int pivotMotorTwo_motorPort = 30;
     public static final double kGripMotorSpeeds = 0.1; // Speeds for the grip motors on the climb.
@@ -66,7 +66,7 @@ public final class Constants {
         12.0; // Gear ratio for the pivot motor for the ramp. For example, if this was was 8, gear
     // ratio would be 1:8 (8 full motor rotations for 1 shaft rotation.)
 
-    //ROTATIONS
+    // ROTATIONS
     public static final double ROTATION_START = 0.0;
     public static final double ROTATION_INTAKE = 15.0;
     public static final double ROTATION_HANG = 125.0;
@@ -83,13 +83,13 @@ public final class Constants {
     public static final int liftMotorOneCanID = 20;
     public static final int liftMotorTwoCanID = 21;
 
-
-    //Lift Heights
-    public static final int L_ONE = 12;
-    public static final int L_TWO = 24;
-    public static final int L_Three = 30;
-    public static final int L_FOUR = 32;
-    public static final int BOTTOM = 0;
+    // Lift Heights (7.5 base)
+    private static final double BASE_LIFT = 7.5;
+    public static final double L_ONE = 15 - BASE_LIFT;
+    public static final double L_TWO = 25.5 - BASE_LIFT;
+    public static final double L_THREE = 41 - BASE_LIFT;
+    public static final double L_FOUR = 68 - BASE_LIFT;
+    public static final double BOTTOM = 0;
   }
 
   public static final class EndEffectorConstants {

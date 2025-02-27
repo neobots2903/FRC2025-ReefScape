@@ -22,7 +22,7 @@ public class EndEffector extends SubsystemBase {
 
   // Motors
   private SparkMax m_endEffectorOne; // Motors for the end effector. //left motor
-  private SparkMax m_endEffectorTwo; //right motor
+  private SparkMax m_endEffectorTwo; // right motor
   private SparkMax m_algeDescorer; // Motor for the algeDescorer
 
   // Motor configs

@@ -34,10 +34,8 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
-import frc.robot.subsystems.endEffector.EndEffector;
 import frc.robot.subsystems.intake.RampMechanism;
 import frc.robot.subsystems.lift.Lift;
-
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /* NOTES */
@@ -66,8 +64,7 @@ public class RobotContainer {
   ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
   RampMechanism ramp = new RampMechanism(); // System for ramp control.
   Lift lift = new Lift(); // Subsystem for the lift control.
-  EndEffector endEffector = new EndEffector(); // Subsystem to control the end effector.
-
+  // EndEffector endEffector = new EndEffector(); // Subsystem to control the end effector.
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -160,29 +157,33 @@ public class RobotContainer {
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
-
     // Lift control system.
-    lift.freeMovement(operatorController.getRightY());
+    // lift.freeMovement(operatorController.getRightY());
 
-    
     // Outtake control for the end effector.
-    operatorController.a().onTrue(new InstantCommand(() -> endEffector.outtaking = true));
+    // operatorController.a().onTrue(new InstantCommand(() -> endEffector.outtaking = true));
 
     // Alge descorer control for the end effector
-    operatorController.b().onTrue(new InstantCommand(() -> endEffector.runAlgeDescorer()));
-    operatorController.b().onFalse(new InstantCommand(() -> endEffector.cutAlgeDescorer()));
+    // operatorController.b().onTrue(new InstantCommand(() -> endEffector.runAlgeDescorer()));
+    // operatorController.b().onFalse(new InstantCommand(() -> endEffector.cutAlgeDescorer()));
 
-    //ramp.rotateRamp(degree);
-    //Rotate ramp system
+    // ramp.rotateRamp(degree);
+    // Rotate ramp system
     operatorController.x().onTrue(new InstantCommand(() -> rampController()));
 
-    //Run lift to position
-    operatorController.povDown().onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.BOTTOM)));
-    operatorController.povUp().onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.L_FOUR)));
-    operatorController.povLeft().onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.L_Three)));
-    operatorController.povRight().onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.L_TWO)));
-
-
+    // Run lift to position
+    operatorController
+        .povDown()
+        .onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.BOTTOM)));
+    operatorController
+        .povUp()
+        .onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.L_FOUR)));
+    operatorController
+        .povLeft()
+        .onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.L_THREE)));
+    operatorController
+        .povRight()
+        .onTrue(new InstantCommand(() -> lift.runLiftToPos(LiftConstants.L_TWO)));
 
     // Reset gyro to 0° when B button is pressed
     controller
@@ -196,14 +197,13 @@ public class RobotContainer {
                 .ignoringDisable(true));
   }
 
-
   private void rampController() {
     if (ramp.rampRotatedForIntake == false) {
-        ramp.rotateRamp(RampMechanismConstants.ROTATION_INTAKE);
-        ramp.rampRotatedForIntake = true;
+      ramp.rotateRamp(RampMechanismConstants.ROTATION_INTAKE);
+      ramp.rampRotatedForIntake = true;
     } else {
-        ramp.rotateRamp(RampMechanismConstants.ROTATION_HANG);
-        ramp.rampRotatedForIntake = false;
+      ramp.rotateRamp(RampMechanismConstants.ROTATION_HANG);
+      ramp.rampRotatedForIntake = false;
     }
   }
 
