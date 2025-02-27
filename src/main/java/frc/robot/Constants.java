@@ -73,17 +73,19 @@ public final class Constants {
   }
 
   public static final class LiftConstants {
-    public static final double maxLiftPosition = 20.0;
-    public static final double minLiftPosition = 0.0;
-    public static final double kP = 0.1;
-    public static final double kI = 0.1;
-    public static final double kD = 0.1;
-    public static final double kMinOutput = 0.1;
-    public static final double kMaxOutput = 0.5;
     public static final int liftMotorOneCanID = 20;
     public static final int liftMotorTwoCanID = 21;
 
-    // Lift Heights (7.5 base)
+    // PID and motor configuration constants
+    // Come back to tuning PID once other mechanisms are working. Good enough for now.
+    public static final double POSITION_CONVERSION_FACTOR = 0.25 * (2 * Math.PI);
+    public static final double PID_P = 0.1;
+    public static final double PID_I = 0.0;
+    public static final double PID_D = 0.0;
+    public static final double OUTPUT_MIN = -0.25;
+    public static final double OUTPUT_MAX = 1.0;
+
+    // Lift Heights (Inches)
     private static final double BASE_LIFT = 7.5;
     public static final double L_ONE = 15 - BASE_LIFT;
     public static final double L_TWO = 25.5 - BASE_LIFT;

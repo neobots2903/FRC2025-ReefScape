@@ -12,14 +12,12 @@ import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.LiftConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class Lift extends SubsystemBase {
-
   private SparkMax leftMotor;
   private SparkMax rightMotor;
-  private SparkMaxConfig leftMotorConfig;
-  private SparkMaxConfig rightMotorConfig;
   private SparkClosedLoopController leftClosedLoopController;
   private SparkClosedLoopController rightClosedLoopController;
   private RelativeEncoder leftEncoder;
@@ -27,88 +25,89 @@ public class Lift extends SubsystemBase {
   private double currentSetpoint;
 
   public Lift() {
-    /*
-     * Initialize the SPARK MAX and get its encoder and closed loop controller
-     * objects for later use.
-     */
-    leftMotor = new SparkMax(Constants.LiftConstants.liftMotorOneCanID, MotorType.kBrushless);
+    // Initialize motors
+    leftMotor = new SparkMax(LiftConstants.liftMotorOneCanID, MotorType.kBrushless);
+    rightMotor = new SparkMax(LiftConstants.liftMotorTwoCanID, MotorType.kBrushless);
+    
+    // Configure motors - invert the left motor instead of negating its setpoint later
+    configureMotor(leftMotor, true);
+    configureMotor(rightMotor, false);
+    
+    // Get controllers and encoders after configuration
     leftClosedLoopController = leftMotor.getClosedLoopController();
     leftEncoder = leftMotor.getEncoder();
-
-    rightMotor = new SparkMax(Constants.LiftConstants.liftMotorTwoCanID, MotorType.kBrushless);
     rightClosedLoopController = rightMotor.getClosedLoopController();
     rightEncoder = rightMotor.getEncoder();
-
-    /*
-     * Create a new SPARK MAX configuration object. This will store the
-     * configuration parameters for the SPARK MAX that we will set below.
-     */
-    leftMotorConfig = new SparkMaxConfig();
-    rightMotorConfig = new SparkMaxConfig();
-
-    /*
-     * Configure the encoder. For this specific example, we are using the
-     * integrated encoder of the NEO, and we don't need to configure it. If
-     * needed, we can adjust values like the position or velocity conversion
-     * factors.
-     */
-    leftMotorConfig.encoder.positionConversionFactor(0.25 * (2 * Math.PI)); // 0.25 * (Math.PI/180)
-
-    rightMotorConfig.encoder.positionConversionFactor(
-        0.25 * (2 * Math.PI)); // (0.25 * 180) / Math.PI
-
-    /*
-     * Configure the closed loop controller. We want to make sure we set the
-     * feedback sensor as the primary encoder.
-     */
-    leftMotorConfig
-        .closedLoop
+  }
+  
+  /**
+   * Configures a SparkMax motor with standardized settings
+   * @param motor The SparkMax motor to configure
+   * @param inverted Whether the motor direction should be inverted
+   */
+  private void configureMotor(SparkMax motor, boolean inverted) {
+    SparkMaxConfig motorConfig = new SparkMaxConfig();
+    
+    // Configure encoder
+    motorConfig.encoder.positionConversionFactor(LiftConstants.POSITION_CONVERSION_FACTOR);
+    
+    // Configure closed loop controller
+    motorConfig.closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        // Set PID values for position control. We don't need to pass a closed loop
-        // slot, as it will default to slot 0.
-        .p(0.1)
-        .i(0)
-        .d(0)
-        .outputRange(-0.3, 1);
-
-    rightMotorConfig
-        .closedLoop
-        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        // Set PID values for position control. We don't need to pass a closed loop
-        // slot, as it will default to slot 0.
-        .p(0.1)
-        .i(0)
-        .d(0)
-        .outputRange(-0.3, 1);
-
-    /*
-     * Apply the configuration to the SPARK MAX.
-     *
-     * kResetSafeParameters is used to get the SPARK MAX to a known state. This
-     * is useful in case the SPARK MAX is replaced.
-     *
-     * kPersistParameters is used to ensure the configuration is not lost when
-     * the SPARK MAX loses power. This is useful for power cycles that may occur
-     * mid-operation.
-     */
-    leftMotor.configure(
-        leftMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
-    rightMotor.configure(
-        rightMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+        .p(LiftConstants.PID_P)
+        .i(LiftConstants.PID_I)
+        .d(LiftConstants.PID_D)
+        .outputRange(LiftConstants.OUTPUT_MIN, LiftConstants.OUTPUT_MAX);
+    
+    // Apply configuration
+    motor.configure(
+        motorConfig, 
+        ResetMode.kResetSafeParameters, 
+        PersistMode.kNoPersistParameters);
+    
+    // Set motor inversion if needed
+    if (inverted) {
+      motorConfig.inverted(inverted);
+    }
   }
 
   public void runLiftToPos(double pos) {
     this.currentSetpoint = pos;
+    // Now we can give both motors the same setpoint
     leftClosedLoopController.setReference(
-        -this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+        this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
     rightClosedLoopController.setReference(
         this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
   }
 
   @Override
   public void periodic() {
+    // Log motor currents
+    Logger.recordOutput("Lift/LeftMotor/Current", leftMotor.getOutputCurrent());
     Logger.recordOutput("Lift/RightMotor/Current", rightMotor.getOutputCurrent());
+    
+    // Log motor positions
+    Logger.recordOutput("Lift/LeftMotor/Position", leftEncoder.getPosition());
     Logger.recordOutput("Lift/RightMotor/Position", rightEncoder.getPosition());
+    
+    // Log motor velocities
+    Logger.recordOutput("Lift/LeftMotor/Velocity", leftEncoder.getVelocity());
+    Logger.recordOutput("Lift/RightMotor/Velocity", rightEncoder.getVelocity());
+    
+    // Log applied output
+    Logger.recordOutput("Lift/LeftMotor/AppliedOutput", leftMotor.getAppliedOutput());
+    Logger.recordOutput("Lift/RightMotor/AppliedOutput", rightMotor.getAppliedOutput());
+    
+    // Log temperatures
+    Logger.recordOutput("Lift/LeftMotor/Temperature", leftMotor.getMotorTemperature());
+    Logger.recordOutput("Lift/RightMotor/Temperature", rightMotor.getMotorTemperature());
+    
+    // Log control metrics
     Logger.recordOutput("Lift/Setpoint", currentSetpoint);
+    Logger.recordOutput("Lift/LeftError", currentSetpoint - leftEncoder.getPosition());
+    Logger.recordOutput("Lift/RightError", currentSetpoint - rightEncoder.getPosition());
+    
+    // Log motor synchronization (difference between motors)
+    Logger.recordOutput("Lift/PositionDifference", leftEncoder.getPosition() - rightEncoder.getPosition());
   }
 }
