@@ -12,6 +12,8 @@ import org.littletonrobotics.junction.Logger;
 /** Contains simple autonomous routines for the robot. */
 public class SimpleAuto {
 
+  private static final double ROBOT_OFFSET = 30.0 / 2; // Half robot length in inches
+
   private SimpleAuto() {
     // Utility class - prevent instantiation
   }
@@ -31,7 +33,7 @@ public class SimpleAuto {
     return Commands.sequence(
             // Step 1: Drive forward.
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting drive forward")),
-            DriveCommands.driveDistance(drive, 70.0), // 12 inches off??? Was 58.
+            DriveCommands.driveDistance(drive, 58.0 + ROBOT_OFFSET), // From robot front.
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed drive forward")),
 
             // Step 2: Raise lift to L3 position

@@ -298,7 +298,7 @@ public class DriveCommands {
    * Creates a command that drives the robot forward a specified distance.
    *
    * @param drive The drive subsystem
-   * @param distanceInches The distance to drive in inches (positive = forward)
+   * @param distanceInches The distance to drive in inches (positive = forward), Measured from robot center
    * @return A command that will drive forward the specified distance
    */
   public static Command driveDistance(Drive drive, double distanceInches) {
