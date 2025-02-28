@@ -59,33 +59,22 @@ public class EndEffector extends SubsystemBase {
   }
 
   /**
-   * Runs intake wheels outward to eject game pieces at the specified speed factor
+   * Runs intake wheels inwards (helps grip pieces)
    *
    * @param speedFactor A multiplier for the base speed (0.0-1.0)
    */
-  public void outtake(double speedFactor) {
+  public void reverse(double speedFactor) {
     double speed = EndEffectorConstants.endEffectorSpeed * speedFactor;
     leftIntakeMotor.set(speed);
     rightIntakeMotor.set(speed);
     currentState = IntakeState.INTAKE;
   }
 
-  /** Runs intake wheels outward to eject game pieces at the default speed */
-  public void outtake() {
-    outtake(1.0);
-  }
-
-  /** Runs intake wheels inward to collect game pieces */
+  /** Runs intake wheels outward to collect game pieces */
   public void intake() {
     leftIntakeMotor.set(-EndEffectorConstants.endEffectorSpeed);
     rightIntakeMotor.set(-EndEffectorConstants.endEffectorSpeed);
     currentState = IntakeState.OUTTAKE;
-  }
-
-  public void revStop() {
-    leftIntakeMotor.set(1);
-    rightIntakeMotor.set(1);
-    stop();
   }
 
   /** Stops the intake wheels */

@@ -17,7 +17,7 @@ public class SimpleAuto {
   }
 
   /**
-   * Creates a simple autonomous command that: 1. Drives forward 5 feet 2. Raises the lift to L1
+   * Creates a simple autonomous command that: 1. Drives forward 5ish feet 2. Raises the lift to L3
    * position 3. Outtakes the game piece
    *
    * <p>Reef is 7'4" from the start line. Robot is 30" long. (58" total)

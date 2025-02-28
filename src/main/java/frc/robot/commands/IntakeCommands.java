@@ -79,7 +79,7 @@ public class IntakeCommands {
 
       // Timer for the reversing phase
       private final Timer reverseTimer = new Timer();
-      private static final double REVERSE_TIME_SECONDS = 0.15; // Time to run motors in reverse
+      private static final double REVERSE_TIME_SECONDS = 0.2; // Time to run motors in reverse
       private static final double REVERSE_SPEED_FACTOR =
           0.4; // Speed factor for reverse (slower than intake)
 
@@ -114,7 +114,7 @@ public class IntakeCommands {
               // Start the reversing phase
               state = IntakeState.REVERSING;
               // Run motors in opposite direction at reduced speed
-              endEffector.outtake(REVERSE_SPEED_FACTOR);
+              endEffector.reverse(REVERSE_SPEED_FACTOR);
               // Start timer for the reversing phase
               reverseTimer.reset();
               reverseTimer.start();
