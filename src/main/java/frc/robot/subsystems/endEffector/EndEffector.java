@@ -73,8 +73,8 @@ public class EndEffector extends SubsystemBase {
   }
 
   public void revStop() {
-    leftIntakeMotor.set(0.2);
-    rightIntakeMotor.set(0.2);
+    leftIntakeMotor.set(1);
+    rightIntakeMotor.set(1);
     stop();
   }
 

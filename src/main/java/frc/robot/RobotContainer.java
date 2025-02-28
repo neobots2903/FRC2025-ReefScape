@@ -20,10 +20,10 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.LiftConstants;
 import frc.robot.commands.DriveCommands;
-import frc.robot.commands.IntakeCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -271,15 +271,20 @@ public class RobotContainer {
     //     .onTrue(Commands.runOnce(() -> climb.moveToGripPosition()).withName("Claws Grip"));
 
     // === GAME PIECE CONTROLS (FACE BUTTONS) ===
-    // A button: Intake game piece (pulls piece in until properly positioned)
+    // A button spin intake
     operatorController
         .a()
-        .onTrue(IntakeCommands.intakeGamePiece(endEffector).withName("Intake Game Piece"));
+        .onTrue(new InstantCommand(() -> endEffector.intake()))
+        .onFalse(new InstantCommand(() -> endEffector.stop()));
+    // // A button: Intake game piece (pulls piece in until properly positioned)
+    // operatorController
+    //     .a()
+    //     .onTrue(IntakeCommands.intakeGamePiece(endEffector).withName("Intake Game Piece"));
 
-    // B button: Outtake game piece (pushes piece out completely)
-    operatorController
-        .b()
-        .onTrue(IntakeCommands.outtakeGamePiece(endEffector).withName("Outtake Game Piece"));
+    // // B button: Outtake game piece (pushes piece out completely)
+    // operatorController
+    //     .b()
+    //     .onTrue(IntakeCommands.outtakeGamePiece(endEffector).withName("Outtake Game Piece"));
   }
 
   /**

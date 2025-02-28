@@ -74,10 +74,10 @@ public final class Constants {
 
     // Lift Heights (Inches)
     private static final double BASE_LIFT = 7.5;
-    public static final double L_ONE = 15 - BASE_LIFT;
-    public static final double L_TWO = 25.5 - BASE_LIFT;
-    public static final double L_THREE = 41 - BASE_LIFT;
-    public static final double L_FOUR = 67.5 - BASE_LIFT;
+    public static final double L_ONE = 17 - BASE_LIFT;
+    public static final double L_TWO = 26 - BASE_LIFT;
+    public static final double L_THREE = 43 - BASE_LIFT;
+    public static final double L_FOUR = 68 - BASE_LIFT;
     public static final double BOTTOM = 0.1;
   }
 
@@ -86,7 +86,7 @@ public final class Constants {
     public static final int endEffectorMotorTwo_Port = 23;
     public static final int intakeLimitSwitchPort = 1;
     public static final int outtakeLimitSwitchPort = 0;
-    public static final double endEffectorSpeed = 0.15;
+    public static final double endEffectorSpeed = 0.2;
     public static final int algeDescorerMotor_Port = 24;
   }
 
