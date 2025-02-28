@@ -39,7 +39,7 @@ public class SimpleAuto {
             Commands.runOnce(() -> lift.runLiftToPos(LiftConstants.L_THREE)),
 
             // Wait for lift to get to position (1.5 second should be enough)
-            Commands.waitSeconds(2),
+            Commands.waitSeconds(1.5),
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed lift to L3")),
 
             // Step 3: Outtake the game piece
@@ -51,7 +51,7 @@ public class SimpleAuto {
 
             // Step 4: Back up from reef
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting backup")),
-            DriveCommands.driveDistance(drive, -2.0),
+            DriveCommands.driveDistance(drive, -6.0),
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed backup")),
 
             // Step 5: Prepare for teleop (maintain lift position)

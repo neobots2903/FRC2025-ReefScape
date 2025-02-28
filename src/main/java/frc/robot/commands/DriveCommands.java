@@ -328,7 +328,8 @@ public class DriveCommands {
 
                   // Apply manual proportional control: speed = error * kP
                   // This is equivalent to P control from a PID without the I and D terms
-                  double speed = Math.min(AUTO_DRIVE_MAX_SPEED, AUTO_DRIVE_KP * distanceRemainingMeters);
+                  double speed =
+                      Math.min(AUTO_DRIVE_MAX_SPEED, AUTO_DRIVE_KP * distanceRemainingMeters);
 
                   // Maintain minimum speed to overcome friction
                   if (speed < 0.4 && distanceRemainingMeters > 0) {
