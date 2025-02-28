@@ -31,7 +31,7 @@ public class SimpleAuto {
     return Commands.sequence(
             // Step 1: Drive forward.
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting drive forward")),
-            DriveCommands.driveDistance(drive, 58.0),
+            DriveCommands.driveDistance(drive, 70.0), // 12 inches off??? Was 58.
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed drive forward")),
 
             // Step 2: Raise lift to L3 position

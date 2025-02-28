@@ -50,7 +50,8 @@ public class DriveCommands {
   // Constants for autonomous driving
   private static final double AUTO_DRIVE_KP = 3.0; // Proportional constant for distance control
   private static final double AUTO_DRIVE_MAX_SPEED = 2.0; // Maximum speed in meters per second
-  private static final double AUTO_DRIVE_TOLERANCE = 0.05; // Distance tolerance in meters
+  private static final double AUTO_DRIVE_TOLERANCE =
+      Units.inchesToMeters(1); // Distance tolerance in meters
 
   private DriveCommands() {}
 
