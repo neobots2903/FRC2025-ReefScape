@@ -212,7 +212,7 @@ public class DriveCommands {
                     sumX += velocitySamples.get(i);
                     sumY += voltageSamples.get(i);
                     sumXY += velocitySamples.get(i) * voltageSamples.get(i);
-                    sumX2 += velocitySamples.get(i) * velocitySamples.get(i);
+                    sumX2 += velocitySamples.get(i) * voltageSamples.get(i);
                   }
                   double kS = (sumY * sumX2 - sumX * sumXY) / (n * sumX2 - sumX * sumX);
                   double kV = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
@@ -303,6 +303,10 @@ public class DriveCommands {
   public static Command driveDistance(Drive drive, double distanceInches) {
     // Convert inches to meters for internal calculations
     double distanceMeters = Units.inchesToMeters(distanceInches);
+    // Track the direction (positive = forward, negative = backward)
+    final boolean isReversed = distanceMeters < 0;
+    // Use absolute distance for calculations but preserve direction for final speed
+    final double absDistanceMeters = Math.abs(distanceMeters);
 
     return Commands.sequence(
         // First, store the starting pose
@@ -315,7 +319,8 @@ public class DriveCommands {
                       + distanceInches
                       + " inches ("
                       + distanceMeters
-                      + " meters)");
+                      + " meters), Direction: "
+                      + (isReversed ? "REVERSE" : "FORWARD"));
             }),
 
         // Then drive until we reach the target distance
@@ -324,34 +329,36 @@ public class DriveCommands {
                   // Calculate how far we've gone so far
                   double distanceTraveledMeters =
                       drive.getPose().getTranslation().getDistance(initialPose.getTranslation());
-                  double distanceRemainingMeters = distanceMeters - distanceTraveledMeters;
+                  double absRemainingMeters = absDistanceMeters - distanceTraveledMeters;
 
                   // Apply manual proportional control: speed = error * kP
-                  // This is equivalent to P control from a PID without the I and D terms
-                  double speed =
-                      Math.min(AUTO_DRIVE_MAX_SPEED, AUTO_DRIVE_KP * distanceRemainingMeters);
+                  double absSpeed =
+                      Math.min(AUTO_DRIVE_MAX_SPEED, AUTO_DRIVE_KP * absRemainingMeters);
 
-                  // Maintain minimum speed to overcome friction
-                  if (speed < 0.4 && distanceRemainingMeters > 0) {
-                    speed = 0.4;
+                  // Maintain minimum speed to overcome friction in either direction
+                  if (absSpeed < 0.4 && absRemainingMeters > 0) {
+                    absSpeed = 0.4;
                   }
 
-                  // Ensure we don't go backwards once we've reached the target
-                  if (distanceRemainingMeters <= 0) {
-                    speed = 0;
+                  // Stop when we've reached the target
+                  if (absRemainingMeters <= 0) {
+                    absSpeed = 0;
                   }
 
-                  // Apply the calculated speed in the forward direction
-                  drive.runVelocity(new ChassisSpeeds(speed, 0, 0));
+                  // Apply direction to speed
+                  double finalSpeed = isReversed ? -absSpeed : absSpeed;
+
+                  // Apply the calculated speed
+                  drive.runVelocity(new ChassisSpeeds(finalSpeed, 0, 0));
 
                   // Log in inches for clarity
-                  double distanceRemainingInches = Units.metersToInches(distanceRemainingMeters);
+                  double absRemainingInches = Units.metersToInches(absRemainingMeters);
                   System.out.println(
                       "Distance remaining: "
-                          + distanceRemainingInches
+                          + absRemainingInches
                           + " inches, Speed: "
-                          + speed
-                          + "m/s");
+                          + finalSpeed
+                          + " m/s");
                 },
                 drive)
             .until(
@@ -359,7 +366,8 @@ public class DriveCommands {
                   // End the command when we're close enough to the target distance
                   double distanceTraveledMeters =
                       drive.getPose().getTranslation().getDistance(initialPose.getTranslation());
-                  return Math.abs(distanceMeters - distanceTraveledMeters) < AUTO_DRIVE_TOLERANCE;
+                  return Math.abs(absDistanceMeters - distanceTraveledMeters)
+                      < AUTO_DRIVE_TOLERANCE;
                 }),
 
         // Finally, stop the robot
