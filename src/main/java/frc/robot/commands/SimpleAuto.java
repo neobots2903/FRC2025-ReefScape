@@ -51,11 +51,12 @@ public class SimpleAuto {
 
             // Step 4: Back up from reef
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting backup")),
-            DriveCommands.driveDistance(drive, -2.0), 
+            DriveCommands.driveDistance(drive, -2.0),
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed backup")),
-            
+
             // Step 5: Prepare for teleop (maintain lift position)
-            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Reduce lift position for teleop")),
+            Commands.runOnce(
+                () -> Logger.recordOutput("Auto/Status", "Reduce lift position for teleop")),
             Commands.runOnce(() -> lift.runLiftToPos(LiftConstants.BOTTOM)),
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Auto sequence complete")))
         .withName("Simple Coral Auto");

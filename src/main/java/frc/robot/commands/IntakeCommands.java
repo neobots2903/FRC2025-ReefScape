@@ -1,5 +1,6 @@
 package frc.robot.commands;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.endEffector.EndEffector;
 import org.littletonrobotics.junction.Logger;
@@ -59,58 +60,86 @@ public class IntakeCommands {
   }
 
   /**
-   * Creates a command that runs the intake until a game piece passes completely through the intake limit switch.
-   * The sequence is:
-   * 1. Start intake
-   * 2. Wait for intake limit switch to become active (piece detected)
-   * 3. Wait for intake limit switch to become inactive again (piece has passed through)
-   * 4. Stop intake
+   * Creates a command that runs the intake until a game piece passes completely through the intake
+   * limit switch, then reverses briefly to pull it back to a secure position.
    *
    * @param endEffector The end effector subsystem to use
    * @return The command
    */
   public static Command intakeUntilPiecePassesThrough(EndEffector endEffector) {
     return new Command() {
-      // Track whether we've seen the limit switch activate
-      private boolean hasDetectedPiece = false;
-      
+      // Track command state - fix local enum declaration (no access modifier)
+      enum IntakeState {
+        WAITING_FOR_DETECTION,
+        WAITING_FOR_PASS_THROUGH,
+        REVERSING
+      }
+
+      private IntakeState state = IntakeState.WAITING_FOR_DETECTION;
+
+      // Timer for the reversing phase
+      private final Timer reverseTimer = new Timer();
+      private static final double REVERSE_TIME_SECONDS = 0.15; // Time to run motors in reverse
+      private static final double REVERSE_SPEED_FACTOR =
+          0.4; // Speed factor for reverse (slower than intake)
+
       @Override
       public void initialize() {
         Logger.recordOutput("Commands/IntakeUntilPiecePassesThrough", "Started");
         // Start intake wheels
         endEffector.intake();
-        // Reset detection state
-        hasDetectedPiece = false;
+        // Initial state
+        state = IntakeState.WAITING_FOR_DETECTION;
+        reverseTimer.stop();
+        reverseTimer.reset();
       }
 
       @Override
       public void execute() {
-        // Update our state if we detect a piece
-        if (endEffector.isIntakeLimitSwitchTriggered()) {
-          hasDetectedPiece = true;
-          Logger.recordOutput("Commands/IntakeUntilPiecePassesThrough", "Piece Detected");
+        switch (state) {
+          case WAITING_FOR_DETECTION:
+            // Wait for the piece to trigger the limit switch
+            if (endEffector.isIntakeLimitSwitchTriggered()) {
+              Logger.recordOutput("Commands/IntakeUntilPiecePassesThrough", "Piece Detected");
+              state = IntakeState.WAITING_FOR_PASS_THROUGH;
+            }
+            break;
+
+          case WAITING_FOR_PASS_THROUGH:
+            // Wait for the piece to pass through the limit switch
+            if (!endEffector.isIntakeLimitSwitchTriggered()) {
+              Logger.recordOutput(
+                  "Commands/IntakeUntilPiecePassesThrough",
+                  "Piece Passed Through - Starting Reverse");
+              // Start the reversing phase
+              state = IntakeState.REVERSING;
+              // Run motors in opposite direction at reduced speed
+              endEffector.outtake(REVERSE_SPEED_FACTOR);
+              // Start timer for the reversing phase
+              reverseTimer.reset();
+              reverseTimer.start();
+            }
+            break;
+
+          case REVERSING:
+            // Let the reversing timer run
+            break;
         }
       }
 
       @Override
       public boolean isFinished() {
-        // Finish when:
-        // 1. We have detected a piece at some point (hasDetectedPiece is true)
-        // 2. AND now the intake switch is clear again (piece has passed through)
-        boolean pieceHasPassedThrough = hasDetectedPiece && !endEffector.isIntakeLimitSwitchTriggered();
-        
-        Logger.recordOutput("Commands/IntakeUntilPiecePassesThrough/HasDetectedPiece", hasDetectedPiece);
-        Logger.recordOutput("Commands/IntakeUntilPiecePassesThrough/SwitchClear", !endEffector.isIntakeLimitSwitchTriggered());
-        
-        return pieceHasPassedThrough;
+        // Finish only after the reversing phase completes
+        return (state == IntakeState.REVERSING) && reverseTimer.hasElapsed(REVERSE_TIME_SECONDS);
       }
 
       @Override
       public void end(boolean interrupted) {
         // Stop motors when command ends
         endEffector.stop();
+        reverseTimer.stop();
         Logger.recordOutput(
-            "Commands/IntakeUntilPiecePassesThrough", 
+            "Commands/IntakeUntilPiecePassesThrough",
             "Ended - " + (interrupted ? "Interrupted" : "Completed"));
       }
 
@@ -118,6 +147,7 @@ public class IntakeCommands {
       public String getName() {
         return "IntakeUntilPiecePassesThrough";
       }
-    }.withName("IntakeUntilPiecePassesThrough").withTimeout(5.0); // Timeout after 5 seconds for safety
+    }.withName("IntakeUntilPiecePassesThrough")
+        .withTimeout(5.0); // Timeout after 5 seconds for safety
   }
 }

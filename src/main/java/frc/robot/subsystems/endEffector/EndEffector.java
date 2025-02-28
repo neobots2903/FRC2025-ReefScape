@@ -58,14 +58,24 @@ public class EndEffector extends SubsystemBase {
     outtakeLimitSwitch = new DigitalInput(EndEffectorConstants.outtakeLimitSwitchPort);
   }
 
-  /** Runs intake wheels inward to collect game pieces */
-  public void outtake() {
-    leftIntakeMotor.set(EndEffectorConstants.endEffectorSpeed);
-    rightIntakeMotor.set(EndEffectorConstants.endEffectorSpeed);
+  /**
+   * Runs intake wheels outward to eject game pieces at the specified speed factor
+   *
+   * @param speedFactor A multiplier for the base speed (0.0-1.0)
+   */
+  public void outtake(double speedFactor) {
+    double speed = EndEffectorConstants.endEffectorSpeed * speedFactor;
+    leftIntakeMotor.set(speed);
+    rightIntakeMotor.set(speed);
     currentState = IntakeState.INTAKE;
   }
 
-  /** Runs intake wheels outward to eject game pieces */
+  /** Runs intake wheels outward to eject game pieces at the default speed */
+  public void outtake() {
+    outtake(1.0);
+  }
+
+  /** Runs intake wheels inward to collect game pieces */
   public void intake() {
     leftIntakeMotor.set(-EndEffectorConstants.endEffectorSpeed);
     rightIntakeMotor.set(-EndEffectorConstants.endEffectorSpeed);

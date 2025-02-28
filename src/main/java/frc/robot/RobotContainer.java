@@ -275,7 +275,9 @@ public class RobotContainer {
     // B button: Outtake game piece (pushes piece out completely)
     operatorController
         .b()
-        .onTrue(IntakeCommands.intakeUntilPiecePassesThrough(endEffector).withName("Outtake Game Piece"));
+        .onTrue(
+            IntakeCommands.intakeUntilPiecePassesThrough(endEffector)
+                .withName("Outtake Game Piece"));
   }
 
   /**
