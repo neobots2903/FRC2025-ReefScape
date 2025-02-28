@@ -41,16 +41,17 @@ public final class Constants {
     public static final int pivotMotorTwo_motorPort = 30;
     public static final int rampMechanismPivot_stallAmperage = 50;
     public static final boolean rampMechanismPivot_EnableStatorCurrentLimit = true;
-    public static final double rampMechanismPivot_kP = 0.1;
+    public static final double rampMechanismPivot_kP = 0.05;
     public static final double rampMechanismPivot_kI = 0.0;
     public static final double rampMechanismPivot_kD = 0.0;
     public static final double rampMechanismPivot_gearRatio = 100.0;
-    public static final double OUTPUT_MIN = -1.0;
-    public static final double OUTPUT_MAX = 1.0;
+    public static final double OUTPUT_MIN = -0.5;
+    public static final double OUTPUT_MAX = 0.5;
 
     // ROTATIONS
-    public static final double ROTATION_INTAKE = 15.0;
-    public static final double ROTATION_HANG = 125.0;
+    public static final double PULL_CAGE_DOWN = -5.0;
+    public static final double ROTATION_INTAKE = -37.0;
+    public static final double ROTATION_HANG = -119.0;
   }
 
   public static final class LiftConstants {
@@ -104,8 +105,7 @@ public final class Constants {
 
     // Claw position setpoints (degrees)
     public static final double CLAW_OPEN_POSITION = 0.0;
-    public static final double LEFT_CLAW_GRIP_POSITION = 30.0;
-    public static final double RIGHT_CLAW_GRIP_POSITION = 85.0;
+    public static final double CLAW_GRIP_POSITION = 85.0;
 
     // Left 30, Right 85...
 

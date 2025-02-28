@@ -42,8 +42,8 @@ public class RampMechanism extends SubsystemBase {
         new SparkMax(RampMechanismConstants.pivotMotorTwo_motorPort, MotorType.kBrushless);
 
     // Configure motors - right motor needs to be inverted to work in opposition
-    configureMotor(leftPivotMotor, false);
-    configureMotor(rightPivotMotor, true);
+    configureMotor(leftPivotMotor, true);
+    configureMotor(rightPivotMotor, false);
 
     // Get controllers and encoders after configuration
     leftPidController = leftPivotMotor.getClosedLoopController();
@@ -62,7 +62,7 @@ public class RampMechanism extends SubsystemBase {
     SparkMaxConfig motorConfig = new SparkMaxConfig();
 
     // Configure motor
-    motorConfig.smartCurrentLimit(40).idleMode(IdleMode.kBrake);
+    motorConfig.smartCurrentLimit(65).idleMode(IdleMode.kBrake);
 
     // Configure encoder
     motorConfig.encoder.positionConversionFactor(
@@ -76,6 +76,10 @@ public class RampMechanism extends SubsystemBase {
         .i(RampMechanismConstants.rampMechanismPivot_kI)
         .d(RampMechanismConstants.rampMechanismPivot_kD)
         .outputRange(RampMechanismConstants.OUTPUT_MIN, RampMechanismConstants.OUTPUT_MAX);
+
+    if (motor.getDeviceId() == 29) {
+      motorConfig.follow(30, inverted);
+    }
 
     // Set motor inversion if needed
     if (inverted) {
@@ -95,9 +99,6 @@ public class RampMechanism extends SubsystemBase {
   public void setPosition(double degrees) {
     this.currentSetpoint = degrees;
 
-    // Use MAXMotionPositionControl (updated API)
-    leftPidController.setReference(
-        this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
     rightPidController.setReference(
         this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
   }
@@ -110,6 +111,11 @@ public class RampMechanism extends SubsystemBase {
   /** Move the ramp to hang position */
   public void moveToHangPosition() {
     setPosition(RampMechanismConstants.ROTATION_HANG);
+  }
+
+  /** Move the ramp to hang position */
+  public void pullCageDown() {
+    setPosition(RampMechanismConstants.PULL_CAGE_DOWN);
   }
 
   /**

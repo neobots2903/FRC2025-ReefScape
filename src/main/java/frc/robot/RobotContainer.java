@@ -33,6 +33,7 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.endEffector.EndEffector;
+import frc.robot.subsystems.intake.RampMechanism;
 import frc.robot.subsystems.lift.Lift;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -60,7 +61,7 @@ public class RobotContainer {
 
   // Subsystems
   ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
-  // RampMechanism ramp = new RampMechanism(); // System for ramp control.
+  RampMechanism ramp = new RampMechanism(); // System for ramp control.
   Lift lift = new Lift(); // Subsystem for the lift control.
   EndEffector endEffector = new EndEffector(); // Subsystem to control the end effector.
 
@@ -242,18 +243,23 @@ public class RobotContainer {
                 .withName("Lift Position Up One"));
 
     // === RAMP MECHANISM CONTROLS (BUMPERS) ===
-    // // Left Bumper: Move ramp to intake position
-    // operatorController
-    //     .leftBumper()
-    //     .onTrue(
-    //         Commands.runOnce(() -> ramp.moveToIntakePosition())
-    //             .withName("Ramp to Intake Position"));
+    // Left Bumper: Move ramp to intake position
+    operatorController
+        .leftBumper()
+        .onTrue(
+            Commands.runOnce(() -> ramp.moveToIntakePosition())
+                .withName("Ramp to Intake Position"));
 
-    // // Right Bumper: Move ramp to hang position
-    // operatorController
-    //     .rightBumper()
-    //     .onTrue(
-    //         Commands.runOnce(() -> ramp.moveToHangPosition()).withName("Ramp to Hang Position"));
+    // Right Bumper: Move ramp to hang position
+    operatorController
+        .rightBumper()
+        .onTrue(
+            Commands.runOnce(() -> ramp.moveToHangPosition()).withName("Ramp to Hang Position"));
+
+    // Back Button: Pull the dang cage down!
+    operatorController
+        .back()
+        .onTrue(Commands.runOnce(() -> ramp.pullCageDown()).withName("Yank that cage!"));
 
     // // === CLIMB CONTROLS (TRIGGERS) ===
     // Left Trigger: Move claws to open position
