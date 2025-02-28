@@ -12,7 +12,7 @@ import org.littletonrobotics.junction.Logger;
 /** Contains simple autonomous routines for the robot. */
 public class SimpleAuto {
 
-  private static final double ROBOT_OFFSET = 30.0 / 2; // Half robot length in inches
+  private static final double ROBOT_OFFSET = 30.0 / 2; // Half robot length in inches (36 WITH BUMBERS, NEED TO TEST!!!)
 
   private SimpleAuto() {
     // Utility class - prevent instantiation
