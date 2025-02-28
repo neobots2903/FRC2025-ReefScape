@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.LiftConstants;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.IntakeCommands;
+import frc.robot.commands.SimpleAuto;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -35,13 +36,6 @@ import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.endEffector.EndEffector;
 import frc.robot.subsystems.lift.Lift;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
-
-/* NOTES */
-/*
- * - I'd probably instantiate the subsystems inside of the RobotContainer constructor instead of
- *   having them be fields. This way, you can use the RobotContainer to determine which
- *   subsystems to instantiate based on the current mode. Right now, they would all move under "REAL".
- */
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -119,12 +113,12 @@ public class RobotContainer {
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
     // Add our simple autonomous routines
-    // autoChooser.addOption( // Drive forward, raise lift, outtake (BACK BUMPER ON START LINE)
-    //     "Simple Coral Auto", SimpleAuto.simpleCoral(drive, lift, endEffector));
-    // autoChooser.addOption( // Drive forward 5 feet
-    //     "Drive Forward 5 feet", DriveCommands.driveDistance(drive, 60.0));
-    // autoChooser.addOption( // Drive forward 1 foot
-    //     "Drive Forward 1 foot", DriveCommands.driveDistance(drive, 12.0));
+    autoChooser.addOption( // Drive forward, raise lift, outtake (BACK BUMPER ON START LINE)
+        "Simple Coral Auto", SimpleAuto.simpleCoral(drive, lift, endEffector));
+    autoChooser.addOption( // Drive forward 5 feet
+        "Drive Forward 5 feet", DriveCommands.driveDistance(drive, 60.0));
+    autoChooser.addOption( // Drive forward 1 foot
+        "Drive Forward 1 foot", DriveCommands.driveDistance(drive, 12.0));
 
     // // Set up SysId routines
     // autoChooser.addOption(
