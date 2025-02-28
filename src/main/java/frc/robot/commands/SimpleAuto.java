@@ -12,7 +12,8 @@ import org.littletonrobotics.junction.Logger;
 /** Contains simple autonomous routines for the robot. */
 public class SimpleAuto {
 
-  private static final double ROBOT_OFFSET = 30.0 / 2; // Half robot length in inches (36 WITH BUMBERS, NEED TO TEST!!!)
+  private static final double ROBOT_OFFSET =
+      30.0 / 2; // Half robot length in inches (36 WITH BUMBERS, NEED TO TEST!!!)
 
   private SimpleAuto() {
     // Utility class - prevent instantiation
@@ -29,7 +30,8 @@ public class SimpleAuto {
    * @param endEffector The end effector subsystem
    * @return The autonomous command sequence
    */
-  public static Command simpleCoral(Drive drive, Lift lift, EndEffector endEffector) {
+  public static Command simpleCoral(
+      Drive drive, Lift lift, EndEffector endEffector, double reefPos) {
     return Commands.sequence(
             // Step 1: Drive forward.
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting drive forward")),
@@ -38,7 +40,7 @@ public class SimpleAuto {
 
             // Step 2: Raise lift to L3 position
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting lift to L3")),
-            Commands.runOnce(() -> lift.runLiftToPos(LiftConstants.L_THREE)),
+            Commands.runOnce(() -> lift.runLiftToPos(reefPos)),
 
             // Wait for lift to get to position (1.5 second should be enough)
             Commands.waitSeconds(1.5),
@@ -59,7 +61,7 @@ public class SimpleAuto {
             // Step 5: Prepare for teleop (maintain lift position)
             Commands.runOnce(
                 () -> Logger.recordOutput("Auto/Status", "Reduce lift position for teleop")),
-            Commands.runOnce(() -> lift.runLiftToPos(LiftConstants.BOTTOM)),
+            Commands.runOnce(() -> lift.runLiftToPos(LiftConstants.L_ONE)),
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Auto sequence complete")))
         .withName("Simple Coral Auto");
   }

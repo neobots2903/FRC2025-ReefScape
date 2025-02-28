@@ -114,7 +114,9 @@ public class RobotContainer {
 
     // Add our simple autonomous routines
     autoChooser.addOption( // Drive forward, raise lift, outtake (BACK BUMPER ON START LINE)
-        "Simple Coral Auto", SimpleAuto.simpleCoral(drive, lift, endEffector));
+        "Simple Coral L3", SimpleAuto.simpleCoral(drive, lift, endEffector, LiftConstants.L_THREE));
+    autoChooser.addOption( // Drive forward, raise lift, outtake (BACK BUMPER ON START LINE)
+        "Simple Coral L2", SimpleAuto.simpleCoral(drive, lift, endEffector, LiftConstants.L_TWO));
     autoChooser.addOption( // Drive forward 5 feet
         "Drive Forward 5 feet", DriveCommands.driveDistance(drive, 60.0));
     autoChooser.addOption( // Drive forward 1 foot
