@@ -29,8 +29,8 @@ public class Lift extends SubsystemBase {
     rightMotor = new SparkMax(LiftConstants.liftMotorTwoCanID, MotorType.kBrushless);
 
     // Configure motors - invert the left motor instead of negating its setpoint later
-    configureMotor(leftMotor, true);
-    configureMotor(rightMotor, false);
+    configureMotor(leftMotor, true, true, LiftConstants.liftMotorTwoCanID);
+    configureMotor(rightMotor, false, false, 0);
 
     // Get controllers and encoders after configuration
     leftClosedLoopController = leftMotor.getClosedLoopController();
@@ -45,7 +45,7 @@ public class Lift extends SubsystemBase {
    * @param motor The SparkMax motor to configure
    * @param inverted Whether the motor direction should be inverted
    */
-  private void configureMotor(SparkMax motor, boolean inverted) {
+  private void configureMotor(SparkMax motor, boolean inverted, boolean follower, int followID) {
     SparkMaxConfig motorConfig = new SparkMaxConfig();
 
     // Configure encoder
@@ -62,8 +62,8 @@ public class Lift extends SubsystemBase {
 
     motorConfig.smartCurrentLimit(40);
 
-    if (motor.getDeviceId() == 20) {
-      motorConfig.follow(21, inverted);
+    if (follower) {
+      motorConfig.follow(followID, inverted);
     }
 
     // Set motor inversion if needed
@@ -77,8 +77,6 @@ public class Lift extends SubsystemBase {
 
   public void runLiftToPos(double pos) {
     this.currentSetpoint = pos;
-    // leftClosedLoopController.setReference(
-    //     this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
     rightClosedLoopController.setReference(
         this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
   }

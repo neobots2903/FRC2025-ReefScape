@@ -46,8 +46,7 @@ public class IntakeCommands {
       @Override
       public void end(boolean interrupted) {
         // Stop motors when command ends
-        endEffector.revStop();
-        // endEffector.stop();
+        endEffector.stop();
         Logger.recordOutput(
             "Commands/IntakeGamePiece", "Ended - " + (interrupted ? "Interrupted" : "Completed"));
       }
@@ -60,31 +59,50 @@ public class IntakeCommands {
   }
 
   /**
-   * Creates a command that outtakes a game piece completely. The command runs the outtake wheels
-   * until both limit switches are NOT pressed, indicating the game piece has been fully ejected.
+   * Creates a command that runs the intake until a game piece passes completely through the intake limit switch.
+   * The sequence is:
+   * 1. Start intake
+   * 2. Wait for intake limit switch to become active (piece detected)
+   * 3. Wait for intake limit switch to become inactive again (piece has passed through)
+   * 4. Stop intake
    *
    * @param endEffector The end effector subsystem to use
    * @return The command
    */
-  public static Command outtakeGamePiece(EndEffector endEffector) {
+  public static Command intakeUntilPiecePassesThrough(EndEffector endEffector) {
     return new Command() {
+      // Track whether we've seen the limit switch activate
+      private boolean hasDetectedPiece = false;
+      
       @Override
       public void initialize() {
-        Logger.recordOutput("Commands/OuttakeGamePiece", "Started");
-        // Start outtake wheels
+        Logger.recordOutput("Commands/IntakeUntilPiecePassesThrough", "Started");
+        // Start intake wheels
         endEffector.intake();
+        // Reset detection state
+        hasDetectedPiece = false;
+      }
+
+      @Override
+      public void execute() {
+        // Update our state if we detect a piece
+        if (endEffector.isIntakeLimitSwitchTriggered()) {
+          hasDetectedPiece = true;
+          Logger.recordOutput("Commands/IntakeUntilPiecePassesThrough", "Piece Detected");
+        }
       }
 
       @Override
       public boolean isFinished() {
-        // Finish when both switches are clear (piece fully ejected)
-        boolean bothSwitchesClear =
-            !endEffector.isIntakeLimitSwitchTriggered()
-                && !endEffector.isOuttakeLimitSwitchTriggered();
-
-        Logger.recordOutput("Commands/OuttakeGamePiece/BothSwitchesClear", bothSwitchesClear);
-
-        return bothSwitchesClear;
+        // Finish when:
+        // 1. We have detected a piece at some point (hasDetectedPiece is true)
+        // 2. AND now the intake switch is clear again (piece has passed through)
+        boolean pieceHasPassedThrough = hasDetectedPiece && !endEffector.isIntakeLimitSwitchTriggered();
+        
+        Logger.recordOutput("Commands/IntakeUntilPiecePassesThrough/HasDetectedPiece", hasDetectedPiece);
+        Logger.recordOutput("Commands/IntakeUntilPiecePassesThrough/SwitchClear", !endEffector.isIntakeLimitSwitchTriggered());
+        
+        return pieceHasPassedThrough;
       }
 
       @Override
@@ -92,13 +110,14 @@ public class IntakeCommands {
         // Stop motors when command ends
         endEffector.stop();
         Logger.recordOutput(
-            "Commands/OuttakeGamePiece", "Ended - " + (interrupted ? "Interrupted" : "Completed"));
+            "Commands/IntakeUntilPiecePassesThrough", 
+            "Ended - " + (interrupted ? "Interrupted" : "Completed"));
       }
 
       @Override
       public String getName() {
-        return "OuttakeGamePiece";
+        return "IntakeUntilPiecePassesThrough";
       }
-    }.withName("OuttakeGamePiece").withTimeout(2.0); // Timeout after 2 seconds for safety
+    }.withName("IntakeUntilPiecePassesThrough").withTimeout(5.0); // Timeout after 5 seconds for safety
   }
 }

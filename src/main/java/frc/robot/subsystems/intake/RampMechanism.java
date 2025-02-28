@@ -42,8 +42,8 @@ public class RampMechanism extends SubsystemBase {
         new SparkMax(RampMechanismConstants.pivotMotorTwo_motorPort, MotorType.kBrushless);
 
     // Configure motors - right motor needs to be inverted to work in opposition
-    configureMotor(leftPivotMotor, true);
-    configureMotor(rightPivotMotor, false);
+    configureMotor(leftPivotMotor, true, true, RampMechanismConstants.pivotMotorTwo_motorPort);
+    configureMotor(rightPivotMotor, false, false, 0);
 
     // Get controllers and encoders after configuration
     leftPidController = leftPivotMotor.getClosedLoopController();
@@ -58,7 +58,7 @@ public class RampMechanism extends SubsystemBase {
    * @param motor The SparkMax motor to configure
    * @param inverted Whether the motor direction should be inverted
    */
-  private void configureMotor(SparkMax motor, boolean inverted) {
+  private void configureMotor(SparkMax motor, boolean inverted, boolean follower, int followerID) {
     SparkMaxConfig motorConfig = new SparkMaxConfig();
 
     // Configure motor
@@ -77,8 +77,8 @@ public class RampMechanism extends SubsystemBase {
         .d(RampMechanismConstants.rampMechanismPivot_kD)
         .outputRange(RampMechanismConstants.OUTPUT_MIN, RampMechanismConstants.OUTPUT_MAX);
 
-    if (motor.getDeviceId() == 29) {
-      motorConfig.follow(30, inverted);
+    if (follower) {
+      motorConfig.follow(followerID, inverted);
     }
 
     // Set motor inversion if needed
