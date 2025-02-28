@@ -46,7 +46,8 @@ public class IntakeCommands {
       @Override
       public void end(boolean interrupted) {
         // Stop motors when command ends
-        endEffector.stop();
+        endEffector.revStop();
+        // endEffector.stop();
         Logger.recordOutput(
             "Commands/IntakeGamePiece", "Ended - " + (interrupted ? "Interrupted" : "Completed"));
       }
@@ -71,7 +72,7 @@ public class IntakeCommands {
       public void initialize() {
         Logger.recordOutput("Commands/OuttakeGamePiece", "Started");
         // Start outtake wheels
-        endEffector.outtake();
+        endEffector.intake();
       }
 
       @Override

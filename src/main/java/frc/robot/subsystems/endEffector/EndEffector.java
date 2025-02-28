@@ -72,6 +72,12 @@ public class EndEffector extends SubsystemBase {
     currentState = IntakeState.OUTTAKE;
   }
 
+  public void revStop() {
+    leftIntakeMotor.set(0.2);
+    rightIntakeMotor.set(0.2);
+    stop();
+  }
+
   /** Stops the intake wheels */
   public void stop() {
     leftIntakeMotor.set(0);

@@ -49,7 +49,7 @@ public final class Constants {
     public static final double OUTPUT_MAX = 0.5;
 
     // ROTATIONS
-    public static final double PULL_CAGE_DOWN = -5.0;
+    public static final double PULL_CAGE_DOWN = 0.0;
     public static final double ROTATION_INTAKE = -37.0;
     public static final double ROTATION_HANG = -119.0;
   }
@@ -84,9 +84,9 @@ public final class Constants {
   public static final class EndEffectorConstants {
     public static final int endEffectorMotorOne_Port = 22;
     public static final int endEffectorMotorTwo_Port = 23;
-    public static final int intakeLimitSwitchPort = 0;
-    public static final int outtakeLimitSwitchPort = 1;
-    public static final double endEffectorSpeed = 0.2;
+    public static final int intakeLimitSwitchPort = 1;
+    public static final int outtakeLimitSwitchPort = 0;
+    public static final double endEffectorSpeed = 0.15;
     public static final int algeDescorerMotor_Port = 24;
   }
 
@@ -105,7 +105,7 @@ public final class Constants {
 
     // Claw position setpoints (degrees)
     public static final double CLAW_OPEN_POSITION = 0.0;
-    public static final double CLAW_GRIP_POSITION = 85.0;
+    public static final double CLAW_GRIP_POSITION = 95.0;
 
     // Left 30, Right 85...
 

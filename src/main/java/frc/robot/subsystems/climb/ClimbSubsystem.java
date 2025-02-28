@@ -64,7 +64,7 @@ public class ClimbSubsystem extends SubsystemBase {
     SparkMaxConfig motorConfig = new SparkMaxConfig();
 
     // Configure motor
-    motorConfig.smartCurrentLimit(30).idleMode(IdleMode.kCoast);
+    motorConfig.smartCurrentLimit(10).idleMode(IdleMode.kBrake);
 
     // Configure encoder
     // Position conversion factor converts from motor rotations to arm degrees
