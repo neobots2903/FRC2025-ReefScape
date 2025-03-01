@@ -44,7 +44,7 @@ public final class Constants {
     public static final double rampMechanismPivot_kP = 0.05;
     public static final double rampMechanismPivot_kI = 0.0;
     public static final double rampMechanismPivot_kD = 0.0;
-    public static final double rampMechanismPivot_gearRatio = 100.0;
+    public static final double rampMechanismPivot_gearRatio = 250.0;
     public static final double OUTPUT_MIN = -0.5;
     public static final double OUTPUT_MAX = 0.5;
 
