@@ -70,7 +70,7 @@ public class SimpleAuto {
                         drive.setPose(
                             new Pose2d(
                                 drive.getPose().getTranslation(),
-                                (drive.getPose().getRotation().minus(new Rotation2d(-180))))),
+                                (drive.getPose().getRotation().minus(new Rotation2d(Math.toRadians(-180)))))),
                     drive)
                 .ignoringDisable(true))
         .withName("Simple Coral Auto");
