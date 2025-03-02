@@ -370,7 +370,7 @@ public class DriveCommands {
                   double distanceTraveledMeters =
                       drive.getPose().getTranslation().getDistance(initialPose.getTranslation());
                   return (Math.abs(absDistanceMeters - distanceTraveledMeters)
-                      < AUTO_DRIVE_TOLERANCE) || drive.getAverageCurrent() > 25.0;
+                      < AUTO_DRIVE_TOLERANCE);
                 }),
 
         // Finally, stop the robot
