@@ -35,7 +35,7 @@ public class SimpleAuto {
     return Commands.sequence(
             // Step 1: Drive forward.
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting drive forward")),
-            DriveCommands.driveDistance(drive, 58.0 + ROBOT_OFFSET), // From robot front.
+            DriveCommands.driveDistance(drive, 54.0 + ROBOT_OFFSET), // From robot front.
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed drive forward")),
 
             // Step 2: Raise lift to L3 position

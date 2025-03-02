@@ -123,6 +123,8 @@ public class RobotContainer {
         "Drive Forward 5 feet", DriveCommands.driveDistance(drive, 60.0));
     autoChooser.addOption( // Drive forward 1 foot
         "Drive Forward 1 foot", DriveCommands.driveDistance(drive, 12.0));
+    autoChooser.addOption( // Drive forward, raise lift, outtake (BACK BUMPER ON START LINE)
+        "Simple Coral L4", SimpleAuto.simpleCoral(drive, lift, endEffector, LiftConstants.L_FOUR));
 
     // // Set up SysId routines
     // autoChooser.addOption(

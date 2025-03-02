@@ -369,8 +369,8 @@ public class DriveCommands {
                   // End the command when we're close enough to the target distance
                   double distanceTraveledMeters =
                       drive.getPose().getTranslation().getDistance(initialPose.getTranslation());
-                  return Math.abs(absDistanceMeters - distanceTraveledMeters)
-                      < AUTO_DRIVE_TOLERANCE;
+                  return (Math.abs(absDistanceMeters - distanceTraveledMeters)
+                      < AUTO_DRIVE_TOLERANCE) || drive.getAverageCurrent() > 25.0;
                 }),
 
         // Finally, stop the robot

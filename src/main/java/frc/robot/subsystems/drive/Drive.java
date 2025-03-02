@@ -321,6 +321,17 @@ public class Drive extends SubsystemBase {
     return output;
   }
 
+  //Returns the average current used by all four drive motors
+  public double getAverageCurrent() {
+      double avgCurrent = 0.0; //Average current variable
+
+      avgCurrent = modules[0].getDriveCurrent() + modules[1].getDriveCurrent() + modules[2].getDriveCurrent() + modules[3].getDriveCurrent();
+
+      avgCurrent = avgCurrent / 4.0;
+
+      return avgCurrent;
+  }
+
   /** Returns the current odometry pose. */
   @AutoLogOutput(key = "Odometry/Robot")
   public Pose2d getPose() {
@@ -365,4 +376,5 @@ public class Drive extends SubsystemBase {
       new Translation2d(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)
     };
   }
+
 }

@@ -125,6 +125,10 @@ public class Module {
     return new SwerveModuleState(getVelocityMetersPerSec(), getAngle());
   }
 
+  public double getDriveCurrent() {
+    return inputs.driveCurrentAmps;
+  }
+
   /** Returns the module positions received this cycle. */
   public SwerveModulePosition[] getOdometryPositions() {
     return odometryPositions;
