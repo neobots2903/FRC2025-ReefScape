@@ -28,26 +28,28 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.LiftConstants;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriveToPose;
+import frc.robot.commands.IntakeCommands;
+import frc.robot.commands.SimpleAuto;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.climb.ClimbSubsystem;
 import frc.robot.subsystems.drive.*;
+import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.GyroIO;
+import frc.robot.subsystems.drive.GyroIOPigeon2;
+import frc.robot.subsystems.drive.ModuleIO;
+import frc.robot.subsystems.drive.ModuleIOSim;
+import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.endEffector.EndEffector;
+import frc.robot.subsystems.intake.RampMechanism;
 import frc.robot.subsystems.lift.Lift;
 import frc.robot.subsystems.vision.*;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
-
-// later.
-
-/* NOTES */
-/*
- * - I'd probably instantiate the subsystems inside of the RobotContainer constructor instead of
- *   having them be fields. This way, you can use the RobotContainer to determine which
- *   subsystems to instantiate based on the current mode. Right now, they would all move under "REAL".
- */
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -60,7 +62,6 @@ public class RobotContainer {
   private final Drive drive;
   private SwerveDriveSimulation driveSimulation = null;
   private final Vision vision;
-  private Lift lift;
 
   // Controller
   private final CommandXboxController driverController = new CommandXboxController(0);
@@ -68,13 +69,24 @@ public class RobotContainer {
       new CommandXboxController(1); // Controller for driver.
 
   // Subsystems
-  // ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
-  // RampMechanism ramp = new RampMechanism(); // System for ramp control.
-  // Lift lift = new Lift(operatorController); // Subsystem for the lift control.
-  // EndEffector endEffector = new EndEffector(); // Subsystem to control the end effector.
+  ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
+  RampMechanism ramp = new RampMechanism(); // System for ramp control.
+  Lift lift = new Lift(); // Subsystem for the lift control.
+  EndEffector endEffector = new EndEffector(); // Subsystem to control the end effector.
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
+
+  // Lift positions array should be double, not int
+  private final double[] liftPositions =
+      new double[] {
+        LiftConstants.BOTTOM,
+        LiftConstants.L_ONE,
+        LiftConstants.L_TWO,
+        LiftConstants.L_THREE,
+        LiftConstants.L_FOUR
+      };
+  private int currentLiftPositionIndex = 0;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -94,7 +106,6 @@ public class RobotContainer {
                 drive::addVisionMeasurement,
                 new VisionIOPhotonVision(camera0Name, robotToCamera0),
                 new VisionIOPhotonVision(camera1Name, robotToCamera1));
-        lift = Lift.getInstance();
         break;
 
       case SIM:
@@ -136,21 +147,33 @@ public class RobotContainer {
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
-    // Set up SysId routines
-    autoChooser.addOption(
-        "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
-    autoChooser.addOption(
-        "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Forward)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Reverse)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    // Add our simple autonomous routines
+    autoChooser.addOption( // Drive forward, raise lift, outtake (BACK BUMPER ON START LINE)
+        "Simple Coral L3", SimpleAuto.simpleCoral(drive, lift, endEffector, LiftConstants.L_THREE));
+    autoChooser.addOption( // Drive forward, raise lift, outtake (BACK BUMPER ON START LINE)
+        "Simple Coral L2", SimpleAuto.simpleCoral(drive, lift, endEffector, LiftConstants.L_TWO));
+    autoChooser.addOption( // Drive forward 5 feet
+        "Drive Forward 5 feet", DriveCommands.driveDistance(drive, 60.0));
+    autoChooser.addOption( // Drive forward 1 foot
+        "Drive Forward 1 foot", DriveCommands.driveDistance(drive, 12.0));
+    autoChooser.addOption( // Drive forward, raise lift, outtake (BACK BUMPER ON START LINE)
+        "Simple Coral L4", SimpleAuto.simpleCoral(drive, lift, endEffector, LiftConstants.L_FOUR));
+
+    // // Set up SysId routines
+    // autoChooser.addOption(
+    //     "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
+    // autoChooser.addOption(
+    //     "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+    // autoChooser.addOption(
+    //     "Drive SysId (Quasistatic Forward)",
+    //     drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    // autoChooser.addOption(
+    //     "Drive SysId (Quasistatic Reverse)",
+    //     drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+    // autoChooser.addOption(
+    //     "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+    // autoChooser.addOption(
+    //     "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
     // Configure the button bindings
     configureButtonBindings();
@@ -163,7 +186,17 @@ public class RobotContainer {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
-    // Default command, normal field-relative drive
+    configureDriverControls();
+    configureOperatorControls();
+  }
+
+  /**
+   * Configure controls for the main driver Driver responsibilities: - Robot movement and
+   * orientation - Emergency functions
+   */
+  private void configureDriverControls() {
+    // Left stick: Translation control (forward/backward with Y-axis, left/right with X-axis)
+    // Right stick: Rotation control (X-axis controls turning)
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
@@ -230,10 +263,12 @@ public class RobotContainer {
 
     driverController.b().onTrue(Commands.runOnce(resetOdometry).ignoringDisable(true));
 
-    operatorController.povUp().onTrue(Commands.runOnce(() -> lift.setPosition(Lift.SetPoint.L1)));
+    operatorController
+        .povUp()
+        .onTrue(Commands.runOnce(() -> lift.runLiftToPos(LiftConstants.L_ONE)));
     operatorController
         .povDown()
-        .onTrue(Commands.runOnce(() -> lift.setPosition(Lift.SetPoint.BOTTOM)));
+        .onTrue(Commands.runOnce(() -> lift.runLiftToPos(LiftConstants.BOTTOM)));
   }
 
   public Pose2d calculateOffsetFromCenter(
@@ -270,6 +305,102 @@ public class RobotContainer {
 
     // Return the final target pose
     return finalPose;
+  }
+
+  /**
+   * Configure controls for the operator Operator responsibilities: - Lift control - Game piece
+   * manipulation - Mechanism control
+   */
+  private void configureOperatorControls() {
+    // === LIFT CONTROLS (D-PAD) ===
+    // D-Pad Up: Move lift directly to highest position (L4)
+    operatorController
+        .povUp()
+        .onTrue(
+            Commands.runOnce(
+                    () -> {
+                      currentLiftPositionIndex = liftPositions.length - 1;
+                      lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
+                    })
+                .withName("Lift to Top Position (L4)"));
+
+    // D-Pad Down: Move lift directly to bottom position
+    operatorController
+        .povDown()
+        .onTrue(
+            Commands.runOnce(
+                    () -> {
+                      currentLiftPositionIndex = 0;
+                      lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
+                    })
+                .withName("Lift to Bottom Position"));
+
+    // D-Pad Left: Move lift down one position
+    operatorController
+        .povLeft()
+        .onTrue(
+            Commands.runOnce(
+                    () -> {
+                      currentLiftPositionIndex = Math.max(currentLiftPositionIndex - 1, 0);
+                      lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
+                    })
+                .withName("Lift Position Down One"));
+
+    // D-Pad Right: Move lift up one position
+    operatorController
+        .povRight()
+        .onTrue(
+            Commands.runOnce(
+                    () -> {
+                      currentLiftPositionIndex =
+                          Math.min(currentLiftPositionIndex + 1, liftPositions.length - 1);
+                      lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
+                    })
+                .withName("Lift Position Up One"));
+
+    // === RAMP MECHANISM CONTROLS (BUMPERS) ===
+    // Left Bumper: Move ramp to intake position
+    operatorController
+        .leftBumper()
+        .onTrue(
+            Commands.runOnce(() -> ramp.moveToIntakePosition())
+                .withName("Ramp to Intake Position"));
+
+    // Right Bumper: Move ramp to hang position
+    operatorController
+        .rightBumper()
+        .onTrue(
+            Commands.runOnce(() -> ramp.moveToHangPosition()).withName("Ramp to Hang Position"));
+
+    // Back Button: Pull the dang cage down!
+    operatorController
+        .back()
+        .onTrue(Commands.runOnce(() -> ramp.pullCageDown()).withName("Yank that cage!"));
+
+    // // === CLIMB CONTROLS (TRIGGERS) ===
+    // Left Trigger: Move claws to open position
+    operatorController
+        .leftTrigger(0.25) // 0.25 threshold for activation
+        .onTrue(Commands.runOnce(() -> climb.moveToOpenPosition()).withName("Claws Open"));
+
+    // Right Trigger: Move claws to grip position
+    operatorController
+        .rightTrigger(0.25) // 0.25 threshold for activation
+        .onTrue(Commands.runOnce(() -> climb.moveToGripPosition()).withName("Claws Grip"));
+
+    // === GAME PIECE CONTROLS (FACE BUTTONS) ===
+    // A button: Manual Intake
+    operatorController
+        .a()
+        .onTrue(new InstantCommand(() -> endEffector.intake()))
+        .onFalse(new InstantCommand(() -> endEffector.stop()));
+
+    // B button: Outtake game piece (pushes piece out completely)
+    operatorController
+        .b()
+        .onTrue(
+            IntakeCommands.intakeUntilPiecePassesThrough(endEffector)
+                .withName("Outtake Game Piece"));
   }
 
   /**

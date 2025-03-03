@@ -42,7 +42,7 @@ public class DriveCommands {
   private static final double ANGLE_KD = 0.4;
   private static final double ANGLE_MAX_VELOCITY = 8.0;
   private static final double ANGLE_MAX_ACCELERATION = 20.0;
-  private static final double FF_START_DELAY = 2.0; // Secs
+  private static final double FF_START_DELAY = 1.0; // Secs
   private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
@@ -52,6 +52,11 @@ public class DriveCommands {
   private static final double LINEAR_KD = 0.0;
   private static final double LINEAR_MAX_VELOCITY = 2.0; // meters/sec
   private static final double LINEAR_MAX_ACCELERATION = 3.0; // meters/sec^2
+  // Constants for autonomous driving
+  private static final double AUTO_DRIVE_KP = 3.0; // Proportional constant for distance control
+  private static final double AUTO_DRIVE_MAX_SPEED = 2.0; // Maximum speed in meters per second
+  private static final double AUTO_DRIVE_TOLERANCE =
+      Units.inchesToMeters(1); // Distance tolerance in meters
 
   private DriveCommands() {}
 
@@ -95,9 +100,10 @@ public class DriveCommands {
                   linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
                   linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
                   omega * drive.getMaxAngularSpeedRadPerSec());
-          boolean isFlipped =
-              DriverStation.getAlliance().isPresent()
-                  && DriverStation.getAlliance().get() == Alliance.Red;
+          boolean isFlipped = false;
+          // boolean isFlipped =
+          //     DriverStation.getAlliance().isPresent()
+          //         && DriverStation.getAlliance().get() == Alliance.Blue;
           drive.runVelocity(
               ChassisSpeeds.fromFieldRelativeSpeeds(
                   speeds,
@@ -241,7 +247,7 @@ public class DriveCommands {
                     sumX += velocitySamples.get(i);
                     sumY += voltageSamples.get(i);
                     sumXY += velocitySamples.get(i) * voltageSamples.get(i);
-                    sumX2 += velocitySamples.get(i) * velocitySamples.get(i);
+                    sumX2 += velocitySamples.get(i) * voltageSamples.get(i);
                   }
                   double kS = (sumY * sumX2 - sumX * sumXY) / (n * sumX2 - sumX * sumX);
                   double kV = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
@@ -322,9 +328,100 @@ public class DriveCommands {
                     })));
   }
 
+  /**
+   * Creates a command that drives the robot forward a specified distance.
+   *
+   * @param drive The drive subsystem
+   * @param distanceInches The distance to drive in inches (positive = forward), Measured from robot
+   *     center
+   * @return A command that will drive forward the specified distance
+   */
+  public static Command driveDistance(Drive drive, double distanceInches) {
+    // Convert inches to meters for internal calculations
+    double distanceMeters = Units.inchesToMeters(distanceInches);
+    // Track the direction (positive = forward, negative = backward)
+    final boolean isReversed = distanceMeters < 0;
+    // Use absolute distance for calculations but preserve direction for final speed
+    final double absDistanceMeters = Math.abs(distanceMeters);
+
+    return Commands.sequence(
+        // First, store the starting pose
+        Commands.runOnce(
+            () -> {
+              // Store starting position to measure distance from
+              initialPose = drive.getPose();
+              System.out.println(
+                  "Starting autonomous drive for "
+                      + distanceInches
+                      + " inches ("
+                      + distanceMeters
+                      + " meters), Direction: "
+                      + (isReversed ? "REVERSE" : "FORWARD"));
+            }),
+
+        // Then drive until we reach the target distance
+        Commands.run(
+                () -> {
+                  // Calculate how far we've gone so far
+                  double distanceTraveledMeters =
+                      drive.getPose().getTranslation().getDistance(initialPose.getTranslation());
+                  double absRemainingMeters = absDistanceMeters - distanceTraveledMeters;
+
+                  // Apply manual proportional control: speed = error * kP
+                  double absSpeed =
+                      Math.min(AUTO_DRIVE_MAX_SPEED, AUTO_DRIVE_KP * absRemainingMeters);
+
+                  // Maintain minimum speed to overcome friction in either direction
+                  if (absSpeed < 0.4 && absRemainingMeters > 0) {
+                    absSpeed = 0.4;
+                  }
+
+                  // Stop when we've reached the target
+                  if (absRemainingMeters <= 0) {
+                    absSpeed = 0;
+                  }
+
+                  // Apply direction to speed
+                  double finalSpeed = isReversed ? -absSpeed : absSpeed;
+
+                  // Apply the calculated speed
+                  drive.runVelocity(new ChassisSpeeds(finalSpeed, 0, 0));
+
+                  // Log in inches for clarity
+                  double absRemainingInches = Units.metersToInches(absRemainingMeters);
+                  System.out.println(
+                      "Distance remaining: "
+                          + absRemainingInches
+                          + " inches, Speed: "
+                          + finalSpeed
+                          + " m/s");
+                },
+                drive)
+            .until(
+                () -> {
+                  // End the command when we're close enough to the target distance
+                  double distanceTraveledMeters =
+                      drive.getPose().getTranslation().getDistance(initialPose.getTranslation());
+                  return (Math.abs(absDistanceMeters - distanceTraveledMeters)
+                      < AUTO_DRIVE_TOLERANCE)
+                  /*|| drive.getAverageCurrent() > 25.0*/ ; // Safe number: 45
+                }),
+
+        // Finally, stop the robot
+        Commands.runOnce(
+            () -> {
+              drive.runVelocity(new ChassisSpeeds(0, 0, 0));
+              System.out.println("Autonomous drive complete");
+            },
+            drive));
+  }
+
   private static class WheelRadiusCharacterizationState {
     double[] positions = new double[4];
     Rotation2d lastAngle = new Rotation2d();
     double gyroDelta = 0.0;
   }
+
+  // Add a field to store initial pose for distance driving
+  private static Pose2d initialPose = new Pose2d();
 }

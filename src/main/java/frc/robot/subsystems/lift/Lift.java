@@ -1,120 +1,115 @@
 package frc.robot.subsystems.lift;
 
-import com.thethriftybot.Conversion;
-import com.thethriftybot.Conversion.PositionUnit;
-import com.thethriftybot.ThriftyNova;
-import com.thethriftybot.ThriftyNova.CurrentType;
-import com.thethriftybot.ThriftyNova.EncoderType;
-import com.thethriftybot.ThriftyNova.PIDSlot;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.spark.ClosedLoopSlot;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
+import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.LiftConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class Lift extends SubsystemBase {
-  // Physical constants
-  private static final double INCHES_PER_RADIAN = 2.5;
-  private static final double POSITION_TOLERANCE = 0.25; // inches
+  private SparkMax leftMotor;
+  private SparkMax rightMotor;
+  private SparkClosedLoopController leftClosedLoopController;
+  private SparkClosedLoopController rightClosedLoopController;
+  private RelativeEncoder leftEncoder;
+  private RelativeEncoder rightEncoder;
+  private double currentSetpoint = 0.0;
 
-  // Motor configuration constants
-  private static final double RAMP_UP_TIME = 0.25;
-  private static final double RAMP_DOWN_TIME = 0.05;
-  private static final double FORWARD_MAX_OUTPUT = 1.0;
-  private static final double REVERSE_MAX_OUTPUT = 0.25;
-  private static final double SOFT_LIMIT_MIN = 0;
-  private static final double SOFT_LIMIT_MAX = 7 * Math.PI;
-  private static final int CURRENT_LIMIT = 50;
+  public Lift() {
+    // Initialize motors
+    leftMotor = new SparkMax(LiftConstants.liftMotorOneCanID, MotorType.kBrushless);
+    rightMotor = new SparkMax(LiftConstants.liftMotorTwoCanID, MotorType.kBrushless);
 
-  // PID constants
-  private static final double kP = 0.5;
-  private static final double kI = 0;
-  private static final double kD = 0;
-  private static final double kFF = 1.2;
+    // Configure motors - invert the left motor instead of negating its setpoint later
+    configureMotor(leftMotor, true, true, LiftConstants.liftMotorTwoCanID);
+    configureMotor(rightMotor, false, false, 0);
 
-  public enum SetPoint {
-    BOTTOM(0),
-    L1(18),
-    L2(32),
-    L3(42),
-    L4(56);
+    // Get controllers and encoders after configuration
+    leftClosedLoopController = leftMotor.getClosedLoopController();
+    leftEncoder = leftMotor.getEncoder();
+    rightClosedLoopController = rightMotor.getClosedLoopController();
+    rightEncoder = rightMotor.getEncoder();
+  }
 
-    final double position;
+  /**
+   * Configures a SparkMax motor with standardized settings
+   *
+   * @param motor The SparkMax motor to configure
+   * @param inverted Whether the motor direction should be inverted
+   */
+  private void configureMotor(SparkMax motor, boolean inverted, boolean follower, int followID) {
+    SparkMaxConfig motorConfig = new SparkMaxConfig();
 
-    SetPoint(double position) {
-      this.position = position;
+    // Configure encoder
+    motorConfig.encoder.positionConversionFactor(LiftConstants.POSITION_CONVERSION_FACTOR);
+
+    // Configure closed loop controller with PID values
+    motorConfig
+        .closedLoop
+        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+        .p(LiftConstants.PID_P)
+        .i(LiftConstants.PID_I)
+        .d(LiftConstants.PID_D)
+        .outputRange(LiftConstants.OUTPUT_MIN, LiftConstants.OUTPUT_MAX);
+
+    motorConfig.smartCurrentLimit(40);
+
+    if (follower) {
+      motorConfig.follow(followID, inverted);
     }
-  }
 
-  private final ThriftyNova m_leftMotor;
-  private final ThriftyNova m_rightMotor;
-  private final Conversion converter;
-
-  private SetPoint currentSetPoint = SetPoint.BOTTOM;
-  private double currentPosition = 0;
-
-  // Singleton instance
-  private static volatile Lift instance;
-
-  public static synchronized Lift getInstance() {
-    if (instance == null) {
-      instance = new Lift();
+    // Set motor inversion if needed
+    if (inverted) {
+      motorConfig.inverted(inverted);
     }
-    return instance;
+
+    // Apply configuration
+    motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
-  private Lift() {
-    converter = new Conversion(PositionUnit.RADIANS, EncoderType.INTERNAL);
-
-    m_leftMotor = configureMotor(100, false); // CAN ID 100, not inverted
-    m_rightMotor = configureMotor(101, true); // CAN ID 101, inverted
-  }
-
-  private ThriftyNova configureMotor(int canId, boolean inverted) {
-    ThriftyNova motor = new ThriftyNova(canId);
-
-    // Basic motor configuration
-    motor.setBrakeMode(true);
-    motor.setInverted(inverted);
-    motor.setRampUp(RAMP_UP_TIME);
-    motor.setRampDown(RAMP_DOWN_TIME);
-    motor.setMaxOutput(FORWARD_MAX_OUTPUT, REVERSE_MAX_OUTPUT);
-
-    // Safety limits
-    motor.setSoftLimits(SOFT_LIMIT_MIN, SOFT_LIMIT_MAX);
-    motor.enableSoftLimits(true);
-    motor.setMaxCurrent(CurrentType.SUPPLY, CURRENT_LIMIT);
-
-    // Encoder and PID configuration
-    motor.useEncoderType(EncoderType.INTERNAL);
-    motor.usePIDSlot(PIDSlot.SLOT0);
-
-    // PID configuration
-    motor.pid0.setP(kP);
-    motor.pid0.setI(kI);
-    motor.pid0.setD(kD);
-    motor.pid0.setFF(kFF);
-
-    motor.clearErrors();
-    return motor;
-  }
-
-  public void setPosition(SetPoint setPoint) {
-    this.currentSetPoint = setPoint;
-    double motorPosition = converter.toMotor(setPoint.position / INCHES_PER_RADIAN);
-    m_leftMotor.setPosition(motorPosition);
-    m_rightMotor.setPosition(motorPosition);
-  }
-
-  public boolean atSetpoint() {
-    return Math.abs(currentPosition - currentSetPoint.position) < POSITION_TOLERANCE;
+  public void runLiftToPos(double pos) {
+    this.currentSetpoint = pos;
+    rightClosedLoopController.setReference(
+        this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
   }
 
   @Override
   public void periodic() {
-    currentPosition = converter.fromMotor(m_leftMotor.getPosition()) * INCHES_PER_RADIAN;
+    // Log motor currents
+    Logger.recordOutput("Lift/LeftMotor/Current", leftMotor.getOutputCurrent());
+    Logger.recordOutput("Lift/RightMotor/Current", rightMotor.getOutputCurrent());
 
-    // Dashboard telemetry
-    Logger.recordOutput("Elevator/Position", currentPosition);
-    Logger.recordOutput("Elevator/Current", m_leftMotor.getStatorCurrent());
-    Logger.recordOutput("Elevator/Target", currentSetPoint.position);
-    Logger.recordOutput("Elevator/AtSetpoint", atSetpoint());
+    // Log motor positions
+    Logger.recordOutput("Lift/LeftMotor/Position", leftEncoder.getPosition());
+    Logger.recordOutput("Lift/RightMotor/Position", rightEncoder.getPosition());
+
+    // Log motor velocities
+    Logger.recordOutput("Lift/LeftMotor/Velocity", leftEncoder.getVelocity());
+    Logger.recordOutput("Lift/RightMotor/Velocity", rightEncoder.getVelocity());
+
+    // Log applied output
+    Logger.recordOutput("Lift/LeftMotor/AppliedOutput", leftMotor.getAppliedOutput());
+    Logger.recordOutput("Lift/RightMotor/AppliedOutput", rightMotor.getAppliedOutput());
+
+    // Log temperatures
+    Logger.recordOutput("Lift/LeftMotor/Temperature", leftMotor.getMotorTemperature());
+    Logger.recordOutput("Lift/RightMotor/Temperature", rightMotor.getMotorTemperature());
+
+    // Log control metrics
+    Logger.recordOutput("Lift/Setpoint", currentSetpoint);
+    Logger.recordOutput("Lift/LeftError", currentSetpoint - leftEncoder.getPosition());
+    Logger.recordOutput("Lift/RightError", currentSetpoint - rightEncoder.getPosition());
+
+    // Log motor synchronization (difference between motors)
+    Logger.recordOutput(
+        "Lift/PositionDifference", leftEncoder.getPosition() - rightEncoder.getPosition());
   }
 }
