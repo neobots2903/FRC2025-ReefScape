@@ -200,8 +200,8 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> driverController.getLeftY(),
-            () -> driverController.getLeftX(),
+            () -> -driverController.getLeftY(),
+            () -> -driverController.getLeftX(),
             () -> -driverController.getRightX()));
 
     // Switch to robot-relative drive when a is held (for vision)
