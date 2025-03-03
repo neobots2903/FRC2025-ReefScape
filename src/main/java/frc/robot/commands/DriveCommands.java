@@ -370,7 +370,8 @@ public class DriveCommands {
                   double distanceTraveledMeters =
                       drive.getPose().getTranslation().getDistance(initialPose.getTranslation());
                   return (Math.abs(absDistanceMeters - distanceTraveledMeters)
-                      < AUTO_DRIVE_TOLERANCE);
+                      < AUTO_DRIVE_TOLERANCE)
+                  /*|| drive.getAverageCurrent() > 25.0*/ ; // Safe number: 45
                 }),
 
         // Finally, stop the robot
