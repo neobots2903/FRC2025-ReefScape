@@ -62,7 +62,9 @@ public class RampMechanism extends SubsystemBase {
     SparkMaxConfig motorConfig = new SparkMaxConfig();
 
     // Configure motor
-    motorConfig.smartCurrentLimit(65).idleMode(IdleMode.kBrake);
+    motorConfig
+        .smartCurrentLimit(RampMechanismConstants.rampMechanismPivot_stallAmperage)
+        .idleMode(IdleMode.kBrake);
 
     // Configure encoder
     motorConfig.encoder.positionConversionFactor(

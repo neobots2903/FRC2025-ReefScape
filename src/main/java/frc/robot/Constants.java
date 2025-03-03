@@ -30,13 +30,6 @@ public final class Constants {
   public static final Pose2d zeroPose2d = new Pose2d();
   public static final Pose3d zeroPose3d = new Pose3d();
 
-  // OFFSETS ARE 0.2 Y, subtracting offset in pose command (icky)
-  public static final Pose2d reefTagOffsetLeft = // Robot +0.2 away X
-      new Pose2d(new Translation2d(0.0, -0.25), Rotation2d.fromDegrees(0));
-
-  public static final Pose2d reefTagOffsetRight = // robot -0.2 away X
-      new Pose2d(new Translation2d(0.0, 0.25), Rotation2d.fromDegrees(0));
-
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
 
@@ -55,8 +48,7 @@ public final class Constants {
     // Neo 1.1 with Spark Max
     public static final int pivotMotorOne_motorPort = 29;
     public static final int pivotMotorTwo_motorPort = 30;
-    public static final int rampMechanismPivot_stallAmperage = 50;
-    public static final boolean rampMechanismPivot_EnableStatorCurrentLimit = true;
+    public static final int rampMechanismPivot_stallAmperage = 65;
     public static final double rampMechanismPivot_kP = 0.05;
     public static final double rampMechanismPivot_kI = 0.0;
     public static final double rampMechanismPivot_kD = 0.0;
@@ -122,14 +114,5 @@ public final class Constants {
     // Claw position setpoints (degrees)
     public static final double CLAW_OPEN_POSITION = 0.0;
     public static final double CLAW_GRIP_POSITION = 95.0;
-
-    // Left 30, Right 85...
-
-    // Legacy constants (can be removed later)
-    public static final double kGripMotorSpeeds = 0.1;
-    public static final double kGripMotorOpenSpeeds = -0.1;
-    public static final double kGripMotorStopped = 0.0;
-    public static final double kClimbPercentEnabled = 0.2;
-    public static final double kClimbPercentDisabled = 0.0;
   }
 }
