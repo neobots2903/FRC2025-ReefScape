@@ -17,8 +17,7 @@ import org.littletonrobotics.junction.Logger;
 
 /**
  * Subsystem that controls the ramp/arm mechanism This allows the robot to position the ramp at
- * various angles for intake, outtake, or hang operations.
- * Expects degrees to be used for setpoints.
+ * various angles for intake, outtake, or hang operations. Expects degrees to be used for setpoints.
  */
 public class RampMechanism extends SubsystemBase {
   // Motors

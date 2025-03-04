@@ -24,10 +24,10 @@ public class Lift extends SubsystemBase {
   private double currentSetpoint = 0.0;
 
   /**
-   * Constructs the Lift subsystem and initializes hardware.
-   * Expects inches to be used for setpoints.
+   * Constructs the Lift subsystem and initializes hardware. Expects inches to be used for
+   * setpoints.
    *
-   * Note: The left motor is inverted to work in opposition to the right motor.
+   * <p>Note: The left motor is inverted to work in opposition to the right motor.
    */
   public Lift() {
     // Initialize motors

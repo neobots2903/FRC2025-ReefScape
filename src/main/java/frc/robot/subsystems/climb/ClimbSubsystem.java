@@ -21,8 +21,7 @@ import org.littletonrobotics.junction.Logger;
 
 /**
  * Subsystem that controls the climbing mechanism. It positions two claws that can grip the climbing
- * bar.
- * Expects degrees to be used for setpoints.
+ * bar. Expects degrees to be used for setpoints.
  */
 public class ClimbSubsystem extends SubsystemBase {
   // Motors
