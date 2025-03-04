@@ -90,9 +90,10 @@ public class DriveToPose extends Command {
 
     ChassisSpeeds speeds =
         new ChassisSpeeds(-driveVelocity.getX(), -driveVelocity.getY(), thetaVelocity);
-    boolean isFlipped =
-        DriverStation.getAlliance().isPresent()
-            && DriverStation.getAlliance().get() == Alliance.Red;
+    boolean isFlipped = false;
+    // boolean isFlipped =
+    //     DriverStation.getAlliance().isPresent()
+    //         && DriverStation.getAlliance().get() == Alliance.Red;
     drive.runVelocity(
         ChassisSpeeds.fromFieldRelativeSpeeds(
             speeds,

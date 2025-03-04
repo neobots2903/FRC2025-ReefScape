@@ -341,6 +341,43 @@ public class Drive extends SubsystemBase {
     return output;
   }
 
+  /** Returns the pose of a tag + offset */
+  public Pose2d calculateOffsetFromCenter(
+      Pose2d tagPose, double distanceFromCenter, boolean moveRight) {
+    // Convert tag heading to radians
+    double tagRadians = tagPose.getRotation().getRadians();
+
+    // Define the offset angle (Right = -90 degrees, Left = +90 degrees)
+    double offsetAngle = moveRight ? Math.PI / 2 : -Math.PI / 2;
+
+    // Calculate the offset relative to the tag's orientation
+    double xOffset =
+        distanceFromCenter
+            * (Math.cos(tagRadians) * Math.cos(offsetAngle)
+                - Math.sin(tagRadians) * Math.sin(offsetAngle));
+    double yOffset =
+        distanceFromCenter
+            * (Math.sin(tagRadians) * Math.cos(offsetAngle)
+                + Math.cos(tagRadians) * Math.sin(offsetAngle));
+
+    // Compute the final target pose in field coordinates
+    double finalX = tagPose.getX() + xOffset;
+    double finalY = tagPose.getY() + yOffset;
+
+    // Ensure the robot faces the tag (by rotating 180 degrees from the tag's heading)
+    Pose2d finalPose =
+        new Pose2d(
+            new Translation2d(finalX, finalY),
+            new Rotation2d(Math.toRadians(tagPose.getRotation().getDegrees() + 180)));
+
+    Logger.recordOutput("AutoAlign/TagPose", tagPose);
+    Logger.recordOutput("AutoAlign/Offset", new Pose2d(xOffset, yOffset, new Rotation2d()));
+    Logger.recordOutput("AutoAlign/FinalOffset", finalPose);
+
+    // Return the final target pose
+    return finalPose;
+  }
+
   // Returns the average current used by all four drive motors
   @AutoLogOutput(key = "Drive/DriveCurrent")
   public double getDriveCurrent() {
