@@ -17,9 +17,9 @@ import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.vision.VisionConstants.*; // Move these to actual constants file
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
@@ -29,10 +29,10 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.LiftConstants;
+import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriveToPose;
 import frc.robot.commands.IntakeCommands;
-import frc.robot.commands.SimpleAuto;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.climb.ClimbSubsystem;
 import frc.robot.subsystems.drive.*;
@@ -109,9 +109,10 @@ public class RobotContainer {
         break;
 
       case SIM:
+        final Pose2d MID_START = new Pose2d(7, 4, new Rotation2d(180));
+        final Pose2d LEFT_START = new Pose2d(20, 20, new Rotation2d(180));
         // Sim robot, instantiate physics sim IO implementations
-        driveSimulation =
-            new SwerveDriveSimulation(Drive.mapleSimConfig, new Pose2d(3, 3, new Rotation2d()));
+        driveSimulation = new SwerveDriveSimulation(Drive.mapleSimConfig, MID_START);
         SimulatedArena.getInstance().addDriveTrainSimulation(driveSimulation);
         drive =
             new Drive(
@@ -144,20 +145,29 @@ public class RobotContainer {
         break;
     }
 
+    // Register Named Commands
+    NamedCommands.registerCommand("ScoreCoral", AutoCommands.ScoreCoral(lift, endEffector));
+    NamedCommands.registerCommand(
+        "RemoveAlgaeL2", AutoCommands.RemoveAlgae(lift, endEffector, LiftConstants.L_TWO));
+    NamedCommands.registerCommand(
+        "RemoveAlgaeL3", AutoCommands.RemoveAlgae(lift, endEffector, LiftConstants.L_THREE));
+
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
     // Add our simple autonomous routines
     autoChooser.addOption( // Drive forward, raise lift, outtake (BACK BUMPER ON START LINE)
-        "Simple Coral L3", SimpleAuto.simpleCoral(drive, lift, endEffector, LiftConstants.L_THREE));
+        "Simple Coral L4",
+        AutoCommands.simpleCoral(drive, lift, endEffector, LiftConstants.L_FOUR));
     autoChooser.addOption( // Drive forward, raise lift, outtake (BACK BUMPER ON START LINE)
-        "Simple Coral L2", SimpleAuto.simpleCoral(drive, lift, endEffector, LiftConstants.L_TWO));
-    autoChooser.addOption( // Drive forward 5 feet
-        "Drive Forward 5 feet", DriveCommands.driveDistance(drive, 60.0));
-    autoChooser.addOption( // Drive forward 1 foot
-        "Drive Forward 1 foot", DriveCommands.driveDistance(drive, 12.0));
+        "Simple Coral L3",
+        AutoCommands.simpleCoral(drive, lift, endEffector, LiftConstants.L_THREE));
     autoChooser.addOption( // Drive forward, raise lift, outtake (BACK BUMPER ON START LINE)
-        "Simple Coral L4", SimpleAuto.simpleCoral(drive, lift, endEffector, LiftConstants.L_FOUR));
+        "Simple Coral L2", AutoCommands.simpleCoral(drive, lift, endEffector, LiftConstants.L_TWO));
+    autoChooser.addOption( // Drive forward 5 feet (from robot center)
+        "Drive Forward 5 feet", DriveCommands.driveDistance(drive, 60.0 + 15));
+    autoChooser.addOption( // Drive forward 1 foot (from robot center)
+        "Drive Forward 1 foot", DriveCommands.driveDistance(drive, 12.0 + 15));
 
     // // Set up SysId routines
     // autoChooser.addOption(

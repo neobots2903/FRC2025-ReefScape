@@ -101,7 +101,7 @@ public class Drive extends SubsystemBase {
                   COTS.WHEELS.DEFAULT_NEOPRENE_TREAD.cof,
                   3))
           .withTrackLengthTrackWidth(Inches.of(25), Inches.of(25))
-          .withBumperSize(Inches.of(30), Inches.of(30));
+          .withBumperSize(Inches.of(36), Inches.of(36));
 
   static final Lock odometryLock = new ReentrantLock();
   private final GyroIO gyroIO;
