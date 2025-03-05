@@ -68,7 +68,7 @@ public class RobotContainer {
   final Pose2d MID_START = new Pose2d(7.15, 4, TOWARDS_DS);
   final Pose2d LEFT_START = new Pose2d(7.15, 1.85, TOWARDS_DS);
   final Pose2d RIGHT_START = new Pose2d(7.15, 6.2, TOWARDS_DS);
-  final Pose2d START_POSE = RIGHT_START;
+  final Pose2d START_POSE = MID_START;
 
   // Controller
   private final CommandXboxController driverController = new CommandXboxController(0);

@@ -29,9 +29,9 @@ import org.ironmaple.simulation.motorsims.SimulatedMotorController;
  */
 public class ModuleIOSim implements ModuleIO {
   // TunerConstants doesn't support separate sim constants, so they are declared locally
-  private static final double DRIVE_KS = 0.03;
+  private static final double DRIVE_KS = 0.11729;
   private static final double DRIVE_KV_ROT =
-      0.91035; // Same units as TunerConstants: (volt * secs) / rotation
+      0.73907; // Same units as TunerConstants: (volt * secs) / rotation
   private static final double DRIVE_KV = 1.0 / Units.rotationsToRadians(1.0 / DRIVE_KV_ROT);
 
   private final SwerveModuleSimulation moduleSimulation;

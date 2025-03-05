@@ -1,0 +1,49 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BLUE Rt Start to C21R"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ScoreCoral"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BLUE C21R to A21"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "RemoveAlgaeL2"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BLUE A21 to A20"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "RemoveAlgaeL3"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}

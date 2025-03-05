@@ -98,7 +98,7 @@ public class Drive extends SubsystemBase {
               COTS.ofMark4i(
                   DCMotor.getKrakenX60(1),
                   DCMotor.getKrakenX60(1),
-                  COTS.WHEELS.DEFAULT_NEOPRENE_TREAD.cof,
+                  WHEEL_COF,
                   3))
           .withTrackLengthTrackWidth(Inches.of(25), Inches.of(25))
           .withBumperSize(Inches.of(36), Inches.of(36));
