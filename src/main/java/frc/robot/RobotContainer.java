@@ -35,17 +35,10 @@ import frc.robot.commands.IntakeCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.climb.ClimbSubsystem;
 import frc.robot.subsystems.drive.*;
-import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.drive.GyroIO;
-import frc.robot.subsystems.drive.GyroIOPigeon2;
-import frc.robot.subsystems.drive.ModuleIO;
-import frc.robot.subsystems.drive.ModuleIOSim;
-import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.endEffector.EndEffector;
 import frc.robot.subsystems.intake.RampMechanism;
 import frc.robot.subsystems.lift.Lift;
 import frc.robot.subsystems.vision.*;
-import java.util.Set;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
@@ -62,6 +55,7 @@ public class RobotContainer {
   private final Drive drive;
   private SwerveDriveSimulation driveSimulation = null;
   private final Vision vision;
+  private final RumbleFeedbackSubsystem rumbleFeedback;
 
   // Sim start poses
   final Rotation2d TOWARDS_DS = new Rotation2d(Units.degreesToRadians(180));
@@ -113,6 +107,7 @@ public class RobotContainer {
                 drive::addVisionMeasurement,
                 new VisionIOPhotonVision(camera0Name, robotToCamera0),
                 new VisionIOPhotonVision(camera1Name, robotToCamera1));
+        rumbleFeedback = new RumbleFeedbackSubsystem(drive, driverController);
         break;
 
       case SIM:
@@ -134,6 +129,7 @@ public class RobotContainer {
                     camera0Name, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose),
                 new VisionIOPhotonVisionSim(
                     camera1Name, robotToCamera1, driveSimulation::getSimulatedDriveTrainPose));
+        rumbleFeedback = new RumbleFeedbackSubsystem(drive, driverController);
         break;
 
       default:
@@ -147,6 +143,7 @@ public class RobotContainer {
                 new ModuleIO() {},
                 (robotPose) -> {});
         vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
+        rumbleFeedback = new RumbleFeedbackSubsystem(drive, driverController);
         break;
     }
 
@@ -254,56 +251,141 @@ public class RobotContainer {
         .rightBumper()
         .onTrue(
             Commands.sequence(
-                    Commands.defer(
-                            () -> {
-                              Pose2d targetPose =
-                                  drive.calculateHorizontalOffset(
-                                      vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, true);
-                              return AutoBuilder.pathfindToPose(
-                                  targetPose, reefAlignmentConstraints, 0.0); // Goal end velocity
-                            },
-                            Set.of(drive))
-                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf))
-                .withName("Auto Align Right"));
+                    Commands.runOnce(
+                        () -> {
+                          Pose2d targetPose =
+                              drive.calculateHorizontalOffset(
+                                  vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, true);
+                          if (targetPose != null) {
+                            rumbleFeedback.startAlignment(targetPose);
+                            AutoBuilder.pathfindToPose(targetPose, reefAlignmentConstraints, 0.0)
+                                .schedule();
+                          }
+                        }),
+                    Commands.waitSeconds(0.1))
+                .withName("Auto Align Right"))
+        .onFalse(Commands.runOnce(() -> rumbleFeedback.stopAlignment()));
 
     // Auto align to left of reef tag (button press)
     driverController
         .leftBumper()
         .onTrue(
             Commands.sequence(
-                    Commands.defer(
-                            () -> {
-                              Pose2d targetPose =
-                                  drive.calculateHorizontalOffset(
-                                      vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, false);
-                              return AutoBuilder.pathfindToPose(
-                                  targetPose, reefAlignmentConstraints, 0.0); // Goal end velocity
-                            },
-                            Set.of(drive))
-                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf))
-                .withName("Auto Align Left"));
+                    Commands.runOnce(
+                        () -> {
+                          Pose2d targetPose =
+                              drive.calculateHorizontalOffset(
+                                  vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, false);
+                          if (targetPose != null) {
+                            rumbleFeedback.startAlignment(targetPose);
+                            AutoBuilder.pathfindToPose(targetPose, reefAlignmentConstraints, 0.0)
+                                .schedule();
+                          }
+                        }),
+                    Commands.waitSeconds(0.1))
+                .withName("Auto Align Left"))
+        .onFalse(Commands.runOnce(() -> rumbleFeedback.stopAlignment()));
 
-    // Auto align to coral station tag using direct distance offset (button press)
+    // Auto align to coral station tag (button press)
     driverController
         .y()
         .onTrue(
             Commands.sequence(
-                    Commands.defer(
-                            () -> {
-                              Pose2d targetPose = vision.getClosestTagPose(1);
-                              return AutoBuilder.pathfindToPose(
-                                  targetPose, coralAlignmentConstraints, 0.0); // Goal end velocity
-                            },
-                            Set.of(drive))
-                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf))
-                .withName("Auto Align Coral Station"));
+                    Commands.runOnce(
+                        () -> {
+                          Pose2d targetPose = vision.getClosestTagPose(1);
+                          if (targetPose != null) {
+                            // Start rumble feedback but don't block
+                            rumbleFeedback.startAlignment(targetPose);
+
+                            // Path finding happens independently
+                            AutoBuilder.pathfindToPose(targetPose, coralAlignmentConstraints, 0.0)
+                                .schedule();
+                          }
+                        }),
+                    Commands.waitSeconds(0.1)) // Small wait to ensure commands start properly
+                .withName("Auto Align Coral Station"))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  // Stop rumble when button released
+                  rumbleFeedback.stopAlignment();
+                }));
+
+    // // Auto align to right of reef tag (button press)
+    // driverController
+    //     .rightBumper()
+    //     .onTrue(
+    //         Commands.sequence(
+    //                 Commands.defer(
+    //                         () -> {
+    //                           Pose2d targetPose =
+    //                               drive.calculateHorizontalOffset(
+    //                                   vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, true);
+    //                           return AutoBuilder.pathfindToPose(
+    //                               targetPose, reefAlignmentConstraints, 0.0); // Goal end
+    // velocity
+    //                         },
+    //                         Set.of(drive))
+    //                     .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf))
+    //             .withName("Auto Align Right"));
+
+    // // Auto align to left of reef tag (button press)
+    // driverController
+    //     .leftBumper()
+    //     .onTrue(
+    //         Commands.sequence(
+    //                 Commands.defer(
+    //                         () -> {
+    //                           Pose2d targetPose =
+    //                               drive.calculateHorizontalOffset(
+    //                                   vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, false);
+    //                           return AutoBuilder.pathfindToPose(
+    //                               targetPose, reefAlignmentConstraints, 0.0); // Goal end
+    // velocity
+    //                         },
+    //                         Set.of(drive))
+    //                     .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf))
+    //             .withName("Auto Align Left"));
+
+    // // Auto align to coral station tag using direct distance offset (button press)
+    // driverController
+    //     .y()
+    //     .onTrue(
+    //         Commands.sequence(
+    //                 Commands.defer(
+    //                         () -> {
+    //                           Pose2d targetPose = vision.getClosestTagPose(1);
+    //                           return AutoBuilder.pathfindToPose(
+    //                               targetPose, coralAlignmentConstraints, 0.0); // Goal end
+    // velocity
+    //                         },
+    //                         Set.of(drive))
+    //                     .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf))
+    //             .withName("Auto Align Coral Station"));
+
+    // Test rumble with B button - simple direct rumble test
+    driverController
+        .b()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  System.out.println("B PRESSED - TESTING RUMBLE ON");
+                  driverController.setRumble(GenericHID.RumbleType.kBothRumble, 1.0);
+                }))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  System.out.println("B RELEASED - TESTING RUMBLE OFF");
+                  driverController.setRumble(GenericHID.RumbleType.kBothRumble, 0.0);
+                }));
 
     final Runnable resetOdometry =
         Constants.currentMode == Constants.Mode.SIM
             ? () -> drive.setPose(driveSimulation.getSimulatedDriveTrainPose())
             : () -> drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d()));
 
-    driverController.b().onTrue(Commands.runOnce(resetOdometry).ignoringDisable(true));
+    driverController.back().onTrue(Commands.runOnce(resetOdometry).ignoringDisable(true));
   }
 
   /**
