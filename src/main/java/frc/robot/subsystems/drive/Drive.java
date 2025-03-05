@@ -95,11 +95,7 @@ public class Drive extends SubsystemBase {
           .withRobotMass(Kilograms.of(ROBOT_MASS_KG))
           .withGyro(COTS.ofPigeon2())
           .withSwerveModule(
-              COTS.ofMark4i(
-                  DCMotor.getKrakenX60(1),
-                  DCMotor.getKrakenX60(1),
-                  WHEEL_COF,
-                  3))
+              COTS.ofMark4i(DCMotor.getKrakenX60(1), DCMotor.getKrakenX60(1), WHEEL_COF, 3))
           .withTrackLengthTrackWidth(Inches.of(25), Inches.of(25))
           .withBumperSize(Inches.of(36), Inches.of(36));
 
