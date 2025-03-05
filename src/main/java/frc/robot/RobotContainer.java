@@ -18,6 +18,7 @@ import static frc.robot.subsystems.vision.VisionConstants.*; // Move these to ac
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
@@ -26,12 +27,10 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.LiftConstants;
 import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
-import frc.robot.commands.DriveToPose;
 import frc.robot.commands.IntakeCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.climb.ClimbSubsystem;
@@ -46,6 +45,7 @@ import frc.robot.subsystems.endEffector.EndEffector;
 import frc.robot.subsystems.intake.RampMechanism;
 import frc.robot.subsystems.lift.Lift;
 import frc.robot.subsystems.vision.*;
+import java.util.Set;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
@@ -232,44 +232,64 @@ public class RobotContainer {
     // Switch to X pattern when X button is pressed
     driverController.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
-    double distanceOffset = Units.inchesToMeters(9);
+    final double REEF_DISTANCE_OFFSET = Units.inchesToMeters(9);
+    final double CORAL_DISTANCE_OFFSET = Units.inchesToMeters(12);
+    // Define path constraints for alignment
+    PathConstraints alignmentConstraints =
+        new PathConstraints(
+            4.0, // Max velocity in m/s
+            4.0, // Max acceleration in m/s^2
+            4.0, // Max angular velocity in rad/s
+            4.0); // Max angular acceleration in rad/s^2
 
-    // Auto align to right of reef tag
+    // Auto align to right of reef tag (button press)
     driverController
         .rightBumper()
-        .whileTrue(
-            new SequentialCommandGroup(
-                new InstantCommand(() -> vision.toggleLock(0)),
-                new DriveToPose(
-                    drive,
-                    () ->
-                        drive.calculateOffsetFromCenter(
-                            vision.getClosestTagPose(0), distanceOffset, true),
-                    () -> drive.getPose())))
-        .onFalse(new InstantCommand(() -> vision.toggleLock(0)));
+        .onTrue(
+            Commands.sequence(
+                    Commands.defer(
+                            () -> {
+                              Pose2d targetPose =
+                                  drive.calculateHorizontalOffset(
+                                      vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, true);
+                              return AutoBuilder.pathfindToPose(
+                                  targetPose, alignmentConstraints, 0.0); // Goal end velocity
+                            },
+                            Set.of(drive))
+                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf))
+                .withName("Auto Align Right"));
 
-    // Auto align to left of reef tag
+    // Auto align to left of reef tag (button press)
     driverController
         .leftBumper()
-        .whileTrue(
-            new SequentialCommandGroup(
-                new InstantCommand(() -> vision.toggleLock(0)),
-                new DriveToPose(
-                    drive,
-                    () ->
-                        drive.calculateOffsetFromCenter(
-                            vision.getClosestTagPose(0), distanceOffset, false),
-                    () -> drive.getPose())))
-        .onFalse(new InstantCommand(() -> vision.toggleLock(0)));
+        .onTrue(
+            Commands.sequence(
+                    Commands.defer(
+                            () -> {
+                              Pose2d targetPose =
+                                  drive.calculateHorizontalOffset(
+                                      vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, false);
+                              return AutoBuilder.pathfindToPose(
+                                  targetPose, alignmentConstraints, 0.0); // Goal end velocity
+                            },
+                            Set.of(drive))
+                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf))
+                .withName("Auto Align Left"));
 
-    // Auto align to coral station tag
+    // Auto align to coral station tag using direct distance offset (button press)
     driverController
         .y()
-        .whileTrue(
-            new SequentialCommandGroup(
-                new InstantCommand(() -> vision.toggleLock(1)),
-                new DriveToPose(drive, () -> vision.getClosestTagPose(1), () -> drive.getPose())))
-        .onFalse(new InstantCommand(() -> vision.toggleLock(1)));
+        .onTrue(
+            Commands.sequence(
+                    Commands.defer(
+                            () -> {
+                              Pose2d targetPose = vision.getClosestTagPose(1);
+                              return AutoBuilder.pathfindToPose(
+                                  targetPose, alignmentConstraints, 0.0); // Goal end velocity
+                            },
+                            Set.of(drive))
+                        .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf))
+                .withName("Auto Align Coral Station"));
 
     final Runnable resetOdometry =
         Constants.currentMode == Constants.Mode.SIM
@@ -277,13 +297,6 @@ public class RobotContainer {
             : () -> drive.setPose(new Pose2d(drive.getPose().getTranslation(), new Rotation2d()));
 
     driverController.b().onTrue(Commands.runOnce(resetOdometry).ignoringDisable(true));
-
-    operatorController
-        .povUp()
-        .onTrue(Commands.runOnce(() -> lift.runLiftToPos(LiftConstants.L_ONE)));
-    operatorController
-        .povDown()
-        .onTrue(Commands.runOnce(() -> lift.runLiftToPos(LiftConstants.BOTTOM)));
   }
 
   /**
