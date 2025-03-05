@@ -63,6 +63,13 @@ public class RobotContainer {
   private SwerveDriveSimulation driveSimulation = null;
   private final Vision vision;
 
+  // Sim start poses
+  final Rotation2d TOWARDS_DS = new Rotation2d(Units.degreesToRadians(180));
+  final Pose2d MID_START = new Pose2d(7.15, 4, TOWARDS_DS);
+  final Pose2d LEFT_START = new Pose2d(7.15, 1.85, TOWARDS_DS);
+  final Pose2d RIGHT_START = new Pose2d(7.15, 6.2, TOWARDS_DS);
+  final Pose2d START_POSE = RIGHT_START;
+
   // Controller
   private final CommandXboxController driverController = new CommandXboxController(0);
   private final CommandXboxController operatorController =
@@ -109,10 +116,8 @@ public class RobotContainer {
         break;
 
       case SIM:
-        final Pose2d MID_START = new Pose2d(7, 4, new Rotation2d(180));
-        final Pose2d LEFT_START = new Pose2d(20, 20, new Rotation2d(180));
         // Sim robot, instantiate physics sim IO implementations
-        driveSimulation = new SwerveDriveSimulation(Drive.mapleSimConfig, MID_START);
+        driveSimulation = new SwerveDriveSimulation(Drive.mapleSimConfig, START_POSE);
         SimulatedArena.getInstance().addDriveTrainSimulation(driveSimulation);
         drive =
             new Drive(
@@ -389,7 +394,7 @@ public class RobotContainer {
   public void resetSimulation() {
     if (Constants.currentMode != Constants.Mode.SIM) return;
 
-    driveSimulation.setSimulationWorldPose(new Pose2d(3, 3, new Rotation2d()));
+    driveSimulation.setSimulationWorldPose(START_POSE);
     SimulatedArena.getInstance().resetFieldForAuto();
   }
 
