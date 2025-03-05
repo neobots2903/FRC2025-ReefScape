@@ -232,12 +232,19 @@ public class RobotContainer {
     // Switch to X pattern when X button is pressed
     driverController.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
+    // Align 9 inches to the left or right of the closest tag
     final double REEF_DISTANCE_OFFSET = Units.inchesToMeters(9);
-    final double CORAL_DISTANCE_OFFSET = Units.inchesToMeters(12);
+
     // Define path constraints for alignment
-    PathConstraints alignmentConstraints =
+    PathConstraints reefAlignmentConstraints =
         new PathConstraints(
-            4.0, // Max velocity in m/s
+            3.0, // Max velocity in m/s
+            4.0, // Max acceleration in m/s^2
+            3.0, // Max angular velocity in rad/s
+            4.0); // Max angular acceleration in rad/s^2
+    PathConstraints coralAlignmentConstraints =
+        new PathConstraints(
+            5.0, // Max velocity in m/s
             4.0, // Max acceleration in m/s^2
             4.0, // Max angular velocity in rad/s
             4.0); // Max angular acceleration in rad/s^2
@@ -253,7 +260,7 @@ public class RobotContainer {
                                   drive.calculateHorizontalOffset(
                                       vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, true);
                               return AutoBuilder.pathfindToPose(
-                                  targetPose, alignmentConstraints, 0.0); // Goal end velocity
+                                  targetPose, reefAlignmentConstraints, 0.0); // Goal end velocity
                             },
                             Set.of(drive))
                         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf))
@@ -270,7 +277,7 @@ public class RobotContainer {
                                   drive.calculateHorizontalOffset(
                                       vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, false);
                               return AutoBuilder.pathfindToPose(
-                                  targetPose, alignmentConstraints, 0.0); // Goal end velocity
+                                  targetPose, reefAlignmentConstraints, 0.0); // Goal end velocity
                             },
                             Set.of(drive))
                         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf))
@@ -285,7 +292,7 @@ public class RobotContainer {
                             () -> {
                               Pose2d targetPose = vision.getClosestTagPose(1);
                               return AutoBuilder.pathfindToPose(
-                                  targetPose, alignmentConstraints, 0.0); // Goal end velocity
+                                  targetPose, coralAlignmentConstraints, 0.0); // Goal end velocity
                             },
                             Set.of(drive))
                         .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf))
