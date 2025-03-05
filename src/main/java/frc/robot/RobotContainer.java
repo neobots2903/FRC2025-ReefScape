@@ -230,7 +230,8 @@ public class RobotContainer {
     driverController.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
     // Align 9 inches to the left or right of the closest tag
-    final double REEF_DISTANCE_OFFSET = Units.inchesToMeters(9);
+    // Changed to 8 inches since the robot size is now accounted for in the calculation
+    final double REEF_DISTANCE_OFFSET = Units.inchesToMeters(8);
 
     // Define path constraints for alignment
     PathConstraints reefAlignmentConstraints =

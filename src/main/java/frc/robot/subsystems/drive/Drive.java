@@ -337,88 +337,50 @@ public class Drive extends SubsystemBase {
     return output;
   }
 
-  /** Returns the pose of a tag + offset */
+  /** Returns the pose of a tag + offset considering robot dimensions */
   public Pose2d calculateHorizontalOffset(
       Pose2d tagPose, double distanceFromCenter, boolean moveRight) {
+    if (tagPose == null) {
+      return null;
+    }
+
     // Convert tag heading to radians
     double tagRadians = tagPose.getRotation().getRadians();
 
-    // Define the offset angle (Right = -90 degrees, Left = +90 degrees)
-    double offsetAngle = moveRight ? Math.PI / 2 : -Math.PI / 2;
+    // The direction perpendicular to the tag face
+    // We'll use this to position the robot horizontally relative to the tag
+    double perpendicularDirection = tagRadians + (moveRight ? Math.PI / 2 : -Math.PI / 2);
 
-    // Calculate the horizontal offset relative to the tag's orientation
-    double xOffset =
-        distanceFromCenter
-            * (Math.cos(tagRadians) * Math.cos(offsetAngle)
-                - Math.sin(tagRadians) * Math.sin(offsetAngle));
-    double yOffset =
-        distanceFromCenter
-            * (Math.sin(tagRadians) * Math.cos(offsetAngle)
-                + Math.cos(tagRadians) * Math.sin(offsetAngle));
+    // Calculate the position at the desired distance from the tag
+    // This is where we want the FRONT of the robot to be
+    double targetX = tagPose.getX() + distanceFromCenter * Math.cos(perpendicularDirection);
+    double targetY = tagPose.getY() + distanceFromCenter * Math.sin(perpendicularDirection);
 
-    // Add 1-inch distance offset from the tag face
-    double distanceFromFace = Units.inchesToMeters(2.0);
+    // Calculate the robot's facing direction (should face the tag)
+    // This is 180 degrees from the tag's direction
+    double robotFacingRadians = tagRadians + Math.PI;
+    Rotation2d robotFacing = new Rotation2d(robotFacingRadians);
 
-    // Calculate offset away from tag face (opposite direction of tag's heading)
-    double xFaceOffset = -Math.cos(tagRadians) * distanceFromFace;
-    double yFaceOffset = -Math.sin(tagRadians) * distanceFromFace;
+    // Calculate the additional offset needed for the robot's center
+    // We need to SUBTRACT this offset from the target position because
+    // the robot's center should be behind its front face
+    double robotHalfLength = Units.inchesToMeters(18.0); // Adjust based on your robot dimensions
 
-    // Add both offsets together
-    double finalX = tagPose.getX() + xOffset + xFaceOffset;
-    double finalY = tagPose.getY() + yOffset + yFaceOffset;
+    // The direction vector pointing from the front of the robot toward its center
+    // This is the opposite of the facing direction
+    double centerOffsetX = -robotHalfLength * Math.cos(robotFacingRadians);
+    double centerOffsetY = -robotHalfLength * Math.sin(robotFacingRadians);
 
-    // Ensure the robot faces the tag (by rotating 180 degrees from the tag's heading)
-    Pose2d finalPose =
-        new Pose2d(
-            new Translation2d(finalX, finalY),
-            new Rotation2d(Math.toRadians(tagPose.getRotation().getDegrees() + 180)));
+    // Final pose positions the robot so its front is at the desired offset from the tag
+    Pose2d finalPose = new Pose2d(targetX + centerOffsetX, targetY + centerOffsetY, robotFacing);
 
+    // Log everything for debugging
     Logger.recordOutput("AutoAlign/TagPose", tagPose);
-    Logger.recordOutput(
-        "AutoAlign/Offset",
-        new Pose2d(xOffset + xFaceOffset, yOffset + yFaceOffset, new Rotation2d()));
-    Logger.recordOutput("AutoAlign/FinalOffset", finalPose);
+    Logger.recordOutput("AutoAlign/TargetPosition", new Pose2d(targetX, targetY, robotFacing));
+    Logger.recordOutput("AutoAlign/FinalPose", finalPose);
 
-    // Return the final target pose
     return finalPose;
   }
-
-  // /** Returns the pose of a tag + offset */
-  // public Pose2d calculateHorizontalOffset(
-  //     Pose2d tagPose, double distanceFromCenter, boolean moveRight) {
-  //   // Convert tag heading to radians
-  //   double tagRadians = tagPose.getRotation().getRadians();
-
-  //   // Define the offset angle (Right = -90 degrees, Left = +90 degrees)
-  //   double offsetAngle = moveRight ? Math.PI / 2 : -Math.PI / 2;
-
-  //   // Calculate the offset relative to the tag's orientation
-  //   double xOffset =
-  //       distanceFromCenter
-  //           * (Math.cos(tagRadians) * Math.cos(offsetAngle)
-  //               - Math.sin(tagRadians) * Math.sin(offsetAngle));
-  //   double yOffset =
-  //       distanceFromCenter
-  //           * (Math.sin(tagRadians) * Math.cos(offsetAngle)
-  //               + Math.cos(tagRadians) * Math.sin(offsetAngle));
-
-  //   // Compute the final target pose in field coordinates
-  //   double finalX = tagPose.getX() + xOffset;
-  //   double finalY = tagPose.getY() + yOffset;
-
-  //   // Ensure the robot faces the tag (by rotating 180 degrees from the tag's heading)
-  //   Pose2d finalPose =
-  //       new Pose2d(
-  //           new Translation2d(finalX, finalY),
-  //           new Rotation2d(Math.toRadians(tagPose.getRotation().getDegrees() + 180)));
-
-  //   Logger.recordOutput("AutoAlign/TagPose", tagPose);
-  //   Logger.recordOutput("AutoAlign/Offset", new Pose2d(xOffset, yOffset, new Rotation2d()));
-  //   Logger.recordOutput("AutoAlign/FinalOffset", finalPose);
-
-  //   // Return the final target pose
-  //   return finalPose;
-  // }
 
   // Returns the average current used by all four drive motors
   @AutoLogOutput(key = "Drive/DriveCurrent")
