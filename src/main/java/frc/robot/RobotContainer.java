@@ -232,6 +232,7 @@ public class RobotContainer {
     // Align 9 inches to the left or right of the closest tag
     // Changed to 8 inches since the robot size is now accounted for in the calculation
     final double REEF_DISTANCE_OFFSET = Units.inchesToMeters(8);
+    final double CORAL_DISTANCE_OFFSET = Units.inchesToMeters(4);
 
     // Define path constraints for alignment
     PathConstraints reefAlignmentConstraints =
@@ -243,9 +244,9 @@ public class RobotContainer {
     PathConstraints coralAlignmentConstraints =
         new PathConstraints(
             5.0, // Max velocity in m/s
-            4.0, // Max acceleration in m/s^2
-            4.0, // Max angular velocity in rad/s
-            4.0); // Max angular acceleration in rad/s^2
+            7.0, // Max acceleration in m/s^2
+            5.0, // Max angular velocity in rad/s
+            7.0); // Max angular acceleration in rad/s^2
 
     // Auto align to right of reef tag (button press)
     driverController
@@ -255,8 +256,8 @@ public class RobotContainer {
                     Commands.runOnce(
                         () -> {
                           Pose2d targetPose =
-                              drive.calculateHorizontalOffset(
-                                  vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, true);
+                              drive.calculateTagOffset(
+                                  vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, 0, true, true);
                           if (targetPose != null) {
                             rumbleFeedback.startAlignment(targetPose);
                             AutoBuilder.pathfindToPose(targetPose, reefAlignmentConstraints, 0.0)
@@ -275,8 +276,12 @@ public class RobotContainer {
                     Commands.runOnce(
                         () -> {
                           Pose2d targetPose =
-                              drive.calculateHorizontalOffset(
-                                  vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, false);
+                              drive.calculateTagOffset(
+                                  vision.getClosestTagPose(0),
+                                  REEF_DISTANCE_OFFSET,
+                                  0,
+                                  false,
+                                  true);
                           if (targetPose != null) {
                             rumbleFeedback.startAlignment(targetPose);
                             AutoBuilder.pathfindToPose(targetPose, reefAlignmentConstraints, 0.0)
@@ -294,24 +299,22 @@ public class RobotContainer {
             Commands.sequence(
                     Commands.runOnce(
                         () -> {
-                          Pose2d targetPose = vision.getClosestTagPose(1);
-                          if (targetPose != null) {
-                            // Start rumble feedback but don't block
-                            rumbleFeedback.startAlignment(targetPose);
+                          Pose2d targetPose =
+                              drive.calculateTagOffset(
+                                  vision.getClosestTagPose(1),
+                                  0,
+                                  CORAL_DISTANCE_OFFSET,
+                                  false,
+                                  false);
 
+                          if (targetPose != null) {
                             // Path finding happens independently
                             AutoBuilder.pathfindToPose(targetPose, coralAlignmentConstraints, 0.0)
                                 .schedule();
                           }
                         }),
                     Commands.waitSeconds(0.1)) // Small wait to ensure commands start properly
-                .withName("Auto Align Coral Station"))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  // Stop rumble when button released
-                  rumbleFeedback.stopAlignment();
-                }));
+                .withName("Auto Align Coral Station"));
 
     // // Auto align to right of reef tag (button press)
     // driverController

@@ -337,9 +337,17 @@ public class Drive extends SubsystemBase {
     return output;
   }
 
-  /** Returns the pose of a tag + offset considering robot dimensions */
-  public Pose2d calculateHorizontalOffset(
-      Pose2d tagPose, double distanceFromCenter, boolean moveRight) {
+  /**
+   * Returns the pose of a tag + offset considering robot dimensions and facing direction. When
+   * faceTag is true, front bumper aligns at target position. When faceTag is false, back bumper
+   * aligns at target position.
+   */
+  public Pose2d calculateTagOffset(
+      Pose2d tagPose,
+      double horizontalOffset,
+      double distantOffset,
+      boolean moveRight,
+      boolean faceTag) {
     if (tagPose == null) {
       return null;
     }
@@ -352,26 +360,30 @@ public class Drive extends SubsystemBase {
     double perpendicularDirection = tagRadians + (moveRight ? Math.PI / 2 : -Math.PI / 2);
 
     // Calculate the position at the desired distance from the tag
-    // This is where we want the FRONT of the robot to be
-    double targetX = tagPose.getX() + distanceFromCenter * Math.cos(perpendicularDirection);
-    double targetY = tagPose.getY() + distanceFromCenter * Math.sin(perpendicularDirection);
+    // This is where we want either the front or back of the robot to be
+    double targetX = tagPose.getX() + horizontalOffset * Math.cos(perpendicularDirection);
+    double targetY = tagPose.getY() + horizontalOffset * Math.sin(perpendicularDirection);
 
-    // Calculate the robot's facing direction (should face the tag)
-    // This is 180 degrees from the tag's direction
-    double robotFacingRadians = tagRadians + Math.PI;
+    // Calculate the robot's facing direction based on faceTag parameter
+    // If faceTag is true: face the tag (180 degrees from tag direction)
+    // If faceTag is false: face away from tag (same direction as tag)
+    double robotFacingRadians = faceTag ? (tagRadians + Math.PI) : tagRadians;
     Rotation2d robotFacing = new Rotation2d(robotFacingRadians);
 
     // Calculate the additional offset needed for the robot's center
-    // We need to SUBTRACT this offset from the target position because
-    // the robot's center should be behind its front face
-    double robotHalfLength = Units.inchesToMeters(18.0); // Adjust based on your robot dimensions
+    double robotHalfLength = Units.inchesToMeters(18.0 + distantOffset);
 
-    // The direction vector pointing from the front of the robot toward its center
-    // This is the opposite of the facing direction
-    double centerOffsetX = -robotHalfLength * Math.cos(robotFacingRadians);
-    double centerOffsetY = -robotHalfLength * Math.sin(robotFacingRadians);
+    // Key change: Direction of offset depends on which bumper we're aligning
+    // When facing the tag: front bumper aligns, so subtract offset in the facing direction
+    // When facing away: back bumper aligns, so add offset in the facing direction
+    double directionMultiplier = faceTag ? -1.0 : 1.0;
 
-    // Final pose positions the robot so its front is at the desired offset from the tag
+    // Calculate the offset from target position to robot center
+    double centerOffsetX = directionMultiplier * robotHalfLength * Math.cos(robotFacingRadians);
+    double centerOffsetY = directionMultiplier * robotHalfLength * Math.sin(robotFacingRadians);
+
+    // Final pose positions the robot so the appropriate bumper is at the desired offset from the
+    // tag
     Pose2d finalPose = new Pose2d(targetX + centerOffsetX, targetY + centerOffsetY, robotFacing);
 
     // Log everything for debugging
