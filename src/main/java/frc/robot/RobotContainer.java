@@ -212,8 +212,8 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> -driverController.getLeftY(),
-            () -> -driverController.getLeftX(),
+            () -> driverController.getLeftY(), // INVERT FOR COMP
+            () -> driverController.getLeftX(), // INVERT FOR COMP
             () -> -driverController.getRightX()));
 
     // Switch to robot-relative drive when a is held (for vision)
@@ -231,7 +231,7 @@ public class RobotContainer {
 
     // Align 9 inches to the left or right of the closest tag
     // Changed to 8 inches since the robot size is now accounted for in the calculation
-    final double REEF_DISTANCE_OFFSET = Units.inchesToMeters(8);
+    final double REEF_DISTANCE_OFFSET = Units.inchesToMeters(6.5);
     final double CORAL_DISTANCE_OFFSET = Units.inchesToMeters(4);
 
     // Define path constraints for alignment
@@ -243,10 +243,10 @@ public class RobotContainer {
             4.0); // Max angular acceleration in rad/s^2
     PathConstraints coralAlignmentConstraints =
         new PathConstraints(
-            5.0, // Max velocity in m/s
-            7.0, // Max acceleration in m/s^2
-            5.0, // Max angular velocity in rad/s
-            7.0); // Max angular acceleration in rad/s^2
+            3.0, // Max velocity in m/s
+            4.0, // Max acceleration in m/s^2
+            3.0, // Max angular velocity in rad/s
+            4.0); // Max angular acceleration in rad/s^2
 
     // Auto align to right of reef tag (button press)
     driverController
@@ -315,74 +315,6 @@ public class RobotContainer {
                         }),
                     Commands.waitSeconds(0.1)) // Small wait to ensure commands start properly
                 .withName("Auto Align Coral Station"));
-
-    // // Auto align to right of reef tag (button press)
-    // driverController
-    //     .rightBumper()
-    //     .onTrue(
-    //         Commands.sequence(
-    //                 Commands.defer(
-    //                         () -> {
-    //                           Pose2d targetPose =
-    //                               drive.calculateHorizontalOffset(
-    //                                   vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, true);
-    //                           return AutoBuilder.pathfindToPose(
-    //                               targetPose, reefAlignmentConstraints, 0.0); // Goal end
-    // velocity
-    //                         },
-    //                         Set.of(drive))
-    //                     .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf))
-    //             .withName("Auto Align Right"));
-
-    // // Auto align to left of reef tag (button press)
-    // driverController
-    //     .leftBumper()
-    //     .onTrue(
-    //         Commands.sequence(
-    //                 Commands.defer(
-    //                         () -> {
-    //                           Pose2d targetPose =
-    //                               drive.calculateHorizontalOffset(
-    //                                   vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, false);
-    //                           return AutoBuilder.pathfindToPose(
-    //                               targetPose, reefAlignmentConstraints, 0.0); // Goal end
-    // velocity
-    //                         },
-    //                         Set.of(drive))
-    //                     .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf))
-    //             .withName("Auto Align Left"));
-
-    // // Auto align to coral station tag using direct distance offset (button press)
-    // driverController
-    //     .y()
-    //     .onTrue(
-    //         Commands.sequence(
-    //                 Commands.defer(
-    //                         () -> {
-    //                           Pose2d targetPose = vision.getClosestTagPose(1);
-    //                           return AutoBuilder.pathfindToPose(
-    //                               targetPose, coralAlignmentConstraints, 0.0); // Goal end
-    // velocity
-    //                         },
-    //                         Set.of(drive))
-    //                     .withInterruptBehavior(Command.InterruptionBehavior.kCancelSelf))
-    //             .withName("Auto Align Coral Station"));
-
-    // Test rumble with B button - simple direct rumble test
-    driverController
-        .b()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  System.out.println("B PRESSED - TESTING RUMBLE ON");
-                  driverController.setRumble(GenericHID.RumbleType.kBothRumble, 1.0);
-                }))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  System.out.println("B RELEASED - TESTING RUMBLE OFF");
-                  driverController.setRumble(GenericHID.RumbleType.kBothRumble, 0.0);
-                }));
 
     final Runnable resetOdometry =
         Constants.currentMode == Constants.Mode.SIM
