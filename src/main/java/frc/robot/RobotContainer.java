@@ -39,6 +39,7 @@ import frc.robot.subsystems.endEffector.EndEffector;
 import frc.robot.subsystems.intake.RampMechanism;
 import frc.robot.subsystems.lift.Lift;
 import frc.robot.subsystems.vision.*;
+import java.util.function.BooleanSupplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
@@ -244,6 +245,14 @@ public class RobotContainer {
             3.0, // Max angular velocity in rad/s
             4.0); // Max angular acceleration in rad/s^2
 
+    // Function to check if driver is using joysticks (for cancellation)
+    final double JOYSTICK_DEADBAND = 0.15;
+    BooleanSupplier driverInputDetected =
+        () ->
+            Math.abs(driverController.getLeftX()) > JOYSTICK_DEADBAND
+                || Math.abs(driverController.getLeftY()) > JOYSTICK_DEADBAND
+                || Math.abs(driverController.getRightX()) > JOYSTICK_DEADBAND;
+
     // Auto align to right of reef tag (button press)
     driverController
         .rightBumper()
@@ -256,6 +265,7 @@ public class RobotContainer {
                                   vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, 0, true, true);
                           if (targetPose != null) {
                             AutoBuilder.pathfindToPose(targetPose, reefAlignmentConstraints, 0.0)
+                                .until(driverInputDetected)
                                 .schedule();
                           }
                         }),
@@ -278,6 +288,7 @@ public class RobotContainer {
                                   true);
                           if (targetPose != null) {
                             AutoBuilder.pathfindToPose(targetPose, reefAlignmentConstraints, 0.0)
+                                .until(driverInputDetected)
                                 .schedule();
                           }
                         }),
@@ -302,10 +313,11 @@ public class RobotContainer {
                           if (targetPose != null) {
                             // Path finding happens independently
                             AutoBuilder.pathfindToPose(targetPose, coralAlignmentConstraints, 0.0)
+                                .until(driverInputDetected)
                                 .schedule();
                           }
                         }),
-                    Commands.waitSeconds(0.1)) // Small wait to ensure commands start properly
+                    Commands.waitSeconds(0.1))
                 .withName("Auto Align Coral Station"));
 
     final Runnable resetOdometry =
