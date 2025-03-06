@@ -55,7 +55,6 @@ public class RobotContainer {
   private final Drive drive;
   private SwerveDriveSimulation driveSimulation = null;
   private final Vision vision;
-  private final RumbleFeedbackSubsystem rumbleFeedback;
 
   // Sim start poses
   final Rotation2d TOWARDS_DS = new Rotation2d(Units.degreesToRadians(180));
@@ -107,7 +106,6 @@ public class RobotContainer {
                 drive::addVisionMeasurement,
                 new VisionIOPhotonVision(camera0Name, robotToCamera0),
                 new VisionIOPhotonVision(camera1Name, robotToCamera1));
-        rumbleFeedback = new RumbleFeedbackSubsystem(drive, driverController);
         break;
 
       case SIM:
@@ -129,7 +127,6 @@ public class RobotContainer {
                     camera0Name, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose),
                 new VisionIOPhotonVisionSim(
                     camera1Name, robotToCamera1, driveSimulation::getSimulatedDriveTrainPose));
-        rumbleFeedback = new RumbleFeedbackSubsystem(drive, driverController);
         break;
 
       default:
@@ -143,7 +140,6 @@ public class RobotContainer {
                 new ModuleIO() {},
                 (robotPose) -> {});
         vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
-        rumbleFeedback = new RumbleFeedbackSubsystem(drive, driverController);
         break;
     }
 
@@ -259,14 +255,12 @@ public class RobotContainer {
                               drive.calculateTagOffset(
                                   vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, 0, true, true);
                           if (targetPose != null) {
-                            rumbleFeedback.startAlignment(targetPose);
                             AutoBuilder.pathfindToPose(targetPose, reefAlignmentConstraints, 0.0)
                                 .schedule();
                           }
                         }),
                     Commands.waitSeconds(0.1))
-                .withName("Auto Align Right"))
-        .onFalse(Commands.runOnce(() -> rumbleFeedback.stopAlignment()));
+                .withName("Auto Align Right"));
 
     // Auto align to left of reef tag (button press)
     driverController
@@ -283,14 +277,12 @@ public class RobotContainer {
                                   false,
                                   true);
                           if (targetPose != null) {
-                            rumbleFeedback.startAlignment(targetPose);
                             AutoBuilder.pathfindToPose(targetPose, reefAlignmentConstraints, 0.0)
                                 .schedule();
                           }
                         }),
                     Commands.waitSeconds(0.1))
-                .withName("Auto Align Left"))
-        .onFalse(Commands.runOnce(() -> rumbleFeedback.stopAlignment()));
+                .withName("Auto Align Left"));
 
     // Auto align to coral station tag (button press)
     driverController
