@@ -18,7 +18,6 @@ import static frc.robot.subsystems.vision.VisionConstants.*; // Move these to ac
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
-import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
@@ -31,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.LiftConstants;
 import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.DriverAssistCommands;
 import frc.robot.commands.IntakeCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.climb.ClimbSubsystem;
@@ -226,25 +226,6 @@ public class RobotContainer {
     // Switch to X pattern when X button is pressed
     driverController.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
-    // Align 9 inches to the left or right of the closest tag
-    // Changed to 8 inches since the robot size is now accounted for in the calculation
-    final double REEF_DISTANCE_OFFSET = Units.inchesToMeters(6.5);
-    final double CORAL_DISTANCE_OFFSET = Units.inchesToMeters(4);
-
-    // Define path constraints for alignment
-    PathConstraints reefAlignmentConstraints =
-        new PathConstraints(
-            3.0, // Max velocity in m/s
-            4.0, // Max acceleration in m/s^2
-            3.0, // Max angular velocity in rad/s
-            4.0); // Max angular acceleration in rad/s^2
-    PathConstraints coralAlignmentConstraints =
-        new PathConstraints(
-            3.0, // Max velocity in m/s
-            4.0, // Max acceleration in m/s^2
-            3.0, // Max angular velocity in rad/s
-            4.0); // Max angular acceleration in rad/s^2
-
     // Function to check if driver is using joysticks (for cancellation)
     final double JOYSTICK_DEADBAND = 0.15;
     BooleanSupplier driverInputDetected =
@@ -256,69 +237,17 @@ public class RobotContainer {
     // Auto align to right of reef tag (button press)
     driverController
         .rightBumper()
-        .onTrue(
-            Commands.sequence(
-                    Commands.runOnce(
-                        () -> {
-                          Pose2d targetPose =
-                              drive.calculateTagOffset(
-                                  vision.getClosestTagPose(0), REEF_DISTANCE_OFFSET, 0, true, true);
-                          if (targetPose != null) {
-                            AutoBuilder.pathfindToPose(targetPose, reefAlignmentConstraints, 0.0)
-                                .until(driverInputDetected)
-                                .schedule();
-                          }
-                        }),
-                    Commands.waitSeconds(0.1))
-                .withName("Auto Align Right"));
+        .onTrue(DriverAssistCommands.alignToReefTag(drive, vision, true, driverInputDetected));
 
     // Auto align to left of reef tag (button press)
     driverController
         .leftBumper()
-        .onTrue(
-            Commands.sequence(
-                    Commands.runOnce(
-                        () -> {
-                          Pose2d targetPose =
-                              drive.calculateTagOffset(
-                                  vision.getClosestTagPose(0),
-                                  REEF_DISTANCE_OFFSET,
-                                  0,
-                                  false,
-                                  true);
-                          if (targetPose != null) {
-                            AutoBuilder.pathfindToPose(targetPose, reefAlignmentConstraints, 0.0)
-                                .until(driverInputDetected)
-                                .schedule();
-                          }
-                        }),
-                    Commands.waitSeconds(0.1))
-                .withName("Auto Align Left"));
+        .onTrue(DriverAssistCommands.alignToReefTag(drive, vision, false, driverInputDetected));
 
     // Auto align to coral station tag (button press)
     driverController
         .y()
-        .onTrue(
-            Commands.sequence(
-                    Commands.runOnce(
-                        () -> {
-                          Pose2d targetPose =
-                              drive.calculateTagOffset(
-                                  vision.getClosestTagPose(1),
-                                  0,
-                                  CORAL_DISTANCE_OFFSET,
-                                  false,
-                                  false);
-
-                          if (targetPose != null) {
-                            // Path finding happens independently
-                            AutoBuilder.pathfindToPose(targetPose, coralAlignmentConstraints, 0.0)
-                                .until(driverInputDetected)
-                                .schedule();
-                          }
-                        }),
-                    Commands.waitSeconds(0.1))
-                .withName("Auto Align Coral Station"));
+        .onTrue(DriverAssistCommands.alignToCoralTag(drive, vision, driverInputDetected));
 
     final Runnable resetOdometry =
         Constants.currentMode == Constants.Mode.SIM
