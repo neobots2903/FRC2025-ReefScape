@@ -34,8 +34,8 @@ public class IntakeCommands {
         // Finish when piece reaches outtake position:
         // - Intake switch NOT triggered (piece no longer at intake)
         // - Outtake switch IS triggered (piece has reached outtake position)
-        boolean intakeSwitchClear = !endEffector.isIntakeLimitSwitchTriggered();
-        boolean outtakeSwitchTriggered = endEffector.isOuttakeLimitSwitchTriggered();
+        boolean intakeSwitchClear = !endEffector.isBackSensorTriggered();
+        boolean outtakeSwitchTriggered = endEffector.isFrontSensorTriggered();
 
         Logger.recordOutput("Commands/IntakeGamePiece/IntakeSwitchClear", intakeSwitchClear);
         Logger.recordOutput(
@@ -99,7 +99,7 @@ public class IntakeCommands {
         switch (state) {
           case WAITING_FOR_DETECTION:
             // Wait for the piece to trigger the limit switch
-            if (endEffector.isIntakeLimitSwitchTriggered()) {
+            if (endEffector.isBackSensorTriggered()) {
               Logger.recordOutput("Commands/IntakeUntilPiecePassesThrough", "Piece Detected");
               state = IntakeState.WAITING_FOR_PASS_THROUGH;
             }
@@ -107,7 +107,7 @@ public class IntakeCommands {
 
           case WAITING_FOR_PASS_THROUGH:
             // Wait for the piece to pass through the limit switch
-            if (!endEffector.isIntakeLimitSwitchTriggered()) {
+            if (!endEffector.isFrontSensorTriggered()) {
               Logger.recordOutput(
                   "Commands/IntakeUntilPiecePassesThrough",
                   "Piece Passed Through - Starting Reverse");

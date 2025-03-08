@@ -17,6 +17,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
@@ -96,6 +97,11 @@ public final class Constants {
     public static final int outtakeLimitSwitchPort = 0;
     public static final double endEffectorSpeed = 0.2;
     public static final int algeDescorerMotor_Port = 24;
+
+    public static final I2C.Port i2cPortRio = I2C.Port.kOnboard;
+    public static final I2C.Port i2cPortNavX = I2C.Port.kMXP;
+
+    public static final int PROX_TRIGGER = 100;
   }
 
   public static final class ClimbConstants {

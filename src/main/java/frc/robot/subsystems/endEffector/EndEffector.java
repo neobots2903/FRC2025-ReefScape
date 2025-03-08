@@ -3,12 +3,15 @@ package frc.robot.subsystems.endEffector;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.ColorSensorV3;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.EndEffectorConstants;
+
+import org.ironmaple.simulation.drivesims.COTS;
 import org.littletonrobotics.junction.Logger;
 
 /**
@@ -21,8 +24,8 @@ public class EndEffector extends SubsystemBase {
   private final SparkMax rightIntakeMotor;
 
   // Limit switches
-  private final DigitalInput intakeLimitSwitch;
-  private final DigitalInput outtakeLimitSwitch;
+  private final ColorSensorV3 frontSensor;
+  private final ColorSensorV3 backSensor;
 
   // Current state tracking
   private IntakeState currentState = IntakeState.STOPPED;
@@ -54,8 +57,8 @@ public class EndEffector extends SubsystemBase {
         rightConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
     // Initialize limit switches
-    intakeLimitSwitch = new DigitalInput(EndEffectorConstants.intakeLimitSwitchPort);
-    outtakeLimitSwitch = new DigitalInput(EndEffectorConstants.outtakeLimitSwitchPort);
+    frontSensor = new ColorSensorV3(EndEffectorConstants.i2cPortRio);
+    backSensor = new ColorSensorV3(EndEffectorConstants.i2cPortNavX);
   }
 
   /**
@@ -87,15 +90,15 @@ public class EndEffector extends SubsystemBase {
   /**
    * @return true if the intake limit switch is triggered (game piece detected at intake position)
    */
-  public boolean isIntakeLimitSwitchTriggered() {
-    return intakeLimitSwitch.get();
+  public boolean isFrontSensorTriggered() {
+    return frontSensor.getProximity() > EndEffectorConstants.PROX_TRIGGER;
   }
 
   /**
    * @return true if the outtake limit switch is triggered (game piece detected at outtake position)
    */
-  public boolean isOuttakeLimitSwitchTriggered() {
-    return outtakeLimitSwitch.get();
+  public boolean isBackSensorTriggered() {
+    return frontSensor.getProximity() > EndEffectorConstants.PROX_TRIGGER;
   }
 
   /**
@@ -108,8 +111,10 @@ public class EndEffector extends SubsystemBase {
   @Override
   public void periodic() {
     // Log sensor values and state
-    Logger.recordOutput("EndEffector/IntakeLimitSwitch", isIntakeLimitSwitchTriggered());
-    Logger.recordOutput("EndEffector/OuttakeLimitSwitch", isOuttakeLimitSwitchTriggered());
+    Logger.recordOutput("EndEffector/frontSensor", isFrontSensorTriggered());
+    Logger.recordOutput("EndEffector/backSensor", isBackSensorTriggered());
+    Logger.recordOutput("EndEffector/frontSensorRawProximity", frontSensor.getProximity());
+    Logger.recordOutput("EndEffector/backSensorRawProximity", backSensor.getProximity());
     Logger.recordOutput("EndEffector/State", currentState.toString());
     Logger.recordOutput("EndEffector/LeftMotor/Output", leftIntakeMotor.getAppliedOutput());
     Logger.recordOutput("EndEffector/RightMotor/Output", rightIntakeMotor.getAppliedOutput());
