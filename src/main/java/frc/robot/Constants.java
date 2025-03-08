@@ -113,6 +113,6 @@ public final class Constants {
 
     // Claw position setpoints (degrees)
     public static final double CLAW_OPEN_POSITION = 0.0;
-    public static final double CLAW_GRIP_POSITION = 95.0;
+    public static final double CLAW_GRIP_POSITION = 94.0;
   }
 }

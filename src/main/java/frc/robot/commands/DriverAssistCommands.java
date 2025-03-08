@@ -61,7 +61,11 @@ public class DriverAssistCommands {
                 () -> {
                   Pose2d targetPose =
                       drive.calculateTagOffset(
-                          vision.getClosestTagPose(0, drive.getPose()), REEF_DISTANCE_OFFSET, 0, alignRight, true);
+                          vision.getClosestTagPose(0, drive.getPose()),
+                          REEF_DISTANCE_OFFSET,
+                          0,
+                          alignRight,
+                          true);
                   if (targetPose != null) {
                     AutoBuilder.pathfindToPose(targetPose, REEF_ALIGNMENT_CONSTRAINTS, 0.0)
                         .until(cancelSupplier)
@@ -87,7 +91,11 @@ public class DriverAssistCommands {
                 () -> {
                   Pose2d targetPose =
                       drive.calculateTagOffset(
-                          vision.getClosestTagPose(1, drive.getPose()), 0, CORAL_DISTANCE_OFFSET, false, false);
+                          vision.getClosestTagPose(1, drive.getPose()),
+                          0,
+                          CORAL_DISTANCE_OFFSET,
+                          false,
+                          false);
 
                   if (targetPose != null) {
                     AutoBuilder.pathfindToPose(targetPose, CORAL_ALIGNMENT_CONSTRAINTS, 0.0)
