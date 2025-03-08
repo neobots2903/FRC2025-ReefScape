@@ -23,7 +23,7 @@ public class EndEffector extends SubsystemBase {
   private final SparkMax leftIntakeMotor;
   private final SparkMax rightIntakeMotor;
 
-  // Limit switches
+  // Limit switches (May need this: https://github.com/PeterJohnson/rpi-colorsensor)
   private final ColorSensorV3 frontSensor;
   private final ColorSensorV3 backSensor;
 
