@@ -19,7 +19,43 @@
         {
           "type": "path",
           "data": {
-            "pathName": "C21R to A21"
+            "pathName": "C21R to CS13"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "IntakeCoral"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "CS13 to C19L"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ScoreCoral"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "C19L to A19"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "RemoveAlgaeL3"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "A19 to A18"
           }
         },
         {
@@ -31,7 +67,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "A21 to A20"
+            "pathName": "A18 to A17"
           }
         },
         {
