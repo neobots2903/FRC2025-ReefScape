@@ -29,6 +29,7 @@ public class DriverAssistCommands {
   // Standard offsets for alignment
   private static final double REEF_DISTANCE_OFFSET = Units.inchesToMeters(6.5);
   private static final double CORAL_DISTANCE_OFFSET = Units.inchesToMeters(4);
+  private static final double ONE_INCH = Units.inchesToMeters(1);
 
   // Path constraints for different alignment scenarios
   private static final PathConstraints REEF_ALIGNMENT_CONSTRAINTS =
@@ -63,7 +64,7 @@ public class DriverAssistCommands {
                       drive.calculateTagOffset(
                           vision.getClosestTagPose(0, drive.getPose()),
                           REEF_DISTANCE_OFFSET,
-                          0,
+                          ONE_INCH,
                           alignRight,
                           true);
                   if (targetPose != null) {

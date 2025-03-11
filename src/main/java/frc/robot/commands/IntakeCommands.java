@@ -2,46 +2,47 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.endEffector.EndEffector;
+import frc.robot.subsystems.lift.Lift;
 import org.littletonrobotics.junction.Logger;
 
 public class IntakeCommands {
 
   /**
-   * Creates a command that intakes a game piece until it reaches the outtake position. The command
-   * runs the intake wheels until the intake limit switch is NOT pressed AND the outtake limit
-   * switch IS pressed, indicating the game piece has moved fully to the outtake position.
+   * Creates a command that captures a game piece from the back of the robot and moves it to the
+   * front position for scoring. The command runs the motors until the front sensor is triggered 
+   * and the back sensor is clear.
    *
    * @param endEffector The end effector subsystem to use
    * @return The command
    */
-  public static Command intakeGamePiece(EndEffector endEffector) {
+  public static Command captureGamePiece(EndEffector endEffector) {
     return new Command() {
       @Override
       public void initialize() {
-        Logger.recordOutput("Commands/IntakeGamePiece", "Started");
-        // Start intake wheels
-        endEffector.intake();
+        Logger.recordOutput("Commands/CaptureGamePiece", "Started");
+        // Run motors to move piece from back to front
+        endEffector.runMotors();
       }
 
       @Override
       public void execute() {
-        // Nothing needed here - motors keep running at the speed set in initialize()
+        // Motors keep running at the speed set in initialize()
+        // Log sensor states for debugging
+        Logger.recordOutput("Commands/CaptureGamePiece/FrontSensor", endEffector.isFrontSensorTriggered());
+        Logger.recordOutput("Commands/CaptureGamePiece/BackSensor", endEffector.isBackSensorTriggered());
       }
 
       @Override
       public boolean isFinished() {
-        // Finish when piece reaches outtake position:
-        // - Intake switch NOT triggered (piece no longer at intake)
-        // - Outtake switch IS triggered (piece has reached outtake position)
-        boolean intakeSwitchClear = !endEffector.isBackSensorTriggered();
-        boolean outtakeSwitchTriggered = endEffector.isFrontSensorTriggered();
+        // Finish when:
+        // 1. Front sensor IS triggered (piece has reached front position)
+        // 2. Back sensor is NOT triggered (piece has cleared the back)
+        boolean frontSensorTriggered = endEffector.isFrontSensorTriggered();
+        boolean backSensorClear = !endEffector.isBackSensorTriggered();
 
-        Logger.recordOutput("Commands/IntakeGamePiece/IntakeSwitchClear", intakeSwitchClear);
-        Logger.recordOutput(
-            "Commands/IntakeGamePiece/OuttakeSwitchTriggered", outtakeSwitchTriggered);
-
-        return intakeSwitchClear && outtakeSwitchTriggered;
+        return frontSensorTriggered && backSensorClear;
       }
 
       @Override
@@ -49,105 +50,175 @@ public class IntakeCommands {
         // Stop motors when command ends
         endEffector.stop();
         Logger.recordOutput(
-            "Commands/IntakeGamePiece", "Ended - " + (interrupted ? "Interrupted" : "Completed"));
+            "Commands/CaptureGamePiece", "Ended - " + (interrupted ? "Interrupted" : "Completed"));
       }
-
-      @Override
-      public String getName() {
-        return "IntakeGamePiece";
-      }
-    }.withName("IntakeGamePiece").withTimeout(3.0); // Timeout after 3 seconds for safety
+    }.withName("CaptureGamePiece").withTimeout(3.0); // Timeout after 3 seconds for safety
   }
 
   /**
-   * Creates a command that runs the intake until a game piece passes completely through the intake
-   * limit switch, then reverses briefly to pull it back to a secure position.
+   * Creates a command that shoots a game piece out the front of the robot.
+   * The command will run until the piece is no longer detected by either sensor.
    *
    * @param endEffector The end effector subsystem to use
    * @return The command
    */
-  public static Command intakeUntilPiecePassesThrough(EndEffector endEffector) {
+  public static Command shootGamePiece(EndEffector endEffector) {
     return new Command() {
-      // Track command state - fix local enum declaration (no access modifier)
-      enum IntakeState {
-        WAITING_FOR_DETECTION,
-        WAITING_FOR_PASS_THROUGH,
-        REVERSING
-      }
-
-      private IntakeState state = IntakeState.WAITING_FOR_DETECTION;
-
-      // Timer for the reversing phase
-      private final Timer reverseTimer = new Timer();
-      private static final double REVERSE_TIME_SECONDS = 0.2; // Time to run motors in reverse
-      private static final double REVERSE_SPEED_FACTOR =
-          0.4; // Speed factor for reverse (slower than intake)
+      private final Timer exitTimer = new Timer();
+      private boolean pieceDetected = false;
+      private boolean timerRunning = false;
+      private static final double EXIT_CONFIRMATION_TIME = 0.1; // Time to confirm piece has exited
 
       @Override
       public void initialize() {
-        Logger.recordOutput("Commands/IntakeUntilPiecePassesThrough", "Started");
-        // Start intake wheels
-        endEffector.intake();
-        // Initial state
-        state = IntakeState.WAITING_FOR_DETECTION;
-        reverseTimer.stop();
-        reverseTimer.reset();
+        Logger.recordOutput("Commands/ShootGamePiece", "Started");
+        // Run motors at full speed to shoot piece out the front
+        endEffector.runMotors(1.0);
+        exitTimer.stop();
+        exitTimer.reset();
+        timerRunning = false;
+        pieceDetected = endEffector.isFrontSensorTriggered() || endEffector.isBackSensorTriggered();
       }
 
       @Override
       public void execute() {
-        switch (state) {
-          case WAITING_FOR_DETECTION:
-            // Wait for the piece to trigger the limit switch
-            if (endEffector.isBackSensorTriggered()) {
-              Logger.recordOutput("Commands/IntakeUntilPiecePassesThrough", "Piece Detected");
-              state = IntakeState.WAITING_FOR_PASS_THROUGH;
-            }
-            break;
+        boolean currentlyDetected = endEffector.isFrontSensorTriggered() || endEffector.isBackSensorTriggered();
+        
+        // If we had a piece but now don't detect it, start exit timer
+        if (pieceDetected && !currentlyDetected) {
+          if (!timerRunning) {
+            exitTimer.reset();
+            exitTimer.start();
+            timerRunning = true;
+          }
+        } else if (currentlyDetected) {
+          // Reset timer if piece is detected again
+          exitTimer.stop();
+          exitTimer.reset();
+          timerRunning = false;
+        }
+        
+        pieceDetected = currentlyDetected;
+      }
 
-          case WAITING_FOR_PASS_THROUGH:
-            // Wait for the piece to pass through the limit switch
-            if (!endEffector.isFrontSensorTriggered()) {
-              Logger.recordOutput(
-                  "Commands/IntakeUntilPiecePassesThrough",
-                  "Piece Passed Through - Starting Reverse");
-              // Start the reversing phase
-              state = IntakeState.REVERSING;
-              // Run motors in opposite direction at reduced speed
-              endEffector.reverse(REVERSE_SPEED_FACTOR);
-              // Start timer for the reversing phase
-              reverseTimer.reset();
-              reverseTimer.start();
-            }
-            break;
+      @Override
+      public boolean isFinished() {
+        // Finish when piece is no longer detected by either sensor for a brief period
+        // This confirms the piece has fully exited
+        return timerRunning && exitTimer.hasElapsed(EXIT_CONFIRMATION_TIME);
+      }
 
-          case REVERSING:
-            // Let the reversing timer run
-            break;
+      @Override
+      public void end(boolean interrupted) {
+        // Stop motors when command ends
+        endEffector.stop();
+        exitTimer.stop();
+        timerRunning = false;
+        Logger.recordOutput(
+            "Commands/ShootGamePiece", "Ended - " + (interrupted ? "Interrupted" : "Completed"));
+      }
+    }.withName("ShootGamePiece").withTimeout(2.0); // Timeout after 2 seconds for safety
+  }
+
+  /**
+   * Creates a command that prepares the game piece for scoring by ensuring it's properly positioned.
+   * This command will gently pulse the motors until the piece is at the front sensor but not at the back.
+   *
+   * @param endEffector The end effector subsystem to use
+   * @return The command
+   */
+  public static Command prepareForScoring(EndEffector endEffector) {
+    return new Command() {
+      private static final double PULSE_SPEED = 0.3; // Gentler speed for positioning
+      private static final double PULSE_DURATION = 0.1; // Time for each pulse
+      private final Timer pulseTimer = new Timer();
+      private boolean isPulsing = false;
+      
+      @Override
+      public void initialize() {
+        Logger.recordOutput("Commands/PrepareForScoring", "Started");
+        pulseTimer.stop();
+        pulseTimer.reset();
+        isPulsing = false;
+      }
+
+      @Override
+      public void execute() {
+        boolean frontSensorTriggered = endEffector.isFrontSensorTriggered();
+        boolean backSensorClear = !endEffector.isBackSensorTriggered();
+        
+        // Ideal position: Front triggered, back clear
+        if (frontSensorTriggered && backSensorClear) {
+          endEffector.stop();
+          isPulsing = false;
+        } 
+        // If piece is too far back (back sensor triggered), pulse forward
+        else if (!backSensorClear) {
+          if (!isPulsing) {
+            endEffector.runMotors(PULSE_SPEED); // Pulse motors to move piece forward
+            pulseTimer.reset();
+            pulseTimer.start();
+            isPulsing = true;
+          } else if (pulseTimer.hasElapsed(PULSE_DURATION)) {
+            endEffector.stop();
+            isPulsing = false;
+          }
+        }
+        // If piece is not detected at front, pulse forward
+        else if (!frontSensorTriggered) {
+          if (!isPulsing) {
+            endEffector.runMotors(PULSE_SPEED); // Pulse motors to move piece forward
+            pulseTimer.reset();
+            pulseTimer.start();
+            isPulsing = true;
+          } else if (pulseTimer.hasElapsed(PULSE_DURATION)) {
+            endEffector.stop();
+            isPulsing = false;
+          }
         }
       }
 
       @Override
       public boolean isFinished() {
-        // Finish only after the reversing phase completes
-        return (state == IntakeState.REVERSING) && reverseTimer.hasElapsed(REVERSE_TIME_SECONDS);
+        // Finish when piece is in ideal position and we're not in the middle of a pulse
+        boolean frontSensorTriggered = endEffector.isFrontSensorTriggered();
+        boolean backSensorClear = !endEffector.isBackSensorTriggered();
+        
+        return frontSensorTriggered && backSensorClear && !isPulsing;
       }
 
       @Override
       public void end(boolean interrupted) {
-        // Stop motors when command ends
         endEffector.stop();
-        reverseTimer.stop();
+        pulseTimer.stop();
         Logger.recordOutput(
-            "Commands/IntakeUntilPiecePassesThrough",
-            "Ended - " + (interrupted ? "Interrupted" : "Completed"));
+            "Commands/PrepareForScoring", "Ended - " + (interrupted ? "Interrupted" : "Completed"));
       }
+    }.withName("PrepareForScoring").withTimeout(3.0); // Safety timeout
+  }
 
-      @Override
-      public String getName() {
-        return "IntakeUntilPiecePassesThrough";
-      }
-    }.withName("IntakeUntilPiecePassesThrough")
-        .withTimeout(5.0); // Timeout after 5 seconds for safety
+  /**
+   * Creates a command that ensures the lift is safe to move by checking that the back sensor is clear.
+   * This prevents crushing a game piece with the lift.
+   *
+   * @param endEffector The end effector subsystem
+   * @param lift The lift subsystem
+   * @param liftPosition The target position for the lift
+   * @return A command that only moves the lift when safe
+   */
+  public static Command safeLiftToPosition(EndEffector endEffector, Lift lift, double liftPosition) {
+    return Commands.either(
+        // If back sensor is clear, move lift to position
+        Commands.runOnce(() -> lift.runLiftToPos(liftPosition)),
+        
+        // If back sensor is triggered, first prepare piece then move lift
+        Commands.sequence(
+            prepareForScoring(endEffector),
+            Commands.runOnce(() -> lift.runLiftToPos(liftPosition))
+        ),
+        
+        // Condition to check if back sensor is clear
+        () -> !endEffector.isBackSensorTriggered()
+    ).withName("SafeLiftToPosition");
   }
 }

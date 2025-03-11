@@ -31,6 +31,7 @@ import frc.robot.Constants.LiftConstants;
 import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriverAssistCommands;
+import frc.robot.commands.IntakeCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.climb.ClimbSubsystem;
 import frc.robot.subsystems.drive.*;
@@ -154,18 +155,11 @@ public class RobotContainer {
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
     // Add our simple autonomous routines
-    autoChooser.addOption( // Drive forward, raise lift, outtake (BACK BUMPER ON START LINE)
-        "Simple Coral L4",
-        AutoCommands.simpleCoral(drive, lift, endEffector, LiftConstants.L_FOUR));
-    autoChooser.addOption( // Drive forward, raise lift, outtake (BACK BUMPER ON START LINE)
-        "Simple Coral L3",
-        AutoCommands.simpleCoral(drive, lift, endEffector, LiftConstants.L_THREE));
-    autoChooser.addOption( // Drive forward, raise lift, outtake (BACK BUMPER ON START LINE)
-        "Simple Coral L2", AutoCommands.simpleCoral(drive, lift, endEffector, LiftConstants.L_TWO));
+    final double ROBOT_OFFSET = 36.0 / 2; // Half robot length in inches
     autoChooser.addOption( // Drive forward 5 feet (from robot center)
-        "Drive Forward 5 feet", DriveCommands.driveDistance(drive, 60.0 + 15));
+        "Drive Forward 5 feet", DriveCommands.driveDistance(drive, 60.0 + ROBOT_OFFSET));
     autoChooser.addOption( // Drive forward 1 foot (from robot center)
-        "Drive Forward 1 foot", DriveCommands.driveDistance(drive, 12.0 + 15));
+        "Drive Forward 1 foot", DriveCommands.driveDistance(drive, 12.0 + ROBOT_OFFSET));
 
     // // Set up SysId routines
     // autoChooser.addOption(
@@ -338,24 +332,21 @@ public class RobotContainer {
         .onTrue(Commands.runOnce(() -> climb.moveToGripPosition()).withName("Claws Grip"));
 
     // === GAME PIECE CONTROLS (FACE BUTTONS) ===
-    // A button: Manual Intake
+    // A button: Capture game piece (single button press)
     operatorController
         .a()
-        .onTrue(new InstantCommand(() -> endEffector.intake()))
-        .onFalse(new InstantCommand(() -> endEffector.stop()));
-
-    // B button: Outtake game piece (pushes piece out completely)
-    // operatorController
-    //     .b()
-    //     .onTrue(
-    //         IntakeCommands.intakeUntilPiecePassesThrough(endEffector)
-    //             .withName("Outtake Game Piece"));
+        .onTrue(IntakeCommands.captureGamePiece(endEffector));
 
     // B button: Remove Algae
     operatorController
         .b()
-        .onTrue(new InstantCommand(() -> endEffector.setAlgaeMotorSpeed(1)))
+        .onTrue(new InstantCommand(() -> endEffector.setAlgaeMotorSpeed(0.75)))
         .onFalse(new InstantCommand(() -> endEffector.setAlgaeMotorSpeed(0)));
+        
+    // Y button: Shoot/deposit game piece
+    operatorController
+        .y()
+        .onTrue(IntakeCommands.shootGamePiece(endEffector));
   }
 
   /**

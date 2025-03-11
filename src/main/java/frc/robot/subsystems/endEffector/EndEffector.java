@@ -30,8 +30,8 @@ public class EndEffector extends SubsystemBase {
 
   /** Possible states of the intake motors */
   public enum IntakeState {
-    INTAKE,
-    OUTTAKE,
+    FORWARD, // Moving game piece from back to front (normal operation)
+    REVERSE, // Rarely used - moves game piece backward
     STOPPED
   }
 
@@ -67,29 +67,47 @@ public class EndEffector extends SubsystemBase {
   }
 
   /**
-   * Runs intake wheels inwards (helps grip pieces)
+   * Runs motors to move game pieces from back to front (standard operation)
    *
    * @param speedFactor A multiplier for the base speed (0.0-1.0)
    */
-  public void reverse(double speedFactor) {
+  public void runMotors(double speedFactor) {
     double speed = EndEffectorConstants.endEffectorSpeed * speedFactor;
-    leftIntakeMotor.set(speed);
+    leftIntakeMotor.set(-speed); // Negative for outward motion (moves piece forward)
+    rightIntakeMotor.set(-speed);
+    currentState = IntakeState.FORWARD;
+  }
+
+  /**
+   * Runs motors at default speed to move game pieces from back to front
+   */
+  public void runMotors() {
+    runMotors(1.0);
+  }
+
+  /**
+   * RARELY USED: Reverses motor direction (moves game piece backward)
+   * Only use in emergency situations where a piece is stuck
+   *
+   * @param speedFactor A multiplier for the base speed (0.0-1.0)
+   */
+  public void reverseMotors(double speedFactor) {
+    double speed = EndEffectorConstants.endEffectorSpeed * speedFactor;
+    leftIntakeMotor.set(speed); // Positive for inward motion
     rightIntakeMotor.set(speed);
-    currentState = IntakeState.INTAKE;
+    currentState = IntakeState.REVERSE;
   }
 
-  /** Runs intake wheels outward to collect game pieces */
-  public void intake() {
-    leftIntakeMotor.set(-EndEffectorConstants.endEffectorSpeed);
-    rightIntakeMotor.set(-EndEffectorConstants.endEffectorSpeed);
-    currentState = IntakeState.OUTTAKE;
-  }
-
+  /**
+   * Sets the speed of the algae remover motor
+   * 
+   * @param speed Speed from -1.0 to 1.0
+   */
   public void setAlgaeMotorSpeed(double speed) {
     algaeRemoveMotor.set(speed);
   }
 
-  /** Stops the intake wheels */
+  /** Stops all motors */
   public void stop() {
     leftIntakeMotor.set(0);
     rightIntakeMotor.set(0);
