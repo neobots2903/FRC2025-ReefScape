@@ -1,17 +1,14 @@
 package frc.robot.subsystems.endEffector;
 
+import com.revrobotics.ColorSensorV3;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.ColorSensorV3;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.EndEffectorConstants;
-
-import org.ironmaple.simulation.drivesims.COTS;
 import org.littletonrobotics.junction.Logger;
 
 /**
@@ -22,6 +19,7 @@ public class EndEffector extends SubsystemBase {
   // Motors
   private final SparkMax leftIntakeMotor;
   private final SparkMax rightIntakeMotor;
+  private final SparkMax algaeRemoveMotor;
 
   // Limit switches (May need this: https://github.com/PeterJohnson/rpi-colorsensor)
   private final ColorSensorV3 frontSensor;
@@ -41,9 +39,11 @@ public class EndEffector extends SubsystemBase {
   public EndEffector() {
     // Initialize motors
     leftIntakeMotor =
-        new SparkMax(EndEffectorConstants.endEffectorMotorOne_Port, MotorType.kBrushed);
+        new SparkMax(EndEffectorConstants.endEffectorMotorOne_Port, MotorType.kBrushless);
     rightIntakeMotor =
-        new SparkMax(EndEffectorConstants.endEffectorMotorTwo_Port, MotorType.kBrushed);
+        new SparkMax(EndEffectorConstants.endEffectorMotorTwo_Port, MotorType.kBrushless);
+    algaeRemoveMotor =
+        new SparkMax(EndEffectorConstants.algeDescorerMotor_Port, MotorType.kBrushless);
 
     // Configure motors
     SparkMaxConfig leftConfig = new SparkMaxConfig();
@@ -55,6 +55,11 @@ public class EndEffector extends SubsystemBase {
     rightConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake).inverted(true);
     rightIntakeMotor.configure(
         rightConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+
+    SparkMaxConfig algaeConfig = new SparkMaxConfig();
+    algaeConfig.smartCurrentLimit(30).idleMode(IdleMode.kCoast).inverted(false);
+    algaeRemoveMotor.configure(
+        algaeConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
     // Initialize limit switches
     frontSensor = new ColorSensorV3(EndEffectorConstants.i2cPortRio);
@@ -80,6 +85,10 @@ public class EndEffector extends SubsystemBase {
     currentState = IntakeState.OUTTAKE;
   }
 
+  public void setAlgaeMotorSpeed(double speed) {
+    algaeRemoveMotor.set(speed);
+  }
+
   /** Stops the intake wheels */
   public void stop() {
     leftIntakeMotor.set(0);
@@ -91,14 +100,28 @@ public class EndEffector extends SubsystemBase {
    * @return true if the intake limit switch is triggered (game piece detected at intake position)
    */
   public boolean isFrontSensorTriggered() {
-    return frontSensor.getProximity() > EndEffectorConstants.PROX_TRIGGER;
+    boolean isTriggered = false;
+
+    if (frontSensor.getBlue() > 40) {
+      isTriggered = true;
+    }
+
+    return isTriggered;
+
+    // frontSensor.getProximity() > EndEffectorConstants.PROX_TRIGGER
   }
 
   /**
    * @return true if the outtake limit switch is triggered (game piece detected at outtake position)
    */
   public boolean isBackSensorTriggered() {
-    return frontSensor.getProximity() > EndEffectorConstants.PROX_TRIGGER;
+    boolean isTriggered = false;
+
+    if (backSensor.getBlue() > 1) {
+      isTriggered = true;
+    }
+
+    return isTriggered;
   }
 
   /**
@@ -113,8 +136,14 @@ public class EndEffector extends SubsystemBase {
     // Log sensor values and state
     Logger.recordOutput("EndEffector/frontSensor", isFrontSensorTriggered());
     Logger.recordOutput("EndEffector/backSensor", isBackSensorTriggered());
+    Logger.recordOutput("EndEffector/frontSensorRawIR", frontSensor.getIR());
+    Logger.recordOutput("EndEffector/backSensorRawIR", backSensor.getIR());
+    Logger.recordOutput("EndEffector/frontSensorRawColor", frontSensor.getRawColor().toString());
+    Logger.recordOutput("EndEffector/backSensorRawColor", backSensor.getRawColor().toString());
     Logger.recordOutput("EndEffector/frontSensorRawProximity", frontSensor.getProximity());
     Logger.recordOutput("EndEffector/backSensorRawProximity", backSensor.getProximity());
+    Logger.recordOutput("EndEffector/backSensorConnected", backSensor.isConnected());
+    Logger.recordOutput("EndEffector/frontSensorConnected", frontSensor.isConnected());
     Logger.recordOutput("EndEffector/State", currentState.toString());
     Logger.recordOutput("EndEffector/LeftMotor/Output", leftIntakeMotor.getAppliedOutput());
     Logger.recordOutput("EndEffector/RightMotor/Output", rightIntakeMotor.getAppliedOutput());

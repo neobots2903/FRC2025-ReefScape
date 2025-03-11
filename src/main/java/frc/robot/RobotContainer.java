@@ -31,7 +31,6 @@ import frc.robot.Constants.LiftConstants;
 import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriverAssistCommands;
-import frc.robot.commands.IntakeCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.climb.ClimbSubsystem;
 import frc.robot.subsystems.drive.*;
@@ -346,11 +345,17 @@ public class RobotContainer {
         .onFalse(new InstantCommand(() -> endEffector.stop()));
 
     // B button: Outtake game piece (pushes piece out completely)
+    // operatorController
+    //     .b()
+    //     .onTrue(
+    //         IntakeCommands.intakeUntilPiecePassesThrough(endEffector)
+    //             .withName("Outtake Game Piece"));
+
+    // B button: Remove Algae
     operatorController
         .b()
-        .onTrue(
-            IntakeCommands.intakeUntilPiecePassesThrough(endEffector)
-                .withName("Outtake Game Piece"));
+        .onTrue(new InstantCommand(() -> endEffector.setAlgaeMotorSpeed(1)))
+        .onFalse(new InstantCommand(() -> endEffector.setAlgaeMotorSpeed(0)));
   }
 
   /**
