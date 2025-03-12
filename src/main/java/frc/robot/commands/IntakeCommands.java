@@ -236,7 +236,7 @@ public class IntakeCommands {
   public static Command removeAlgaeGently(EndEffector endEffector) {
     return new Command() {
       // Constants
-      private static final double APPROACH_SPEED = 0.2; // Slow approach speed
+      private static final double APPROACH_SPEED = 0.15; // Slow approach speed
       private static final double CURRENT_THRESHOLD = 10.0; // Amps to detect contact
       private static final double TARGET_POSITION = 125.0; // Target position in degrees
 
