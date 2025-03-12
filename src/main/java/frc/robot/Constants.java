@@ -101,7 +101,8 @@ public final class Constants {
     public static final I2C.Port i2cPortRio = I2C.Port.kOnboard;
     public static final I2C.Port i2cPortNavX = I2C.Port.kMXP;
 
-    public static final int PROX_TRIGGER = 100;
+    public static final int FRONT_PROX_TRIGGER = 70;
+    public static final int BACK_PROX_TRIGGER = 110;
   }
 
   public static final class ClimbConstants {

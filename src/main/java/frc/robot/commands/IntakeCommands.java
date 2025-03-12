@@ -11,8 +11,8 @@ public class IntakeCommands {
 
   /**
    * Creates a command that captures a game piece from the back of the robot and moves it to the
-   * front position for scoring. The command runs the motors until the front sensor is triggered 
-   * and the back sensor is clear.
+   * front position for scoring. The command runs the motors until the front sensor is triggered and
+   * the back sensor is clear.
    *
    * @param endEffector The end effector subsystem to use
    * @return The command
@@ -23,15 +23,17 @@ public class IntakeCommands {
       public void initialize() {
         Logger.recordOutput("Commands/CaptureGamePiece", "Started");
         // Run motors to move piece from back to front
-        endEffector.runMotors();
+        endEffector.runMotors(0.75);
       }
 
       @Override
       public void execute() {
         // Motors keep running at the speed set in initialize()
         // Log sensor states for debugging
-        Logger.recordOutput("Commands/CaptureGamePiece/FrontSensor", endEffector.isFrontSensorTriggered());
-        Logger.recordOutput("Commands/CaptureGamePiece/BackSensor", endEffector.isBackSensorTriggered());
+        Logger.recordOutput(
+            "Commands/CaptureGamePiece/FrontSensor", endEffector.isFrontSensorTriggered());
+        Logger.recordOutput(
+            "Commands/CaptureGamePiece/BackSensor", endEffector.isBackSensorTriggered());
       }
 
       @Override
@@ -56,8 +58,8 @@ public class IntakeCommands {
   }
 
   /**
-   * Creates a command that shoots a game piece out the front of the robot.
-   * The command will run until the piece is no longer detected by either sensor.
+   * Creates a command that shoots a game piece out the front of the robot. The command will run
+   * until the piece is no longer detected by either sensor.
    *
    * @param endEffector The end effector subsystem to use
    * @return The command
@@ -82,8 +84,9 @@ public class IntakeCommands {
 
       @Override
       public void execute() {
-        boolean currentlyDetected = endEffector.isFrontSensorTriggered() || endEffector.isBackSensorTriggered();
-        
+        boolean currentlyDetected =
+            endEffector.isFrontSensorTriggered() || endEffector.isBackSensorTriggered();
+
         // If we had a piece but now don't detect it, start exit timer
         if (pieceDetected && !currentlyDetected) {
           if (!timerRunning) {
@@ -97,7 +100,7 @@ public class IntakeCommands {
           exitTimer.reset();
           timerRunning = false;
         }
-        
+
         pieceDetected = currentlyDetected;
       }
 
@@ -121,8 +124,9 @@ public class IntakeCommands {
   }
 
   /**
-   * Creates a command that prepares the game piece for scoring by ensuring it's properly positioned.
-   * This command will gently pulse the motors until the piece is at the front sensor but not at the back.
+   * Creates a command that prepares the game piece for scoring by ensuring it's properly
+   * positioned. This command will gently pulse the motors until the piece is at the front sensor
+   * but not at the back.
    *
    * @param endEffector The end effector subsystem to use
    * @return The command
@@ -133,7 +137,7 @@ public class IntakeCommands {
       private static final double PULSE_DURATION = 0.1; // Time for each pulse
       private final Timer pulseTimer = new Timer();
       private boolean isPulsing = false;
-      
+
       @Override
       public void initialize() {
         Logger.recordOutput("Commands/PrepareForScoring", "Started");
@@ -146,12 +150,12 @@ public class IntakeCommands {
       public void execute() {
         boolean frontSensorTriggered = endEffector.isFrontSensorTriggered();
         boolean backSensorClear = !endEffector.isBackSensorTriggered();
-        
+
         // Ideal position: Front triggered, back clear
         if (frontSensorTriggered && backSensorClear) {
           endEffector.stop();
           isPulsing = false;
-        } 
+        }
         // If piece is too far back (back sensor triggered), pulse forward
         else if (!backSensorClear) {
           if (!isPulsing) {
@@ -183,7 +187,7 @@ public class IntakeCommands {
         // Finish when piece is in ideal position and we're not in the middle of a pulse
         boolean frontSensorTriggered = endEffector.isFrontSensorTriggered();
         boolean backSensorClear = !endEffector.isBackSensorTriggered();
-        
+
         return frontSensorTriggered && backSensorClear && !isPulsing;
       }
 
@@ -198,27 +202,27 @@ public class IntakeCommands {
   }
 
   /**
-   * Creates a command that ensures the lift is safe to move by checking that the back sensor is clear.
-   * This prevents crushing a game piece with the lift.
+   * Creates a command that ensures the lift is safe to move by checking that the back sensor is
+   * clear. This prevents crushing a game piece with the lift.
    *
    * @param endEffector The end effector subsystem
    * @param lift The lift subsystem
    * @param liftPosition The target position for the lift
    * @return A command that only moves the lift when safe
    */
-  public static Command safeLiftToPosition(EndEffector endEffector, Lift lift, double liftPosition) {
+  public static Command safeLiftToPosition(
+      EndEffector endEffector, Lift lift, double liftPosition) {
     return Commands.either(
-        // If back sensor is clear, move lift to position
-        Commands.runOnce(() -> lift.runLiftToPos(liftPosition)),
-        
-        // If back sensor is triggered, first prepare piece then move lift
-        Commands.sequence(
-            prepareForScoring(endEffector),
-            Commands.runOnce(() -> lift.runLiftToPos(liftPosition))
-        ),
-        
-        // Condition to check if back sensor is clear
-        () -> !endEffector.isBackSensorTriggered()
-    ).withName("SafeLiftToPosition");
+            // If back sensor is clear, move lift to position
+            Commands.runOnce(() -> lift.runLiftToPos(liftPosition)),
+
+            // If back sensor is triggered, first prepare piece then move lift
+            Commands.sequence(
+                prepareForScoring(endEffector),
+                Commands.runOnce(() -> lift.runLiftToPos(liftPosition))),
+
+            // Condition to check if back sensor is clear
+            () -> !endEffector.isBackSensorTriggered())
+        .withName("SafeLiftToPosition");
   }
 }

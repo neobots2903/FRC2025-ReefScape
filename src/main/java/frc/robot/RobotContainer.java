@@ -333,20 +333,14 @@ public class RobotContainer {
 
     // === GAME PIECE CONTROLS (FACE BUTTONS) ===
     // A button: Capture game piece (single button press)
-    operatorController
-        .a()
-        .onTrue(IntakeCommands.captureGamePiece(endEffector));
+    operatorController.a().onTrue(IntakeCommands.captureGamePiece(endEffector));
 
     // B button: Remove Algae
     operatorController
         .b()
-        .onTrue(new InstantCommand(() -> endEffector.setAlgaeMotorSpeed(0.75)))
-        .onFalse(new InstantCommand(() -> endEffector.setAlgaeMotorSpeed(0)));
-        
+
     // Y button: Shoot/deposit game piece
-    operatorController
-        .y()
-        .onTrue(IntakeCommands.shootGamePiece(endEffector));
+    operatorController.y().onTrue(IntakeCommands.shootGamePiece(endEffector));
   }
 
   /**
