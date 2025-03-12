@@ -239,16 +239,21 @@ public class IntakeCommands {
       private static final double APPROACH_SPEED = 0.15; // Slow approach speed
       private static final double CURRENT_THRESHOLD = 10.0; // Amps to detect contact
       private static final double TARGET_POSITION = 125.0; // Target position in degrees
+      private static final double MAX_ROTATION_WITHOUT_CONTACT = 90.0; // Maximum degrees to rotate before giving up
 
       // State variables
       private boolean contactDetected = false;
+      private boolean rotationLimitExceeded = false;
       private Timer contactDebounceTimer = new Timer();
       private boolean timerRunning = false;
+      private double startPosition;
 
       @Override
       public void initialize() {
         Logger.recordOutput("Commands/AlgaeRemoval", "Starting gentle approach");
         contactDetected = false;
+        rotationLimitExceeded = false;
+        startPosition = endEffector.getAlgaePosition();
         endEffector.setAlgaeMotorSpeed(APPROACH_SPEED); // Start with slow constant speed
         contactDebounceTimer.stop();
         contactDebounceTimer.reset();
@@ -259,7 +264,19 @@ public class IntakeCommands {
       public void execute() {
         // Monitor current and position
         double current = endEffector.getAlgaeMotorCurrent();
+        double currentPosition = endEffector.getAlgaePosition();
+        double rotationSoFar = Math.abs(currentPosition - startPosition);
+        
         Logger.recordOutput("Commands/AlgaeRemoval/Current", current);
+        Logger.recordOutput("Commands/AlgaeRemoval/RotationSoFar", rotationSoFar);
+
+        // Check if we've rotated too far without contact
+        if (!contactDetected && rotationSoFar > MAX_ROTATION_WITHOUT_CONTACT) {
+          rotationLimitExceeded = true;
+          endEffector.setAlgaeMotorSpeed(0); // Stop the motor
+          Logger.recordOutput("Commands/AlgaeRemoval", "Rotation limit exceeded, no contact detected");
+          return;
+        }
 
         if (!contactDetected && current > CURRENT_THRESHOLD) {
           // Start debounce timer when contact initially detected
@@ -288,8 +305,14 @@ public class IntakeCommands {
 
       @Override
       public boolean isFinished() {
+        // Finish if rotation limit exceeded
+        if (rotationLimitExceeded) {
+          return true;
+        }
+
+        // Not finished until contact is detected
         if (!contactDetected) {
-          return false; // Not finished until contact is detected
+          return false;
         }
 
         // After contact, finish when position is approximately reached
@@ -300,10 +323,11 @@ public class IntakeCommands {
 
       @Override
       public void end(boolean interrupted) {
-        if (interrupted) {
-          // If interrupted, stop the motor
+        if (interrupted || rotationLimitExceeded) {
+          // If interrupted or rotation limit exceeded, stop the motor
           endEffector.setAlgaeMotorSpeed(0);
-          Logger.recordOutput("Commands/AlgaeRemoval", "Interrupted");
+          Logger.recordOutput("Commands/AlgaeRemoval", 
+              rotationLimitExceeded ? "Stopped: Rotation limit exceeded" : "Interrupted");
         } else {
           Logger.recordOutput("Commands/AlgaeRemoval", "Completed successfully");
         }
