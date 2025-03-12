@@ -80,10 +80,10 @@ public class EndEffector extends SubsystemBase {
     algaeConfig
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .p(0.01)
-        .i(0)
-        .d(0)
-        .outputRange(0.5, 1);
+        .p(0.0075) // 0.01
+        .i(0) // 0
+        .d(0.01) // 0.01
+        .outputRange(-0.75, 0.8);
 
     algaeRemoveMotor.configure(
         algaeConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
@@ -151,7 +151,7 @@ public class EndEffector extends SubsystemBase {
 
   /** Move the claws to grip/closed position */
   public void moveToRemovePos() {
-    setPosition(10); // 100
+    setPosition(125); // 100
   }
 
   /** Move the claws to open position */
@@ -196,6 +196,24 @@ public class EndEffector extends SubsystemBase {
    */
   public IntakeState getCurrentState() {
     return currentState;
+  }
+
+  /**
+   * Gets the current draw of the algae remover motor
+   *
+   * @return Current in amps
+   */
+  public double getAlgaeMotorCurrent() {
+    return algaeRemoveMotor.getOutputCurrent();
+  }
+
+  /**
+   * Gets the current position of the algae remover
+   *
+   * @return Position in degrees
+   */
+  public double getAlgaePosition() {
+    return algaeEncoder.getPosition();
   }
 
   @Override

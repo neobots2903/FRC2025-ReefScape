@@ -25,7 +25,6 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.LiftConstants;
 import frc.robot.commands.AutoCommands;
@@ -335,8 +334,11 @@ public class RobotContainer {
     // A button: Capture game piece (single button press)
     operatorController.a().onTrue(IntakeCommands.captureGamePiece(endEffector));
 
-    // B button: Toggle the algae remover position between stowed and deployed
-    operatorController.b().onTrue(Commands.runOnce(() -> endEffector.toggleAlgaePos()));
+    // B button: Run the gentle algae removal sequence when pressed, stow when released
+    operatorController
+        .b()
+        .onTrue(IntakeCommands.removeAlgaeGently(endEffector))
+        .onFalse(Commands.runOnce(() -> endEffector.moveToStow()));
 
     // Y button: Shoot/deposit game piece
     operatorController.y().onTrue(IntakeCommands.shootGamePiece(endEffector));

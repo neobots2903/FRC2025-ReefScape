@@ -225,4 +225,89 @@ public class IntakeCommands {
             () -> !endEffector.isBackSensorTriggered())
         .withName("SafeLiftToPosition");
   }
+
+  /**
+   * Creates a command that gently removes algae with a slow approach followed by position control.
+   * Uses current detection to identify when contact is made with the algae.
+   *
+   * @param endEffector The end effector subsystem to use
+   * @return The command sequence
+   */
+  public static Command removeAlgaeGently(EndEffector endEffector) {
+    return new Command() {
+      // Constants
+      private static final double APPROACH_SPEED = 0.2; // Slow approach speed
+      private static final double CURRENT_THRESHOLD = 10.0; // Amps to detect contact
+      private static final double TARGET_POSITION = 125.0; // Target position in degrees
+
+      // State variables
+      private boolean contactDetected = false;
+      private Timer contactDebounceTimer = new Timer();
+      private boolean timerRunning = false;
+
+      @Override
+      public void initialize() {
+        Logger.recordOutput("Commands/AlgaeRemoval", "Starting gentle approach");
+        contactDetected = false;
+        endEffector.setAlgaeMotorSpeed(APPROACH_SPEED); // Start with slow constant speed
+        contactDebounceTimer.stop();
+        contactDebounceTimer.reset();
+        timerRunning = false;
+      }
+
+      @Override
+      public void execute() {
+        // Monitor current and position
+        double current = endEffector.getAlgaeMotorCurrent();
+        Logger.recordOutput("Commands/AlgaeRemoval/Current", current);
+
+        if (!contactDetected && current > CURRENT_THRESHOLD) {
+          // Start debounce timer when contact initially detected
+          if (!timerRunning) {
+            contactDebounceTimer.reset();
+            contactDebounceTimer.start();
+            timerRunning = true;
+          }
+
+          // If the current remains high for a short period, confirm contact
+          if (contactDebounceTimer.hasElapsed(0.05)) {
+            // Contact confirmed, switch to position control
+            contactDetected = true;
+            endEffector.setAlgaeMotorSpeed(0); // Stop the motor briefly
+            Logger.recordOutput(
+                "Commands/AlgaeRemoval", "Contact detected, switching to position control");
+            endEffector.setPosition(TARGET_POSITION); // Use position control to final position
+          }
+        } else if (!contactDetected && timerRunning && current <= CURRENT_THRESHOLD) {
+          // Reset debounce timer if current drops below threshold during debounce
+          contactDebounceTimer.reset();
+          contactDebounceTimer.stop();
+          timerRunning = false;
+        }
+      }
+
+      @Override
+      public boolean isFinished() {
+        if (!contactDetected) {
+          return false; // Not finished until contact is detected
+        }
+
+        // After contact, finish when position is approximately reached
+        double currentPos = endEffector.getAlgaePosition();
+        double error = Math.abs(TARGET_POSITION - currentPos);
+        return error < 5.0; // 5 degree tolerance
+      }
+
+      @Override
+      public void end(boolean interrupted) {
+        if (interrupted) {
+          // If interrupted, stop the motor
+          endEffector.setAlgaeMotorSpeed(0);
+          Logger.recordOutput("Commands/AlgaeRemoval", "Interrupted");
+        } else {
+          Logger.recordOutput("Commands/AlgaeRemoval", "Completed successfully");
+        }
+      }
+    }.withName("RemoveAlgaeGently").withTimeout(3.0); // Safety timeout
+  }
 }
