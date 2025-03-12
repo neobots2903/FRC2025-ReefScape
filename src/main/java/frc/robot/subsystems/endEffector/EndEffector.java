@@ -31,6 +31,7 @@ public class EndEffector extends SubsystemBase {
 
   // Current state tracking
   private double currentSetpoint = 0.0;
+  private boolean isRemovingPos = false;
 
   // Limit switches (May need this: https://github.com/PeterJohnson/rpi-colorsensor)
   private final ColorSensorV3 frontSensor;
@@ -68,7 +69,7 @@ public class EndEffector extends SubsystemBase {
         rightConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
     SparkMaxConfig algaeConfig = new SparkMaxConfig();
-    algaeConfig.smartCurrentLimit(30).idleMode(IdleMode.kCoast).inverted(true);
+    algaeConfig.smartCurrentLimit(30).idleMode(IdleMode.kBrake).inverted(true);
 
     // Configure encoder
     // Position conversion factor converts from motor rotations to arm degrees
@@ -79,17 +80,17 @@ public class EndEffector extends SubsystemBase {
     algaeConfig
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .p(0.1)
+        .p(0.01)
         .i(0)
         .d(0)
         .outputRange(0.5, 1);
 
+    algaeRemoveMotor.configure(
+        algaeConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+
     // Get controllers and encoders after configuration
     algaePidController = algaeRemoveMotor.getClosedLoopController();
     algaeEncoder = algaeRemoveMotor.getEncoder();
-
-    algaeRemoveMotor.configure(
-        algaeConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
     // Initialize limit switches
     frontSensor = new ColorSensorV3(EndEffectorConstants.i2cPortRio); // Under 70 Normal
@@ -156,6 +157,17 @@ public class EndEffector extends SubsystemBase {
   /** Move the claws to open position */
   public void moveToStow() {
     setPosition(0);
+  }
+
+  public void toggleAlgaePos() {
+    if (isRemovingPos) {
+      moveToStow();
+    } else {
+      moveToRemovePos();
+    }
+
+    // Set for future;
+    isRemovingPos = !isRemovingPos;
   }
 
   /** Stops all motors */
