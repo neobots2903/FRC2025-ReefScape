@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BLUE Mid Start to C21R"
+            "pathName": "BLUE LT Start to C22L"
           }
         },
         {
@@ -19,7 +19,31 @@
         {
           "type": "path",
           "data": {
-            "pathName": "C21R to A21"
+            "pathName": "C22L to CS12"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "IntakeCoral"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "CS12 to C17R"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ScoreCoral"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "C17R to A17"
           }
         },
         {
@@ -31,7 +55,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "A21 to A20"
+            "pathName": "A17 to A18"
           }
         },
         {

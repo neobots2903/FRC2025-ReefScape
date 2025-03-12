@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BLUE Rt Start to C21R"
+            "pathName": "RED MD Start to C10R"
           }
         },
         {
@@ -19,19 +19,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "C21R to A21"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "RemoveAlgaeL2"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "A21 to A20"
+            "pathName": "C10R to A10"
           }
         },
         {
