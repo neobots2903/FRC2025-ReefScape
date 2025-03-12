@@ -335,8 +335,8 @@ public class RobotContainer {
     // A button: Capture game piece (single button press)
     operatorController.a().onTrue(IntakeCommands.captureGamePiece(endEffector));
 
-    // B button: Remove Algae
-    operatorController.b().onTrue(new InstantCommand(() -> endEffector.toggleAlgaePos()));
+    // B button: Toggle the algae remover position between stowed and deployed
+    operatorController.b().onTrue(Commands.runOnce(() -> endEffector.toggleAlgaePos()));
 
     // Y button: Shoot/deposit game piece
     operatorController.y().onTrue(IntakeCommands.shootGamePiece(endEffector));

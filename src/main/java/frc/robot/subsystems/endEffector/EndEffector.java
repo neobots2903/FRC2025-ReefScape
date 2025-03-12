@@ -151,7 +151,7 @@ public class EndEffector extends SubsystemBase {
 
   /** Move the claws to grip/closed position */
   public void moveToRemovePos() {
-    setPosition(100);
+    setPosition(10); // 100
   }
 
   /** Move the claws to open position */
