@@ -146,9 +146,9 @@ public class RobotContainer {
     // Register Named Commands
     NamedCommands.registerCommand("ScoreCoral", AutoCommands.ScoreCoral(lift, endEffector));
     NamedCommands.registerCommand(
-        "RemoveAlgaeL2", AutoCommands.RemoveAlgae(lift, endEffector, LiftConstants.L_TWO));
+        "RemoveAlgaeL2", AutoCommands.RemoveAlgae(drive, lift, endEffector, LiftConstants.L_TWO));
     NamedCommands.registerCommand(
-        "RemoveAlgaeL3", AutoCommands.RemoveAlgae(lift, endEffector, LiftConstants.L_THREE));
+        "RemoveAlgaeL3", AutoCommands.RemoveAlgae(drive, lift, endEffector, LiftConstants.L_THREE));
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
