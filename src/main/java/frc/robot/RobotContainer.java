@@ -259,12 +259,14 @@ public class RobotContainer {
     operatorController
         .povUp()
         .onTrue(
-            Commands.runOnce(
-                    () -> {
-                      currentLiftPositionIndex = liftPositions.length - 1;
-                      lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
-                    })
-                .withName("Lift to Top Position (L4)"));
+            Commands.runOnce(() -> endEffector.moveToReadyPos())
+                .andThen(
+                    Commands.runOnce(
+                        () -> {
+                          currentLiftPositionIndex = liftPositions.length - 1;
+                          lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
+                        }))
+                .withName("Lift Position Up One"));
 
     // D-Pad Down: Move lift directly to bottom position
     operatorController
@@ -275,6 +277,8 @@ public class RobotContainer {
                       currentLiftPositionIndex = 0;
                       lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
                     })
+                .andThen(Commands.waitSeconds(0.25))
+                .andThen(Commands.runOnce(() -> endEffector.moveToStow()))
                 .withName("Lift to Bottom Position"));
 
     // D-Pad Left: Move lift down one position
@@ -286,18 +290,22 @@ public class RobotContainer {
                       currentLiftPositionIndex = Math.max(currentLiftPositionIndex - 1, 0);
                       lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
                     })
+                .andThen(Commands.waitSeconds(0.25))
+                .andThen(Commands.runOnce(() -> endEffector.moveToStow()))
                 .withName("Lift Position Down One"));
 
     // D-Pad Right: Move lift up one position
     operatorController
         .povRight()
         .onTrue(
-            Commands.runOnce(
-                    () -> {
-                      currentLiftPositionIndex =
-                          Math.min(currentLiftPositionIndex + 1, liftPositions.length - 1);
-                      lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
-                    })
+            Commands.runOnce(() -> endEffector.moveToReadyPos())
+                .andThen(
+                    Commands.runOnce(
+                        () -> {
+                          currentLiftPositionIndex =
+                              Math.min(currentLiftPositionIndex + 1, liftPositions.length - 1);
+                          lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
+                        }))
                 .withName("Lift Position Up One"));
 
     // === RAMP MECHANISM CONTROLS (BUMPERS) ===
@@ -337,11 +345,15 @@ public class RobotContainer {
     // B button: Run the gentle algae removal sequence when pressed, stow when released
     operatorController
         .b()
-        .onTrue(IntakeCommands.removeAlgaeGently(endEffector))
-        .onFalse(Commands.runOnce(() -> endEffector.moveToStow()));
+        .onTrue(Commands.runOnce(() -> endEffector.moveToReadyPos()))
+        .onFalse(IntakeCommands.removeAlgaeGently(endEffector));
 
     // Y button: Shoot/deposit game piece
-    operatorController.y().onTrue(IntakeCommands.shootGamePiece(endEffector));
+    operatorController
+        .y()
+        .onTrue(
+            IntakeCommands.shootGamePiece(endEffector)
+                .andThen(IntakeCommands.prepareForScoring(endEffector)));
   }
 
   /**

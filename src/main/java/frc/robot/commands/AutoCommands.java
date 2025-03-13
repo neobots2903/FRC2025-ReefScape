@@ -2,7 +2,6 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.Constants.LiftConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.endEffector.EndEffector;
@@ -57,7 +56,8 @@ public class AutoCommands {
    * @param reefPos The lift position for algae removal
    * @return The command sequence
    */
-  public static Command RemoveAlgae(Drive drive, Lift lift, EndEffector endEffector, double reefPos) {
+  public static Command RemoveAlgae(
+      Drive drive, Lift lift, EndEffector endEffector, double reefPos) {
     return Commands.sequence(
             // Step 1: Raise lift to position
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting lift to pos")),
@@ -67,23 +67,22 @@ public class AutoCommands {
             Commands.waitSeconds(1),
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed lift to pos")),
 
-            // Step 3: Run algae removal motor WHILE driving back 6 inches. It's a lift and pull motion.
-            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting algae removal with pullback")),
+            // Step 3: Run algae removal motor WHILE driving back 6 inches. It's a lift and pull
+            // motion.
+            Commands.runOnce(
+                () -> Logger.recordOutput("Auto/Status", "Starting algae removal with pullback")),
             Commands.parallel(
                 // Remove algae with the mechanism
                 IntakeCommands.removeAlgaeGently(endEffector),
-                
+
                 // Drive backward slowly while removing algae
                 Commands.sequence(
                     // Wait briefly before starting to drive back (let mechanism make contact)
                     Commands.waitSeconds(0.3),
                     // Drive backward slowly (6 inches)
-                    DriveCommands.driveDistance(
-                        drive,
-                        -6.0)   // 6 inches backward
-                )
-            ),
-            
+                    DriveCommands.driveDistance(drive, -6.0) // 6 inches backward
+                    )),
+
             // Move the algae remover back to stowed position
             Commands.runOnce(() -> endEffector.moveToStow()),
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed algae removal")),

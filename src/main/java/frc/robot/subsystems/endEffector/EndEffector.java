@@ -151,12 +151,16 @@ public class EndEffector extends SubsystemBase {
 
   /** Move the claws to grip/closed position */
   public void moveToRemovePos() {
-    setPosition(125); // 100
+    setPosition(-55);
   }
 
   /** Move the claws to open position */
   public void moveToStow() {
-    setPosition(0);
+    setPosition(-5);
+  }
+
+  public void moveToReadyPos() {
+    setPosition(-200);
   }
 
   public void toggleAlgaePos() {
@@ -182,6 +186,7 @@ public class EndEffector extends SubsystemBase {
    */
   public boolean isFrontSensorTriggered() {
     return frontSensor.getProximity() > EndEffectorConstants.FRONT_PROX_TRIGGER;
+    // return false;
   }
 
   /**

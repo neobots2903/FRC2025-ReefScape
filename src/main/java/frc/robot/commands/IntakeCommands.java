@@ -23,7 +23,7 @@ public class IntakeCommands {
       public void initialize() {
         Logger.recordOutput("Commands/CaptureGamePiece", "Started");
         // Run motors to move piece from back to front
-        endEffector.runMotors(0.75);
+        endEffector.runMotors(1);
       }
 
       @Override
@@ -34,6 +34,10 @@ public class IntakeCommands {
             "Commands/CaptureGamePiece/FrontSensor", endEffector.isFrontSensorTriggered());
         Logger.recordOutput(
             "Commands/CaptureGamePiece/BackSensor", endEffector.isBackSensorTriggered());
+
+        if (endEffector.isFrontSensorTriggered()) {
+          endEffector.runMotors(0.3);
+        }
       }
 
       @Override
@@ -45,6 +49,7 @@ public class IntakeCommands {
         boolean backSensorClear = !endEffector.isBackSensorTriggered();
 
         return frontSensorTriggered && backSensorClear;
+        // return frontSensorTriggered;
       }
 
       @Override
@@ -238,8 +243,9 @@ public class IntakeCommands {
       // Constants
       private static final double APPROACH_SPEED = 0.15; // Slow approach speed
       private static final double CURRENT_THRESHOLD = 10.0; // Amps to detect contact
-      private static final double TARGET_POSITION = 125.0; // Target position in degrees
-      private static final double MAX_ROTATION_WITHOUT_CONTACT = 90.0; // Maximum degrees to rotate before giving up
+      private static final double TARGET_POSITION = -55.0; // Target position in degrees
+      private static final double MAX_ROTATION_WITHOUT_CONTACT =
+          70.0; // Maximum degrees to rotate before giving up
 
       // State variables
       private boolean contactDetected = false;
@@ -266,7 +272,7 @@ public class IntakeCommands {
         double current = endEffector.getAlgaeMotorCurrent();
         double currentPosition = endEffector.getAlgaePosition();
         double rotationSoFar = Math.abs(currentPosition - startPosition);
-        
+
         Logger.recordOutput("Commands/AlgaeRemoval/Current", current);
         Logger.recordOutput("Commands/AlgaeRemoval/RotationSoFar", rotationSoFar);
 
@@ -274,7 +280,8 @@ public class IntakeCommands {
         if (!contactDetected && rotationSoFar > MAX_ROTATION_WITHOUT_CONTACT) {
           rotationLimitExceeded = true;
           endEffector.setAlgaeMotorSpeed(0); // Stop the motor
-          Logger.recordOutput("Commands/AlgaeRemoval", "Rotation limit exceeded, no contact detected");
+          Logger.recordOutput(
+              "Commands/AlgaeRemoval", "Rotation limit exceeded, no contact detected");
           return;
         }
 
@@ -326,7 +333,9 @@ public class IntakeCommands {
         if (interrupted || rotationLimitExceeded) {
           // If interrupted or rotation limit exceeded, stop the motor
           endEffector.setAlgaeMotorSpeed(0);
-          Logger.recordOutput("Commands/AlgaeRemoval", 
+          endEffector.moveToStow();
+          Logger.recordOutput(
+              "Commands/AlgaeRemoval",
               rotationLimitExceeded ? "Stopped: Rotation limit exceeded" : "Interrupted");
         } else {
           Logger.recordOutput("Commands/AlgaeRemoval", "Completed successfully");
