@@ -64,11 +64,11 @@ public class DriverAssistCommands {
                       drive.calculateTagOffset(
                           vision.getClosestTagPose(0, drive.getPose()),
                           REEF_DISTANCE_OFFSET,
-                          ONE_INCH,
+                          ONE_INCH * 3,
                           alignRight,
                           true);
                   if (targetPose != null) {
-                    AutoBuilder.pathfindToPose(targetPose, REEF_ALIGNMENT_CONSTRAINTS, 0.0)
+                    AutoBuilder.pathfindToPose(targetPose, REEF_ALIGNMENT_CONSTRAINTS)
                         .until(cancelSupplier)
                         .schedule();
                   }
@@ -99,7 +99,7 @@ public class DriverAssistCommands {
                           false);
 
                   if (targetPose != null) {
-                    AutoBuilder.pathfindToPose(targetPose, CORAL_ALIGNMENT_CONSTRAINTS, 0.0)
+                    AutoBuilder.pathfindToPose(targetPose, CORAL_ALIGNMENT_CONSTRAINTS)
                         .until(cancelSupplier)
                         .schedule();
                   }
