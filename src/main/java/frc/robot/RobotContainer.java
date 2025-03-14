@@ -155,9 +155,7 @@ public class RobotContainer {
     NamedCommands.registerCommand(
         "RemoveAlgaeL3",
         AutoCommands.RemoveAlgae(drive, lift, endEffector, LiftPosition.LEVEL_THREE.getPosition()));
-    NamedCommands.registerCommand(
-      "IntakeCommand",
-      IntakeCommands.captureGamePiece(endEffector));
+    NamedCommands.registerCommand("IntakeCommand", IntakeCommands.captureGamePiece(endEffector));
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
@@ -168,14 +166,13 @@ public class RobotContainer {
         "Drive Forward 5 feet", DriveCommands.driveDistance(drive, 60.0 + ROBOT_OFFSET));
     autoChooser.addOption( // Drive forward 1 foot (from robot center)
         "Drive Forward 1 foot", DriveCommands.driveDistance(drive, 12.0 + ROBOT_OFFSET));
-    
+
     // Add test autos for individual AutoCommands
-    autoChooser.addOption("Test Score Coral", 
-        AutoCommands.ScoreCoral(lift, endEffector));
-    autoChooser.addOption("Test Remove Algae", 
+    autoChooser.addOption("Test Score Coral", AutoCommands.ScoreCoral(lift, endEffector));
+    autoChooser.addOption(
+        "Test Remove Algae",
         AutoCommands.RemoveAlgae(drive, lift, endEffector, LiftPosition.LEVEL_TWO.getPosition()));
-    autoChooser.addOption("Test Intake", 
-        IntakeCommands.captureGamePiece(endEffector));
+    autoChooser.addOption("Test Intake", IntakeCommands.captureGamePiece(endEffector));
 
     // // Set up SysId routines
     // autoChooser.addOption(
