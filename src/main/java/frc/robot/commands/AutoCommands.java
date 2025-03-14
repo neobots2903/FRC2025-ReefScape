@@ -75,16 +75,13 @@ public class AutoCommands {
   public static Command RemoveAlgae(
       Drive drive, Lift lift, EndEffector endEffector, double reefPos) {
     return Commands.sequence(
-            // Step 1: Raise lift to position
-            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting lift to pos")),
-            Commands.runOnce(() -> lift.runLiftToPos(reefPos)),
+            // Step 1: Raise lift to position using safety checks
+            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting lift to reef position")),
+            // Use safeCoralLift to ensure coral safety during lift movement
+            LiftCommands.safeCoralLift(endEffector, lift, reefPos),
+            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed lift to reef position")),
 
-            // Wait for lift to get to position (1 second should be enough)
-            Commands.waitSeconds(1),
-            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed lift to pos")),
-
-            // Step 3: Run algae removal motor WHILE driving back 6 inches. It's a lift and pull
-            // motion.
+            // Step 2: Run algae removal motor WHILE driving back 6 inches.
             Commands.runOnce(
                 () -> Logger.recordOutput("Auto/Status", "Starting algae removal with pullback")),
             Commands.parallel(
@@ -99,14 +96,18 @@ public class AutoCommands {
                     DriveCommands.driveDistance(drive, -6.0) // 6 inches backward
                     )),
 
-            // Move the algae remover back to stowed position
+            // Step 3: Make sure algae mechanism is safely stowed before moving lift
+            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Stowing algae mechanism")),
             Commands.runOnce(() -> endEffector.moveToStow()),
+            // Wait briefly for mechanism to stow
+            Commands.waitSeconds(0.2),
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed algae removal")),
 
-            // Step 4: Lower lift to L1
-            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting lift to L1")),
-            Commands.runOnce(() -> lift.runLiftToPos(LiftConstants.L_ONE)),
-            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed lift to L1")))
+            // Step 4: Lower lift to L2 using safety checks
+            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting lift to L2")),
+            // Use safeCoralLift again to safely lower the lift
+            LiftCommands.safeCoralLift(endEffector, lift, Lift.LiftPosition.LEVEL_TWO),
+            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed lift to L2")))
         .withName("RemoveAlgae");
   }
 
@@ -130,9 +131,6 @@ public class AutoCommands {
             // Step 2: Move lift to bottom position with safety checks
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Moving lift to bottom")),
             LiftCommands.safeCoralLift(endEffector, lift, Lift.LiftPosition.BOTTOM),
-
-            // Step 3: Wait briefly to ensure everything is in position
-            Commands.waitSeconds(0.25),
             Commands.runOnce(
                 () -> Logger.recordOutput("Auto/Status", "Setup complete, starting intake")),
 
