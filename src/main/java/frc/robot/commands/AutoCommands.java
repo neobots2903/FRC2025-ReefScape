@@ -1,10 +1,12 @@
 package frc.robot.commands;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.LiftConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.endEffector.EndEffector;
+import frc.robot.subsystems.intake.RampMechanism;
 import frc.robot.subsystems.lift.Lift;
 import org.littletonrobotics.junction.Logger;
 
@@ -14,6 +16,9 @@ public class AutoCommands {
   private AutoCommands() {
     // Utility class - prevent instantiation
   }
+
+  // Move the timeout constant to class level so it's accessible to both the command and withTimeout()
+  private static final double INTAKE_TIMEOUT = 5.0; // Max time to run intake
 
   /**
    * Creates a command that scores a coral game piece by raising the lift, shooting the game piece,
@@ -25,23 +30,22 @@ public class AutoCommands {
    */
   public static Command ScoreCoral(Lift lift, EndEffector endEffector) {
     return Commands.sequence(
-            // Step 1: Raise lift to position
+            // Step 1: Raise lift to position with coral safety checks
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting lift to L4")),
-            // Commands.runOnce(() -> lift.runLiftToPos(LiftConstants.L_FOUR)),
-            IntakeCommands.safeLiftToPosition(endEffector, lift, LiftConstants.L_FOUR),
-
-            // Wait for lift to get to position (1.25 second should be enough)
-            Commands.waitSeconds(1.25),
+            LiftCommands.positionCoralAndLift(endEffector, lift, Lift.LiftPosition.LEVEL_FOUR),
+            
+            // No need to wait extra time - safeCoralLift already waits for position to be reached
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed lift to L4")),
 
-            // Step 3: Shoot the game piece
+            // Step 2: Shoot the game piece
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting to shoot piece")),
-            IntakeCommands.shootGamePiece(endEffector), // Start shooting
+            IntakeCommands.shootGamePiece(endEffector),
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed shooting piece")),
 
-            // Step 4: Lower lift to L2
+            // Step 3: Lower lift to L2 with coral safety checks
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting lift to L2")),
-            Commands.runOnce(() -> lift.runLiftToPos(LiftConstants.L_TWO)),
+            // Use safeCoralLift for lowering as well
+            LiftCommands.safeCoralLift(endEffector, lift, Lift.LiftPosition.LEVEL_TWO),
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed lift to L2")))
         .withName("ScoreCoral");
   }
@@ -92,5 +96,38 @@ public class AutoCommands {
             Commands.runOnce(() -> lift.runLiftToPos(LiftConstants.L_ONE)),
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed lift to L1")))
         .withName("RemoveAlgae");
+  }
+
+  /**
+   * Creates a command that automatically intakes a coral piece. The command ensures the ramp is 
+   * in intake position and the lift is at the bottom before running the intake until a piece 
+   * is detected.
+   *
+   * @param lift The lift subsystem
+   * @param endEffector The end effector subsystem
+   * @param ramp The ramp mechanism subsystem
+   * @return The command sequence
+   */
+  public static Command IntakeCoral(Lift lift, EndEffector endEffector, RampMechanism ramp) {
+    return Commands.sequence(
+            // Step 1: Make sure ramp is in intake position and algae mechanism is stowed
+            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Setting up for intake")),
+            Commands.runOnce(() -> ramp.moveToIntakePosition()),
+            Commands.runOnce(() -> endEffector.moveToStow()),
+            
+            // Step 2: Move lift to bottom position with safety checks
+            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Moving lift to bottom")),
+            LiftCommands.safeCoralLift(endEffector, lift, Lift.LiftPosition.BOTTOM),
+            
+            // Step 3: Wait briefly to ensure everything is in position
+            Commands.waitSeconds(0.25),
+            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Setup complete, starting intake")),
+            
+            // Step 4: Run intake until piece is detected
+            IntakeCommands.captureGamePiece(endEffector),
+            
+            // Step 5: If piece was detected, run capture to position it properly
+            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Moving piece to front position")))
+        .withName("AutoIntake");
   }
 }

@@ -207,31 +207,6 @@ public class IntakeCommands {
   }
 
   /**
-   * Creates a command that ensures the lift is safe to move by checking that the back sensor is
-   * clear. This prevents crushing a game piece with the lift.
-   *
-   * @param endEffector The end effector subsystem
-   * @param lift The lift subsystem
-   * @param liftPosition The target position for the lift
-   * @return A command that only moves the lift when safe
-   */
-  public static Command safeLiftToPosition(
-      EndEffector endEffector, Lift lift, double liftPosition) {
-    return Commands.either(
-            // If back sensor is clear, move lift to position
-            Commands.runOnce(() -> lift.runLiftToPos(liftPosition)),
-
-            // If back sensor is triggered, first prepare piece then move lift
-            Commands.sequence(
-                prepareForScoring(endEffector),
-                Commands.runOnce(() -> lift.runLiftToPos(liftPosition))),
-
-            // Condition to check if back sensor is clear
-            () -> !endEffector.isBackSensorTriggered())
-        .withName("SafeLiftToPosition");
-  }
-
-  /**
    * Creates a command that gently removes algae with a slow approach followed by position control.
    * Uses current detection to identify when contact is made with the algae.
    *

@@ -15,6 +15,27 @@ import frc.robot.Constants.LiftConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class Lift extends SubsystemBase {
+  // Enum for lift positions
+  public enum LiftPosition {
+    BOTTOM(LiftConstants.BOTTOM),
+    LEVEL_ONE(LiftConstants.L_ONE),
+    LEVEL_TWO(LiftConstants.L_TWO),
+    LEVEL_THREE(LiftConstants.L_THREE),
+    LEVEL_FOUR(LiftConstants.L_FOUR);
+
+    private final double position;
+
+    LiftPosition(double position) {
+      this.position = position;
+    }
+
+    public double getPosition() {
+      return position;
+    }
+  }
+
+  private static final double POSITION_TOLERANCE = 0.5; // Position tolerance in inches
+
   private SparkMax leftMotor;
   private SparkMax rightMotor;
   private SparkClosedLoopController leftClosedLoopController;
@@ -22,6 +43,7 @@ public class Lift extends SubsystemBase {
   private RelativeEncoder leftEncoder;
   private RelativeEncoder rightEncoder;
   private double currentSetpoint = 0.0;
+  private LiftPosition currentTargetPosition = LiftPosition.BOTTOM;
 
   /**
    * Constructs the Lift subsystem and initializes hardware. Expects inches to be used for
@@ -81,10 +103,65 @@ public class Lift extends SubsystemBase {
     motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
-  public void runLiftToPos(double pos) {
-    this.currentSetpoint = pos;
+  /**
+   * Moves the lift to a predefined position.
+   *
+   * @param position The lift position to move to
+   */
+  public void runLiftToPos(LiftPosition position) {
+    this.currentTargetPosition = position;
+    this.currentSetpoint = position.getPosition();
     rightClosedLoopController.setReference(
         this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+  }
+
+  /**
+   * Moves the lift to a specific height in inches.
+   *
+   * @param position The position in inches
+   */
+  public void runLiftToPos(double position) {
+    this.currentSetpoint = position;
+    
+    // Update the current target position if it matches one of our predefined positions
+    for (LiftPosition liftPos : LiftPosition.values()) {
+      if (Math.abs(position - liftPos.getPosition()) < 0.01) {
+        this.currentTargetPosition = liftPos;
+        break;
+      }
+    }
+    
+    rightClosedLoopController.setReference(
+        this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
+  }
+
+  /**
+   * Gets the current target position.
+   *
+   * @return The current target position
+   */
+  public LiftPosition getCurrentTargetPosition() {
+    return currentTargetPosition;
+  }
+
+  /**
+   * Gets the current actual position in inches.
+   *
+   * @return The current position in inches
+   */
+  public double getCurrentPosition() {
+    // Average the two encoders for a more reliable reading
+    return (leftEncoder.getPosition() + rightEncoder.getPosition()) / 2.0;
+  }
+
+  /**
+   * Checks if the lift is at its target position within tolerance.
+   *
+   * @return true if the lift is at the target position
+   */
+  public boolean isAtTargetPosition() {
+    double currentAvgPosition = getCurrentPosition();
+    return Math.abs(currentAvgPosition - currentSetpoint) < POSITION_TOLERANCE;
   }
 
   @Override
@@ -117,5 +194,10 @@ public class Lift extends SubsystemBase {
     // Log motor synchronization (difference between motors)
     Logger.recordOutput(
         "Lift/PositionDifference", leftEncoder.getPosition() - rightEncoder.getPosition());
+
+    // Additional logging
+    Logger.recordOutput("Lift/IsAtPosition", isAtTargetPosition());
+    Logger.recordOutput("Lift/CurrentPosition", getCurrentPosition());
+    Logger.recordOutput("Lift/CurrentTargetPosition", currentTargetPosition.toString());
   }
 }

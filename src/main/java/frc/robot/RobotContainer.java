@@ -43,6 +43,7 @@ import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import frc.robot.subsystems.lift.Lift.LiftPosition;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -87,6 +88,9 @@ public class RobotContainer {
         LiftConstants.L_FOUR
       };
   private int currentLiftPositionIndex = 0;
+
+  // Current lift position
+  private LiftPosition currentLiftPosition = LiftPosition.BOTTOM;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -146,9 +150,9 @@ public class RobotContainer {
     // Register Named Commands
     NamedCommands.registerCommand("ScoreCoral", AutoCommands.ScoreCoral(lift, endEffector));
     NamedCommands.registerCommand(
-        "RemoveAlgaeL2", AutoCommands.RemoveAlgae(drive, lift, endEffector, LiftConstants.L_TWO));
+        "RemoveAlgaeL2", AutoCommands.RemoveAlgae(drive, lift, endEffector, LiftPosition.LEVEL_TWO.getPosition()));
     NamedCommands.registerCommand(
-        "RemoveAlgaeL3", AutoCommands.RemoveAlgae(drive, lift, endEffector, LiftConstants.L_THREE));
+        "RemoveAlgaeL3", AutoCommands.RemoveAlgae(drive, lift, endEffector, LiftPosition.LEVEL_THREE.getPosition()));
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
@@ -263,10 +267,10 @@ public class RobotContainer {
                 .andThen(
                     Commands.runOnce(
                         () -> {
-                          currentLiftPositionIndex = liftPositions.length - 1;
-                          lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
+                          currentLiftPosition = LiftPosition.LEVEL_FOUR;
+                          lift.runLiftToPos(currentLiftPosition);
                         }))
-                .withName("Lift Position Up One"));
+                .withName("Lift to Top Position (L4)"));
 
     // D-Pad Down: Move lift directly to bottom position
     operatorController
@@ -274,8 +278,8 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                     () -> {
-                      currentLiftPositionIndex = 0;
-                      lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
+                      currentLiftPosition = LiftPosition.BOTTOM;
+                      lift.runLiftToPos(currentLiftPosition);
                     })
                 .andThen(Commands.waitSeconds(0.25))
                 .andThen(Commands.runOnce(() -> endEffector.moveToStow()))
@@ -287,8 +291,24 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                     () -> {
-                      currentLiftPositionIndex = Math.max(currentLiftPositionIndex - 1, 0);
-                      lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
+                      // Move down one level in the enum
+                      switch (currentLiftPosition) {
+                        case LEVEL_FOUR:
+                          currentLiftPosition = LiftPosition.LEVEL_THREE;
+                          break;
+                        case LEVEL_THREE:
+                          currentLiftPosition = LiftPosition.LEVEL_TWO;
+                          break;
+                        case LEVEL_TWO:
+                          currentLiftPosition = LiftPosition.LEVEL_ONE;
+                          break;
+                        case LEVEL_ONE:
+                        case BOTTOM:
+                        default:
+                          currentLiftPosition = LiftPosition.BOTTOM;
+                          break;
+                      }
+                      lift.runLiftToPos(currentLiftPosition);
                     })
                 .andThen(Commands.waitSeconds(0.25))
                 .andThen(Commands.runOnce(() -> endEffector.moveToStow()))
@@ -302,9 +322,24 @@ public class RobotContainer {
                 .andThen(
                     Commands.runOnce(
                         () -> {
-                          currentLiftPositionIndex =
-                              Math.min(currentLiftPositionIndex + 1, liftPositions.length - 1);
-                          lift.runLiftToPos(liftPositions[currentLiftPositionIndex]);
+                          // Move up one level in the enum
+                          switch (currentLiftPosition) {
+                            case BOTTOM:
+                              currentLiftPosition = LiftPosition.LEVEL_ONE;
+                              break;
+                            case LEVEL_ONE:
+                              currentLiftPosition = LiftPosition.LEVEL_TWO;
+                              break;
+                            case LEVEL_TWO:
+                              currentLiftPosition = LiftPosition.LEVEL_THREE;
+                              break;
+                            case LEVEL_THREE:
+                            case LEVEL_FOUR:
+                            default:
+                              currentLiftPosition = LiftPosition.LEVEL_FOUR;
+                              break;
+                          }
+                          lift.runLiftToPos(currentLiftPosition);
                         }))
                 .withName("Lift Position Up One"));
 
