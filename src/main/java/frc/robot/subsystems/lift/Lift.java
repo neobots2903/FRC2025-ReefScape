@@ -122,7 +122,7 @@ public class Lift extends SubsystemBase {
    */
   public void runLiftToPos(double position) {
     this.currentSetpoint = position;
-    
+
     // Update the current target position if it matches one of our predefined positions
     for (LiftPosition liftPos : LiftPosition.values()) {
       if (Math.abs(position - liftPos.getPosition()) < 0.01) {
@@ -130,7 +130,7 @@ public class Lift extends SubsystemBase {
         break;
       }
     }
-    
+
     rightClosedLoopController.setReference(
         this.currentSetpoint, ControlType.kPosition, ClosedLoopSlot.kSlot0);
   }

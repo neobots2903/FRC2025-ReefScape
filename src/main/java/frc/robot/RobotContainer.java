@@ -37,13 +37,13 @@ import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.endEffector.EndEffector;
 import frc.robot.subsystems.intake.RampMechanism;
 import frc.robot.subsystems.lift.Lift;
+import frc.robot.subsystems.lift.Lift.LiftPosition;
 import frc.robot.subsystems.vision.*;
 import java.util.function.BooleanSupplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
-import frc.robot.subsystems.lift.Lift.LiftPosition;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -150,9 +150,14 @@ public class RobotContainer {
     // Register Named Commands
     NamedCommands.registerCommand("ScoreCoral", AutoCommands.ScoreCoral(lift, endEffector));
     NamedCommands.registerCommand(
-        "RemoveAlgaeL2", AutoCommands.RemoveAlgae(drive, lift, endEffector, LiftPosition.LEVEL_TWO.getPosition()));
+        "RemoveAlgaeL2",
+        AutoCommands.RemoveAlgae(drive, lift, endEffector, LiftPosition.LEVEL_TWO.getPosition()));
     NamedCommands.registerCommand(
-        "RemoveAlgaeL3", AutoCommands.RemoveAlgae(drive, lift, endEffector, LiftPosition.LEVEL_THREE.getPosition()));
+        "RemoveAlgaeL3",
+        AutoCommands.RemoveAlgae(drive, lift, endEffector, LiftPosition.LEVEL_THREE.getPosition()));
+    NamedCommands.registerCommand(
+      "IntakeCommand",
+      IntakeCommands.captureGamePiece(endEffector));
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
@@ -163,6 +168,14 @@ public class RobotContainer {
         "Drive Forward 5 feet", DriveCommands.driveDistance(drive, 60.0 + ROBOT_OFFSET));
     autoChooser.addOption( // Drive forward 1 foot (from robot center)
         "Drive Forward 1 foot", DriveCommands.driveDistance(drive, 12.0 + ROBOT_OFFSET));
+    
+    // Add test autos for individual AutoCommands
+    autoChooser.addOption("Test Score Coral", 
+        AutoCommands.ScoreCoral(lift, endEffector));
+    autoChooser.addOption("Test Remove Algae", 
+        AutoCommands.RemoveAlgae(drive, lift, endEffector, LiftPosition.LEVEL_TWO.getPosition()));
+    autoChooser.addOption("Test Intake", 
+        IntakeCommands.captureGamePiece(endEffector));
 
     // // Set up SysId routines
     // autoChooser.addOption(
@@ -375,7 +388,11 @@ public class RobotContainer {
 
     // === GAME PIECE CONTROLS (FACE BUTTONS) ===
     // A button: Capture game piece (single button press)
-    operatorController.a().onTrue(IntakeCommands.captureGamePiece(endEffector)/*.andThen(IntakeCommands.prepareForScoring(endEffector))*/);
+    operatorController
+        .a()
+        .onTrue(
+            IntakeCommands.captureGamePiece(
+                endEffector) /*.andThen(IntakeCommands.prepareForScoring(endEffector))*/);
 
     // B button: Run the gentle algae removal sequence when pressed, stow when released
     operatorController
@@ -384,10 +401,7 @@ public class RobotContainer {
         .onFalse(IntakeCommands.removeAlgaeGently(endEffector));
 
     // Y button: Shoot/deposit game piece
-    operatorController
-        .y()
-        .onTrue(
-            IntakeCommands.shootGamePiece(endEffector));
+    operatorController.y().onTrue(IntakeCommands.shootGamePiece(endEffector));
   }
 
   /**

@@ -29,7 +29,7 @@ This repository contains the robot code for the 2025 FIRST Robotics Competition 
 
 - **Framework**: WPILib 2025 Framework
 - **Language**: Java
-- **Libraries**: 
+- **Libraries**:
   - PathPlanner for autonomous path planning
   - AdvantageKit for robust logging and replay
   - Phoenix for motor control

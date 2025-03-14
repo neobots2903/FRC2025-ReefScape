@@ -1,6 +1,5 @@
 package frc.robot.commands;
 
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.LiftConstants;
@@ -17,7 +16,8 @@ public class AutoCommands {
     // Utility class - prevent instantiation
   }
 
-  // Move the timeout constant to class level so it's accessible to both the command and withTimeout()
+  // Move the timeout constant to class level so it's accessible to both the command and
+  // withTimeout()
   private static final double INTAKE_TIMEOUT = 5.0; // Max time to run intake
 
   /**
@@ -33,7 +33,7 @@ public class AutoCommands {
             // Step 1: Raise lift to position with coral safety checks
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting lift to L4")),
             LiftCommands.positionCoralAndLift(endEffector, lift, Lift.LiftPosition.LEVEL_FOUR),
-            
+
             // No need to wait extra time - safeCoralLift already waits for position to be reached
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed lift to L4")),
 
@@ -49,6 +49,18 @@ public class AutoCommands {
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed lift to L2")))
         .withName("ScoreCoral");
   }
+
+  /*
+   *              _______ BARGE SIDE _______
+   *             /                          \
+   *            /            L2              \
+   *           /   L3                    L3   \
+   * LEFT SIDE |                              | RIGHT SIDE
+   *           \   L2                    L2   /
+   *            \            L3              /
+   *             \______ DRIVER SIDE _______/
+   *
+   */
 
   /**
    * Creates a command that removes algae from a reef by raising the lift to the specified position,
@@ -99,9 +111,9 @@ public class AutoCommands {
   }
 
   /**
-   * Creates a command that automatically intakes a coral piece. The command ensures the ramp is 
-   * in intake position and the lift is at the bottom before running the intake until a piece 
-   * is detected.
+   * Creates a command that automatically intakes a coral piece. The command ensures the ramp is in
+   * intake position and the lift is at the bottom before running the intake until a piece is
+   * detected.
    *
    * @param lift The lift subsystem
    * @param endEffector The end effector subsystem
@@ -114,20 +126,22 @@ public class AutoCommands {
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Setting up for intake")),
             Commands.runOnce(() -> ramp.moveToIntakePosition()),
             Commands.runOnce(() -> endEffector.moveToStow()),
-            
+
             // Step 2: Move lift to bottom position with safety checks
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Moving lift to bottom")),
             LiftCommands.safeCoralLift(endEffector, lift, Lift.LiftPosition.BOTTOM),
-            
+
             // Step 3: Wait briefly to ensure everything is in position
             Commands.waitSeconds(0.25),
-            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Setup complete, starting intake")),
-            
+            Commands.runOnce(
+                () -> Logger.recordOutput("Auto/Status", "Setup complete, starting intake")),
+
             // Step 4: Run intake until piece is detected
             IntakeCommands.captureGamePiece(endEffector),
-            
+
             // Step 5: If piece was detected, run capture to position it properly
-            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Moving piece to front position")))
+            Commands.runOnce(
+                () -> Logger.recordOutput("Auto/Status", "Moving piece to front position")))
         .withName("AutoIntake");
   }
 }
