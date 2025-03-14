@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 3.841163793103448,
-        "y": 5.176508620689656
+        "x": 10.404183475391285,
+        "y": 4.011921630034575
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.7568965517241377,
-        "y": 5.126077586206898
+        "x": 11.377199523225775,
+        "y": 3.883934692046127
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 3.1603448275862065,
-        "y": 4.008189655172415
+        "x": 11.698109776264912,
+        "y": 3.8617329803672993
       },
       "prevControl": {
-        "x": 3.084770584063837,
-        "y": 4.246493103985103
+        "x": 10.691931672620886,
+        "y": 3.9615562952394923
       },
       "nextControl": null,
       "isLocked": false,
@@ -31,7 +31,20 @@
   "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [],
+  "eventMarkers": [
+    {
+      "name": "ScoreCoral",
+      "waypointRelativePos": 1.0,
+      "endWaypointRelativePos": null,
+      "command": null
+    },
+    {
+      "name": "RemoveAlgaeL2",
+      "waypointRelativePos": 1.0,
+      "endWaypointRelativePos": null,
+      "command": null
+    }
+  ],
   "globalConstraints": {
     "maxVelocity": 3.0,
     "maxAcceleration": 3.0,
@@ -48,7 +61,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -61.02029230207118
+    "rotation": 0.0
   },
   "useDefaultConstraints": true
 }

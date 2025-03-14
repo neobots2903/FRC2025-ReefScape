@@ -3,41 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 5.833189655172413,
-        "y": 4.218318965517242
+        "x": 10.404183475391285,
+        "y": 1.9092859629038208
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.601275913869133,
-        "y": 5.339535860950931
+        "x": 11.4521834699307,
+        "y": 1.7990456260957377
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 5.160775862068965,
-        "y": 6.605387931034484
+        "x": 12.541476461049673,
+        "y": 2.7642038809286578
       },
       "prevControl": {
-        "x": 5.528392979235157,
-        "y": 6.325189277559773
-      },
-      "nextControl": {
-        "x": 4.6954721843625675,
-        "y": 6.96004351659369
-      },
-      "isLocked": false,
-      "linkedName": null
-    },
-    {
-      "anchor": {
-        "x": 1.21875,
-        "y": 7.017241379310345
-      },
-      "prevControl": {
-        "x": 4.554646517813321,
-        "y": 6.591647707267384
+        "x": 12.183021196133774,
+        "y": 2.572325975051606
       },
       "nextControl": null,
       "isLocked": false,
@@ -49,8 +33,14 @@
   "pointTowardsZones": [],
   "eventMarkers": [
     {
-      "name": "IntakeCoral",
-      "waypointRelativePos": 2.0,
+      "name": "ScoreCoral",
+      "waypointRelativePos": 1.0,
+      "endWaypointRelativePos": null,
+      "command": null
+    },
+    {
+      "name": "RemoveAlgaeL3",
+      "waypointRelativePos": 1.0,
       "endWaypointRelativePos": null,
       "command": null
     }
@@ -65,13 +55,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -53.61564818416416
+    "rotation": 59.89866439860901
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 179.41536947929487
+    "rotation": 0.0
   },
   "useDefaultConstraints": true
 }

@@ -3,25 +3,25 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 16.358739265235695,
-        "y": 1.044561076808619
+        "x": 1.2195959967535894,
+        "y": 7.027237714303506
       },
       "prevControl": null,
       "nextControl": {
-        "x": 16.792213480568954,
-        "y": 0.7206865457667598
+        "x": 1.9778034427082187,
+        "y": 6.4363677822879755
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 13.886409852311417,
-        "y": 2.9276889337075716
+        "x": 3.68037417643779,
+        "y": 5.097896782127586
       },
       "prevControl": {
-        "x": 13.618867752291852,
-        "y": 3.13240319575967
+        "x": 3.1216303676646233,
+        "y": 5.529750156142999
       },
       "nextControl": null,
       "isLocked": false,
@@ -37,6 +37,12 @@
       "waypointRelativePos": 1.0,
       "endWaypointRelativePos": null,
       "command": null
+    },
+    {
+      "name": "RemoveAlgaeL2",
+      "waypointRelativePos": 1.0,
+      "endWaypointRelativePos": null,
+      "command": null
     }
   ],
   "globalConstraints": {
@@ -49,13 +55,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 119.60451556875705
+    "rotation": -60.25515814739522
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 126.25383255040855
+    "rotation": -53.45828613350119
   },
   "useDefaultConstraints": true
 }

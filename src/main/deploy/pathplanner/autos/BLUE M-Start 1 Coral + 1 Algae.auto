@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "RED MD Start to C10R"
+            "pathName": "BLUE M-Start to 21R"
           }
         },
         {
@@ -17,15 +17,9 @@
           }
         },
         {
-          "type": "path",
-          "data": {
-            "pathName": "C10R to A10"
-          }
-        },
-        {
           "type": "named",
           "data": {
-            "name": "RemoveAlgaeL3"
+            "name": "RemoveAlgaeL2"
           }
         }
       ]

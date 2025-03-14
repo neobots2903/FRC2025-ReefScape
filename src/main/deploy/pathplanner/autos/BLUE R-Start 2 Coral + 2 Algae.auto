@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BLUE RT Start to C20L"
+            "pathName": "BLUE R-Start to 20R"
           }
         },
         {
@@ -17,9 +17,15 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "RemoveAlgaeL3"
+          }
+        },
+        {
           "type": "path",
           "data": {
-            "pathName": "C20L to CS13"
+            "pathName": "BLUE 20R to 13"
           }
         },
         {
@@ -31,7 +37,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "CS13 to C19L"
+            "pathName": "BLUE 13 to 19R"
           }
         },
         {
@@ -41,39 +47,9 @@
           }
         },
         {
-          "type": "path",
-          "data": {
-            "pathName": "C19L to A19"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "RemoveAlgaeL3"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "A19 to A18"
-          }
-        },
-        {
           "type": "named",
           "data": {
             "name": "RemoveAlgaeL2"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "A18 to A17"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "RemoveAlgaeL3"
           }
         }
       ]
