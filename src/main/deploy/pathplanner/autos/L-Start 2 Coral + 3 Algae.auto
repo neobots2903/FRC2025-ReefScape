@@ -51,6 +51,18 @@
           "data": {
             "name": "RemoveAlgaeL2"
           }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BLUE 17R to 18R"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "RemoveAlgaeL3"
+          }
         }
       ]
     }
