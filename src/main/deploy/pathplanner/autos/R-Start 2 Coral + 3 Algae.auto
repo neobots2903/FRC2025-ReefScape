@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BLUE R-Start to 20R"
+            "pathName": "BLUE L-Start to 22R"
           }
         },
         {
@@ -25,7 +25,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BLUE 20R to 13"
+            "pathName": "BLUE 22R to 12"
           }
         },
         {
@@ -37,7 +37,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BLUE 13 to 19R"
+            "pathName": "BLUE 12 to 17R"
           }
         },
         {
@@ -55,7 +55,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BLUE 19R to 18R"
+            "pathName": "BLUE 17R to 18R"
           }
         },
         {
