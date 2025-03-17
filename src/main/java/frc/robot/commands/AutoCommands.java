@@ -32,14 +32,15 @@ public class AutoCommands {
             // Step 1: Raise lift to position with coral safety checks
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting lift to L4")),
             LiftCommands.positionCoralAndLift(endEffector, lift, Lift.LiftPosition.LEVEL_FOUR),
-            Commands.waitUntil(lift::isAtTargetPosition),
+            Commands.waitUntil(lift::isAtTargetPosition).andThen(
+                Commands.waitSeconds(0.25)), // Wait for lift recoil to stop
 
             // No need to wait extra time - safeCoralLift already waits for position to be reached
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed lift to L4")),
 
             // Step 2: Shoot the game piece
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting to shoot piece")),
-            IntakeCommands.shootGamePiece(endEffector),
+            IntakeCommands.shootGamePiece(endEffector).andThen(Commands.waitSeconds(0.25)),
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed shooting piece")),
 
             // Step 3: Lower lift to L2 with coral safety checks
@@ -95,7 +96,7 @@ public class AutoCommands {
                     // Wait briefly before starting to drive back (let mechanism make contact)
                     Commands.waitSeconds(0.3),
                     // Drive backward slowly (6 inches)
-                    DriveCommands.driveDistance(drive, -10.0) // 6 inches backward
+                    DriveCommands.driveDistance(drive, -12.0) // 12 inches backward
                     )),
 
             // Step 3: Make sure algae mechanism is safely stowed before moving lift
