@@ -39,6 +39,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -52,6 +53,9 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.util.LocalADStarAK;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
+import org.ironmaple.simulation.drivesims.COTS;
+import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -69,9 +73,9 @@ public class Drive extends SubsystemBase {
               Math.hypot(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)));
 
   // PathPlanner config constants
-  private static final double ROBOT_MASS_KG = 74.088;
+  private static final double ROBOT_MASS_KG = Units.lbsToKilograms(115);
   private static final double ROBOT_MOI = 6.883;
-  private static final double WHEEL_COF = 1.2;
+  private static final double WHEEL_COF = COTS.WHEELS.DEFAULT_NEOPRENE_TREAD.cof;
   private static final RobotConfig PP_CONFIG =
       new RobotConfig(
           ROBOT_MASS_KG,
@@ -80,11 +84,20 @@ public class Drive extends SubsystemBase {
               TunerConstants.FrontLeft.WheelRadius,
               TunerConstants.kSpeedAt12Volts.in(MetersPerSecond),
               WHEEL_COF,
-              DCMotor.getKrakenX60Foc(1)
-                  .withReduction(TunerConstants.FrontLeft.DriveMotorGearRatio),
+              DCMotor.getKrakenX60(1).withReduction(TunerConstants.FrontLeft.DriveMotorGearRatio),
               TunerConstants.FrontLeft.SlipCurrent,
               1),
           getModuleTranslations());
+
+  // Maple Sim Config
+  public static final DriveTrainSimulationConfig mapleSimConfig =
+      DriveTrainSimulationConfig.Default()
+          .withRobotMass(Kilograms.of(ROBOT_MASS_KG))
+          .withGyro(COTS.ofPigeon2())
+          .withSwerveModule(
+              COTS.ofMark4i(DCMotor.getKrakenX60(1), DCMotor.getKrakenX60(1), WHEEL_COF, 3))
+          .withTrackLengthTrackWidth(Inches.of(25), Inches.of(25))
+          .withBumperSize(Inches.of(36), Inches.of(36));
 
   static final Lock odometryLock = new ReentrantLock();
   private final GyroIO gyroIO;
@@ -105,14 +118,17 @@ public class Drive extends SubsystemBase {
       };
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, new Pose2d());
+  private final Consumer<Pose2d> resetSimulationPoseCallBack;
 
   public Drive(
       GyroIO gyroIO,
       ModuleIO flModuleIO,
       ModuleIO frModuleIO,
       ModuleIO blModuleIO,
-      ModuleIO brModuleIO) {
+      ModuleIO brModuleIO,
+      Consumer<Pose2d> resetSimulationPoseCallBack) {
     this.gyroIO = gyroIO;
+    this.resetSimulationPoseCallBack = resetSimulationPoseCallBack;
     modules[0] = new Module(flModuleIO, 0, TunerConstants.FrontLeft);
     modules[1] = new Module(frModuleIO, 1, TunerConstants.FrontRight);
     modules[2] = new Module(blModuleIO, 2, TunerConstants.BackLeft);
@@ -321,19 +337,71 @@ public class Drive extends SubsystemBase {
     return output;
   }
 
+  /**
+   * Returns the pose of a tag + offset considering robot dimensions and facing direction. When
+   * faceTag is true, front bumper aligns at target position. When faceTag is false, back bumper
+   * aligns at target position.
+   */
+  public Pose2d calculateTagOffset(
+      Pose2d tagPose,
+      double horizontalOffset,
+      double distantOffset,
+      boolean moveRight,
+      boolean faceTag) {
+    if (tagPose == null) {
+      return null;
+    }
+
+    // Convert tag heading to radians
+    double tagRadians = tagPose.getRotation().getRadians();
+
+    // The direction perpendicular to the tag face
+    // We'll use this to position the robot horizontally relative to the tag
+    double perpendicularDirection = tagRadians + (moveRight ? Math.PI / 2 : -Math.PI / 2);
+
+    // Calculate the position at the desired distance from the tag
+    // This is where we want either the front or back of the robot to be
+    double targetX = tagPose.getX() + horizontalOffset * Math.cos(perpendicularDirection);
+    double targetY = tagPose.getY() + horizontalOffset * Math.sin(perpendicularDirection);
+
+    // Calculate the robot's facing direction based on faceTag parameter
+    // If faceTag is true: face the tag (180 degrees from tag direction)
+    // If faceTag is false: face away from tag (same direction as tag)
+    double robotFacingRadians = faceTag ? (tagRadians + Math.PI) : tagRadians;
+    Rotation2d robotFacing = new Rotation2d(robotFacingRadians);
+
+    // Calculate the additional offset needed for the robot's center
+    double robotHalfLength = Units.inchesToMeters(18.0 + distantOffset);
+
+    // Key change: Direction of offset depends on which bumper we're aligning
+    // When facing the tag: front bumper aligns, so subtract offset in the facing direction
+    // When facing away: back bumper aligns, so add offset in the facing direction
+    double directionMultiplier = faceTag ? -1.0 : 1.0;
+
+    // Calculate the offset from target position to robot center
+    double centerOffsetX = directionMultiplier * robotHalfLength * Math.cos(robotFacingRadians);
+    double centerOffsetY = directionMultiplier * robotHalfLength * Math.sin(robotFacingRadians);
+
+    // Final pose positions the robot so the appropriate bumper is at the desired offset from the
+    // tag
+    Pose2d finalPose = new Pose2d(targetX + centerOffsetX, targetY + centerOffsetY, robotFacing);
+
+    // Log everything for debugging
+    Logger.recordOutput("AutoAlign/TagPose", tagPose);
+    Logger.recordOutput("AutoAlign/TargetPosition", new Pose2d(targetX, targetY, robotFacing));
+    Logger.recordOutput("AutoAlign/FinalPose", finalPose);
+
+    return finalPose;
+  }
+
   // Returns the average current used by all four drive motors
-  public double getAverageCurrent() {
-    double avgCurrent = 0.0; // Average current variable
-
-    avgCurrent =
-        modules[0].getDriveCurrent()
-            + modules[1].getDriveCurrent()
-            + modules[2].getDriveCurrent()
-            + modules[3].getDriveCurrent();
-
-    avgCurrent = avgCurrent / 4.0;
-
-    return avgCurrent;
+  @AutoLogOutput(key = "Drive/DriveCurrent")
+  public double getDriveCurrent() {
+    double output = 0.0;
+    for (int i = 0; i < 4; i++) {
+      output += modules[i].getDriveCurrent() / 4.0;
+    }
+    return output;
   }
 
   /** Returns the current odometry pose. */
@@ -349,6 +417,7 @@ public class Drive extends SubsystemBase {
 
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
+    resetSimulationPoseCallBack.accept(pose);
     poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
   }
 

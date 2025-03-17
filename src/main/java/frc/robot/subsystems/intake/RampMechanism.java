@@ -17,7 +17,7 @@ import org.littletonrobotics.junction.Logger;
 
 /**
  * Subsystem that controls the ramp/arm mechanism This allows the robot to position the ramp at
- * various angles for intake, outtake, or hang operations.
+ * various angles for intake, outtake, or hang operations. Expects degrees to be used for setpoints.
  */
 public class RampMechanism extends SubsystemBase {
   // Motors
@@ -62,7 +62,9 @@ public class RampMechanism extends SubsystemBase {
     SparkMaxConfig motorConfig = new SparkMaxConfig();
 
     // Configure motor
-    motorConfig.smartCurrentLimit(65).idleMode(IdleMode.kBrake);
+    motorConfig
+        .smartCurrentLimit(RampMechanismConstants.rampMechanismPivot_stallAmperage)
+        .idleMode(IdleMode.kBrake);
 
     // Configure encoder
     motorConfig.encoder.positionConversionFactor(

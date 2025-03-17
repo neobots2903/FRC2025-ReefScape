@@ -47,6 +47,11 @@ public class DriveCommands {
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
 
+  // April Tag alignment constants
+  private static final double LINEAR_KP = 1.0;
+  private static final double LINEAR_KD = 0.0;
+  private static final double LINEAR_MAX_VELOCITY = 2.0; // meters/sec
+  private static final double LINEAR_MAX_ACCELERATION = 3.0; // meters/sec^2
   // Constants for autonomous driving
   private static final double AUTO_DRIVE_KP = 3.0; // Proportional constant for distance control
   private static final double AUTO_DRIVE_MAX_SPEED = 2.0; // Maximum speed in meters per second
@@ -95,16 +100,45 @@ public class DriveCommands {
                   linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
                   linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
                   omega * drive.getMaxAngularSpeedRadPerSec());
-          boolean isFlipped = false;
-          // boolean isFlipped =
-          //     DriverStation.getAlliance().isPresent()
-          //         && DriverStation.getAlliance().get() == Alliance.Blue;
+          // boolean isFlipped = false;
+          boolean isFlipped =
+              DriverStation.getAlliance().isPresent()
+                  && DriverStation.getAlliance().get() == Alliance.Blue;
           drive.runVelocity(
               ChassisSpeeds.fromFieldRelativeSpeeds(
                   speeds,
                   isFlipped
                       ? drive.getRotation().plus(new Rotation2d(Math.PI))
                       : drive.getRotation()));
+        },
+        drive);
+  }
+
+  /** Robot relative drive command using joystick for linear control and angular control. */
+  public static Command joystickDriveRobotRelative(
+      Drive drive,
+      DoubleSupplier xSupplier,
+      DoubleSupplier ySupplier,
+      DoubleSupplier omegaSupplier) {
+    return Commands.run(
+        () -> {
+          // Get linear velocity
+          Translation2d linearVelocity =
+              getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), ySupplier.getAsDouble());
+
+          // Apply rotation deadband
+          double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), DEADBAND);
+
+          // Square rotation value for more precise control
+          omega = Math.copySign(omega * omega, omega);
+
+          // Convert to robot relative speeds & send command
+          ChassisSpeeds speeds =
+              new ChassisSpeeds(
+                  linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
+                  linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
+                  omega * drive.getMaxAngularSpeedRadPerSec());
+          drive.runVelocity(speeds);
         },
         drive);
   }
@@ -158,7 +192,6 @@ public class DriveCommands {
                           : drive.getRotation()));
             },
             drive)
-
         // Reset PID controller when command starts
         .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
   }
