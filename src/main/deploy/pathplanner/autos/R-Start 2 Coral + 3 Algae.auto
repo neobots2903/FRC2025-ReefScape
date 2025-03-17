@@ -11,15 +11,22 @@
           }
         },
         {
-          "type": "named",
+          "type": "sequential",
           "data": {
-            "name": "ScoreCoral"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "RemoveAlgaeL3"
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "ScoreCoral"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "RemoveAlgaeL3"
+                }
+              }
+            ]
           }
         },
         {

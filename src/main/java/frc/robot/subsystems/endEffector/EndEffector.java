@@ -34,7 +34,7 @@ public class EndEffector extends SubsystemBase {
   private boolean isRemovingPos = false;
 
   // Limit switches (May need this: https://github.com/PeterJohnson/rpi-colorsensor)
-  private final ColorSensorV3 frontSensor;
+  // private final ColorSensorV3 frontSensor;
   private final ColorSensorV3 backSensor;
 
   // Current state tracking
@@ -93,7 +93,7 @@ public class EndEffector extends SubsystemBase {
     algaeEncoder = algaeRemoveMotor.getEncoder();
 
     // Initialize limit switches
-    frontSensor = new ColorSensorV3(EndEffectorConstants.i2cPortRio); // Under 70 Normal
+    // frontSensor = new ColorSensorV3(EndEffectorConstants.i2cPortRio); // Under 70 Normal
     backSensor = new ColorSensorV3(EndEffectorConstants.i2cPortNavX); // Under 110 Normal
   }
 
@@ -184,10 +184,10 @@ public class EndEffector extends SubsystemBase {
   /**
    * @return true if the intake limit switch is triggered (game piece detected at intake position)
    */
-  public boolean isFrontSensorTriggered() {
-    return frontSensor.getProximity() > EndEffectorConstants.FRONT_PROX_TRIGGER;
-    // return false;
-  }
+  // public boolean isFrontSensorTriggered() {
+  //   return frontSensor.getProximity() > EndEffectorConstants.FRONT_PROX_TRIGGER;
+  //   // return false;
+  // }
 
   /**
    * @return true if the outtake limit switch is triggered (game piece detected at outtake position)
@@ -224,16 +224,16 @@ public class EndEffector extends SubsystemBase {
   @Override
   public void periodic() {
     // Log sensor values and state
-    Logger.recordOutput("EndEffector/frontSensor", isFrontSensorTriggered());
+    // Logger.recordOutput("EndEffector/frontSensor", isFrontSensorTriggered());
     Logger.recordOutput("EndEffector/backSensor", isBackSensorTriggered());
-    Logger.recordOutput("EndEffector/frontSensorRawIR", frontSensor.getIR());
+    // Logger.recordOutput("EndEffector/frontSensorRawIR", frontSensor.getIR());
     Logger.recordOutput("EndEffector/backSensorRawIR", backSensor.getIR());
-    Logger.recordOutput("EndEffector/frontSensorRawColor", frontSensor.getRawColor().toString());
+    // Logger.recordOutput("EndEffector/frontSensorRawColor", frontSensor.getRawColor().toString());
     Logger.recordOutput("EndEffector/backSensorRawColor", backSensor.getRawColor().toString());
-    Logger.recordOutput("EndEffector/frontSensorRawProximity", frontSensor.getProximity());
+    // Logger.recordOutput("EndEffector/frontSensorRawProximity", frontSensor.getProximity());
     Logger.recordOutput("EndEffector/backSensorRawProximity", backSensor.getProximity());
     Logger.recordOutput("EndEffector/backSensorConnected", backSensor.isConnected());
-    Logger.recordOutput("EndEffector/frontSensorConnected", frontSensor.isConnected());
+    // Logger.recordOutput("EndEffector/frontSensorConnected", frontSensor.isConnected());
     Logger.recordOutput("EndEffector/State", currentState.toString());
     Logger.recordOutput("EndEffector/LeftMotor/Output", leftIntakeMotor.getAppliedOutput());
     Logger.recordOutput("EndEffector/RightMotor/Output", rightIntakeMotor.getAppliedOutput());

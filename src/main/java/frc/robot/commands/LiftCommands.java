@@ -22,7 +22,8 @@ public class LiftCommands {
    */
   public static Command safeCoralLift(
       EndEffector endEffector, Lift lift, LiftPosition targetPosition) {
-    return safeCoralLift(endEffector, lift, targetPosition.getPosition());
+    return Commands.runOnce(() -> lift.runLiftToPos(targetPosition));
+    // return safeCoralLift(endEffector, lift, targetPosition.getPosition());
   }
 
   /**
@@ -167,6 +168,7 @@ public class LiftCommands {
     boolean movingUp = targetPosition.getPosition() > currentPosition;
 
     return Commands.sequence(
+            Commands.runOnce(() -> endEffector.stop()),
             // First make sure coral is in safe position
             Commands.runOnce(
                 () ->
@@ -187,10 +189,11 @@ public class LiftCommands {
             Commands.waitSeconds(0.2),
 
             // Move coral to safe position
-            IntakeCommands.prepareForScoring(endEffector),
+            // IntakeCommands.prepareForScoring(endEffector),
 
             // Then move lift when safe
             safeCoralLift(endEffector, lift, targetPosition))
+        // Commands.runOnce(() -> lift.runLiftToPos(targetPosition)))
         .withName("PositionCoralAndLift");
   }
 

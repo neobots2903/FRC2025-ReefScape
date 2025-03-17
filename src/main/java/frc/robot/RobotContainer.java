@@ -44,6 +44,7 @@ import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.photonvision.PhotonCamera;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -63,6 +64,10 @@ public class RobotContainer {
   final Pose2d LEFT_START = new Pose2d(7.15, 1.85, TOWARDS_DS);
   final Pose2d RIGHT_START = new Pose2d(7.15, 6.2, TOWARDS_DS);
   final Pose2d START_POSE = MID_START;
+
+  // Cameras
+  boolean cameraEnabled = false;
+  PhotonCamera camera = new PhotonCamera("backCamera");
 
   // Controller
   private final CommandXboxController driverController = new CommandXboxController(0);
@@ -108,8 +113,8 @@ public class RobotContainer {
         vision =
             new Vision(
                 drive::addVisionMeasurement,
-                new VisionIOPhotonVision(camera0Name, robotToCamera0),
-                new VisionIOPhotonVision(camera1Name, robotToCamera1));
+                new VisionIOPhotonVision(camera0Name, robotToCamera0) /*,
+                new VisionIOPhotonVision(camera1Name, robotToCamera1)*/);
         break;
 
       case SIM:
@@ -128,9 +133,9 @@ public class RobotContainer {
             new Vision(
                 drive::addVisionMeasurement,
                 new VisionIOPhotonVisionSim(
-                    camera0Name, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose),
+                    camera0Name, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose) /*,
                 new VisionIOPhotonVisionSim(
-                    camera1Name, robotToCamera1, driveSimulation::getSimulatedDriveTrainPose));
+                    camera1Name, robotToCamera1, driveSimulation::getSimulatedDriveTrainPose)*/);
         break;
 
       default:
@@ -155,7 +160,7 @@ public class RobotContainer {
     NamedCommands.registerCommand(
         "RemoveAlgaeL3",
         AutoCommands.RemoveAlgae(drive, lift, endEffector, LiftPosition.LEVEL_THREE.getPosition()));
-    NamedCommands.registerCommand("IntakeCommand", IntakeCommands.captureGamePiece(endEffector));
+    NamedCommands.registerCommand("IntakeCoral", AutoCommands.IntakeCoral(lift, endEffector, ramp));
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
@@ -222,12 +227,7 @@ public class RobotContainer {
     // Switch to robot-relative drive when a is held (for vision)
     driverController // Assign to paddle probably?
         .a()
-        .whileTrue(
-            DriveCommands.joystickDriveRobotRelative(
-                drive,
-                () -> -driverController.getLeftY(),
-                () -> -driverController.getLeftX(),
-                () -> -driverController.getRightX()));
+        .onTrue(Commands.runOnce(() -> enabledCamera()));
 
     // Switch to X pattern when X button is pressed
     driverController.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
@@ -398,7 +398,11 @@ public class RobotContainer {
         .onFalse(IntakeCommands.removeAlgaeGently(endEffector));
 
     // Y button: Shoot/deposit game piece
-    operatorController.y().onTrue(IntakeCommands.shootGamePiece(endEffector));
+    // operatorController.y().onTrue(IntakeCommands.shootGamePiece(endEffector));
+    operatorController
+        .y()
+        .onTrue(Commands.runOnce(() -> endEffector.runMotors()))
+        .onFalse(Commands.runOnce(() -> endEffector.stop()));
   }
 
   /**
@@ -415,6 +419,16 @@ public class RobotContainer {
 
     driveSimulation.setSimulationWorldPose(START_POSE);
     SimulatedArena.getInstance().resetFieldForAuto();
+  }
+
+  public void enabledCamera() {
+    cameraEnabled = !cameraEnabled;
+
+    if (cameraEnabled = true) {
+      camera.setDriverMode(true);
+    } else {
+      camera.setDriverMode(false);
+    }
   }
 
   public void updateSimulation() {

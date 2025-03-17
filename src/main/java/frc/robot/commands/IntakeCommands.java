@@ -21,21 +21,21 @@ public class IntakeCommands {
       public void initialize() {
         Logger.recordOutput("Commands/CaptureGamePiece", "Started");
         // Run motors to move piece from back to front
-        endEffector.runMotors(1);
+        endEffector.runMotors(0.4);
       }
 
       @Override
       public void execute() {
         // Motors keep running at the speed set in initialize()
         // Log sensor states for debugging
-        Logger.recordOutput(
-            "Commands/CaptureGamePiece/FrontSensor", endEffector.isFrontSensorTriggered());
+        // Logger.recordOutput(
+        //     "Commands/CaptureGamePiece/FrontSensor", endEffector.isFrontSensorTriggered());
         Logger.recordOutput(
             "Commands/CaptureGamePiece/BackSensor", endEffector.isBackSensorTriggered());
 
-        if (endEffector.isFrontSensorTriggered()) {
-          endEffector.runMotors(0.3);
-        }
+        // if (endEffector.isFrontSensorTriggered()) {
+        //   endEffector.runMotors(0.3);
+        // }
       }
 
       @Override
@@ -43,11 +43,12 @@ public class IntakeCommands {
         // Finish when:
         // 1. Front sensor IS triggered (piece has reached front position)
         // 2. Back sensor is NOT triggered (piece has cleared the back)
-        boolean frontSensorTriggered = endEffector.isFrontSensorTriggered();
+        // boolean frontSensorTriggered = endEffector.isFrontSensorTriggered();
         boolean backSensorClear = !endEffector.isBackSensorTriggered();
 
-        return frontSensorTriggered && backSensorClear;
+        // return frontSensorTriggered && backSensorClear;
         // return frontSensorTriggered;
+        return backSensorClear;
       }
 
       @Override
@@ -82,13 +83,16 @@ public class IntakeCommands {
         exitTimer.stop();
         exitTimer.reset();
         timerRunning = false;
-        pieceDetected = endEffector.isFrontSensorTriggered() || endEffector.isBackSensorTriggered();
+        // pieceDetected = endEffector.isFrontSensorTriggered() ||
+        // endEffector.isBackSensorTriggered();
+        pieceDetected = endEffector.isBackSensorTriggered();
       }
 
       @Override
       public void execute() {
-        boolean currentlyDetected =
-            endEffector.isFrontSensorTriggered() || endEffector.isBackSensorTriggered();
+        boolean currentlyDetected = endEffector.isBackSensorTriggered();
+        // boolean currentlyDetected =
+        //     endEffector.isFrontSensorTriggered() || endEffector.isBackSensorTriggered();
 
         // If we had a piece but now don't detect it, start exit timer
         if (pieceDetected && !currentlyDetected) {
@@ -151,11 +155,11 @@ public class IntakeCommands {
 
       @Override
       public void execute() {
-        boolean frontSensorTriggered = endEffector.isFrontSensorTriggered();
+        // boolean frontSensorTriggered = endEffector.isFrontSensorTriggered();
         boolean backSensorClear = !endEffector.isBackSensorTriggered();
 
         // Ideal position: Front triggered, back clear
-        if (frontSensorTriggered && backSensorClear) {
+        if (backSensorClear) {
           endEffector.stop();
           isPulsing = false;
         }
@@ -171,27 +175,28 @@ public class IntakeCommands {
             isPulsing = false;
           }
         }
-        // If piece is not detected at front, pulse forward
-        else if (!frontSensorTriggered) {
-          if (!isPulsing) {
-            endEffector.runMotors(PULSE_SPEED); // Pulse motors to move piece forward
-            pulseTimer.reset();
-            pulseTimer.start();
-            isPulsing = true;
-          } else if (pulseTimer.hasElapsed(PULSE_DURATION)) {
-            endEffector.stop();
-            isPulsing = false;
-          }
-        }
+        // // If piece is not detected at front, pulse forward
+        // else if (!frontSensorTriggered) {
+        //   if (!isPulsing) {
+        //     endEffector.runMotors(PULSE_SPEED); // Pulse motors to move piece forward
+        //     pulseTimer.reset();
+        //     pulseTimer.start();
+        //     isPulsing = true;
+        //   } else if (pulseTimer.hasElapsed(PULSE_DURATION)) {
+        //     endEffector.stop();
+        //     isPulsing = false;
+        //   }
+        // }
       }
 
       @Override
       public boolean isFinished() {
         // Finish when piece is in ideal position and we're not in the middle of a pulse
-        boolean frontSensorTriggered = endEffector.isFrontSensorTriggered();
+        // boolean frontSensorTriggered = endEffector.isFrontSensorTriggered();
         boolean backSensorClear = !endEffector.isBackSensorTriggered();
 
-        return frontSensorTriggered && backSensorClear && !isPulsing;
+        // return frontSensorTriggered && backSensorClear && !isPulsing;
+        return backSensorClear && !isPulsing;
       }
 
       @Override

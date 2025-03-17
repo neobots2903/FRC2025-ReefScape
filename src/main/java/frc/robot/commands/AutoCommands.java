@@ -2,7 +2,6 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.Constants.LiftConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.endEffector.EndEffector;
 import frc.robot.subsystems.intake.RampMechanism;
@@ -33,6 +32,7 @@ public class AutoCommands {
             // Step 1: Raise lift to position with coral safety checks
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting lift to L4")),
             LiftCommands.positionCoralAndLift(endEffector, lift, Lift.LiftPosition.LEVEL_FOUR),
+            Commands.waitUntil(lift::isAtTargetPosition),
 
             // No need to wait extra time - safeCoralLift already waits for position to be reached
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed lift to L4")),
@@ -76,16 +76,18 @@ public class AutoCommands {
       Drive drive, Lift lift, EndEffector endEffector, double reefPos) {
     return Commands.sequence(
             // Step 1: Raise lift to position using safety checks
-            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting lift to reef position")),
+            Commands.runOnce(
+                () -> Logger.recordOutput("Auto/Status", "Starting lift to reef position")),
             // Use safeCoralLift to ensure coral safety during lift movement
             LiftCommands.safeCoralLift(endEffector, lift, reefPos),
-            Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed lift to reef position")),
-
+            Commands.runOnce(
+                () -> Logger.recordOutput("Auto/Status", "Completed lift to reef position")),
+            Commands.runOnce(() -> endEffector.moveToReadyPos())
+                .andThen(Commands.waitSeconds(0.25)),
             // Step 2: Run algae removal motor WHILE driving back 6 inches.
             Commands.runOnce(
                 () -> Logger.recordOutput("Auto/Status", "Starting algae removal with pullback")),
             Commands.parallel(
-                // Remove algae with the mechanism
                 IntakeCommands.removeAlgaeGently(endEffector),
 
                 // Drive backward slowly while removing algae
@@ -93,14 +95,14 @@ public class AutoCommands {
                     // Wait briefly before starting to drive back (let mechanism make contact)
                     Commands.waitSeconds(0.3),
                     // Drive backward slowly (6 inches)
-                    DriveCommands.driveDistance(drive, -6.0) // 6 inches backward
+                    DriveCommands.driveDistance(drive, -10.0) // 6 inches backward
                     )),
 
             // Step 3: Make sure algae mechanism is safely stowed before moving lift
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Stowing algae mechanism")),
             Commands.runOnce(() -> endEffector.moveToStow()),
             // Wait briefly for mechanism to stow
-            Commands.waitSeconds(0.2),
+            Commands.waitSeconds(0.25),
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed algae removal")),
 
             // Step 4: Lower lift to L2 using safety checks
@@ -133,9 +135,10 @@ public class AutoCommands {
             LiftCommands.safeCoralLift(endEffector, lift, Lift.LiftPosition.BOTTOM),
             Commands.runOnce(
                 () -> Logger.recordOutput("Auto/Status", "Setup complete, starting intake")),
-
+            Commands.runOnce(() -> endEffector.runMotors(0.3)),
+            Commands.waitUntil(endEffector::isBackSensorTriggered),
             // Step 4: Run intake until piece is detected
-            IntakeCommands.captureGamePiece(endEffector),
+            IntakeCommands.captureGamePiece(endEffector).andThen(Commands.waitSeconds(0.5)),
 
             // Step 5: If piece was detected, run capture to position it properly
             Commands.runOnce(
