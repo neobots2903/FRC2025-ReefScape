@@ -424,7 +424,7 @@ public class RobotContainer {
   public void enabledCamera() {
     cameraEnabled = !cameraEnabled;
 
-    if (cameraEnabled = true) {
+    if (cameraEnabled) {
       camera.setDriverMode(true);
     } else {
       camera.setDriverMode(false);
