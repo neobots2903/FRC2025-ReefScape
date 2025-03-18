@@ -26,7 +26,6 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.Constants.LiftConstants;
 import frc.robot.commands.AutoCommands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriverAssistCommands;
@@ -36,7 +35,7 @@ import frc.robot.subsystems.climb.ClimbSubsystem;
 import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.endEffector.EndEffector;
 import frc.robot.subsystems.intake.RampMechanism;
-import frc.robot.subsystems.lift.Lift;
+import frc.robot.subsystems.lift.*;
 import frc.robot.subsystems.lift.Lift.LiftPosition;
 import frc.robot.subsystems.vision.*;
 import java.util.function.BooleanSupplier;
@@ -57,6 +56,7 @@ public class RobotContainer {
   private final Drive drive;
   private SwerveDriveSimulation driveSimulation = null;
   private final Vision vision;
+  private final Lift lift;
 
   // Sim start poses
   final Rotation2d TOWARDS_DS = new Rotation2d(Units.degreesToRadians(180));
@@ -77,22 +77,10 @@ public class RobotContainer {
   // Subsystems
   ClimbSubsystem climb = new ClimbSubsystem(); // Subsystem for climb.
   RampMechanism ramp = new RampMechanism(); // System for ramp control.
-  Lift lift = new Lift(); // Subsystem for the lift control.
   EndEffector endEffector = new EndEffector(); // Subsystem to control the end effector.
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
-
-  // Lift positions array should be double, not int
-  private final double[] liftPositions =
-      new double[] {
-        LiftConstants.BOTTOM,
-        LiftConstants.L_ONE,
-        LiftConstants.L_TWO,
-        LiftConstants.L_THREE,
-        LiftConstants.L_FOUR
-      };
-  private int currentLiftPositionIndex = 0;
 
   // Current lift position
   private LiftPosition currentLiftPosition = LiftPosition.BOTTOM;
@@ -115,6 +103,7 @@ public class RobotContainer {
                 drive::addVisionMeasurement,
                 new VisionIOPhotonVision(camera0Name, robotToCamera0) /*,
                 new VisionIOPhotonVision(camera1Name, robotToCamera1)*/);
+        lift = new Lift(new LiftIOReal());
         break;
 
       case SIM:
@@ -136,6 +125,7 @@ public class RobotContainer {
                     camera0Name, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose) /*,
                 new VisionIOPhotonVisionSim(
                     camera1Name, robotToCamera1, driveSimulation::getSimulatedDriveTrainPose)*/);
+        lift = new Lift(new LiftIOSim());
         break;
 
       default:
@@ -149,6 +139,7 @@ public class RobotContainer {
                 new ModuleIO() {},
                 (robotPose) -> {});
         vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
+        lift = new Lift(new LiftIO() {});
         break;
     }
 
@@ -278,7 +269,7 @@ public class RobotContainer {
                     Commands.runOnce(
                         () -> {
                           currentLiftPosition = LiftPosition.LEVEL_FOUR;
-                          lift.runLiftToPos(currentLiftPosition);
+                          lift.runLift(currentLiftPosition);
                         }))
                 .withName("Lift to Top Position (L4)"));
 
@@ -289,7 +280,7 @@ public class RobotContainer {
             Commands.runOnce(
                     () -> {
                       currentLiftPosition = LiftPosition.BOTTOM;
-                      lift.runLiftToPos(currentLiftPosition);
+                      lift.runLift(currentLiftPosition);
                     })
                 .andThen(Commands.waitSeconds(0.25))
                 .andThen(Commands.runOnce(() -> endEffector.moveToStow()))
@@ -318,7 +309,7 @@ public class RobotContainer {
                           currentLiftPosition = LiftPosition.BOTTOM;
                           break;
                       }
-                      lift.runLiftToPos(currentLiftPosition);
+                      lift.runLift(currentLiftPosition);
                     })
                 .andThen(Commands.waitSeconds(0.25))
                 .andThen(Commands.runOnce(() -> endEffector.moveToStow()))
@@ -349,7 +340,7 @@ public class RobotContainer {
                               currentLiftPosition = LiftPosition.LEVEL_FOUR;
                               break;
                           }
-                          lift.runLiftToPos(currentLiftPosition);
+                          lift.runLift(currentLiftPosition);
                         }))
                 .withName("Lift Position Up One"));
 

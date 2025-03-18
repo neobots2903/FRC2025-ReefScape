@@ -32,8 +32,8 @@ public class AutoCommands {
             // Step 1: Raise lift to position with coral safety checks
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Starting lift to L4")),
             LiftCommands.positionCoralAndLift(endEffector, lift, Lift.LiftPosition.LEVEL_FOUR),
-            Commands.waitUntil(lift::isAtTargetPosition).andThen(
-                Commands.waitSeconds(0.25)), // Wait for lift recoil to stop
+            Commands.waitUntil(lift::isAtTargetPosition)
+                .andThen(Commands.waitSeconds(0.25)), // Wait for lift recoil to stop
 
             // No need to wait extra time - safeCoralLift already waits for position to be reached
             Commands.runOnce(() -> Logger.recordOutput("Auto/Status", "Completed lift to L4")),

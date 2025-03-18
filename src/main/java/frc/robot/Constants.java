@@ -67,10 +67,14 @@ public final class Constants {
     public static final int liftMotorOneCanID = 20;
     public static final int liftMotorTwoCanID = 21;
 
+    public static final double GEAR_RATIO = 1.0 / 7.0; // 7:1 ratio
+    public static final double CARRIAGE_MASS_LBS = 15; // Mass of the lift carriage in kg
+    public static final double DRUM_RADIUS_INCHES = 1.751; // Radius of the drum in inches
+
     // PID and motor configuration constants
     // Come back to tuning PID once other mechanisms are working. Good enough for now.
     public static final double INCHES_PER_RADIAN =
-        ((1.0 / 7.0) * (1.751 / 2.0))
+        (GEAR_RATIO * (DRUM_RADIUS_INCHES / 2.0))
             * 2; // 7:1 gear ratio, 1.751" pitch(?) diameter, times 2 for second stage of lift
     public static final double POSITION_CONVERSION_FACTOR =
         INCHES_PER_RADIAN

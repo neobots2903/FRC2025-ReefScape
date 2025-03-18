@@ -22,7 +22,7 @@ public class LiftCommands {
    */
   public static Command safeCoralLift(
       EndEffector endEffector, Lift lift, LiftPosition targetPosition) {
-    return Commands.runOnce(() -> lift.runLiftToPos(targetPosition));
+    return Commands.runOnce(() -> lift.runLift(targetPosition));
     // return safeCoralLift(endEffector, lift, targetPosition.getPosition());
   }
 
@@ -214,7 +214,7 @@ public class LiftCommands {
                         "Commands/EmergencyCoralSafety", "EMERGENCY SAFETY ACTIVATED")),
 
             // Move lift to bottom position (safest position)
-            Commands.runOnce(() -> lift.runLiftToPos(Lift.LiftPosition.BOTTOM)),
+            Commands.runOnce(() -> lift.runLift(Lift.LiftPosition.BOTTOM)),
 
             // Move coral to safe position
             IntakeCommands.prepareForScoring(endEffector),
